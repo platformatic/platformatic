@@ -1,46 +1,65 @@
-export const kFields = Symbol.for('plt.globals.fields')
+import {
+  CloseCallbackRegistrationClosedError,
+  InvalidCloseCallbackError,
+  MissingGlobalError
+} from './errors.js'
+
+const kState = Symbol.for('plt.globals.state')
+
+if (!globalThis[kState]) {
+  Object.defineProperty(globalThis, kState, {
+    value: { values: {}, fields: new Set(), closeCallbacks: [], closeCallbacksStarted: false, initialized: false },
+    enumerable: false,
+  })
+}
+
+const state = globalThis[kState]
 
 function getField (name, options) {
   const { throwOnMissing = true } = options ?? {}
 
-  if (throwOnMissing && !globalThis.platformatic?.[kFields]?.has(name)) {
-    throw new Error(`globalThis.platformatic.${name} is not available`)
+  if (throwOnMissing && !state.fields.has(name)) {
+    throw new MissingGlobalError(name)
   }
 
-  return globalThis.platformatic?.[name]
+  return state.values[name]
 }
 
 export function getGlobal () {
-  return globalThis.platformatic
+  return state.initialized ? state.values : undefined
+}
+
+// Return a shallow selection without exposing the mutable globals container.
+export function getGlobals (...names) {
+  return Object.fromEntries(names.map(name => [name, getField(name)]))
 }
 
 export function updateGlobals (updates) {
-  globalThis.platformatic ??= {}
-  globalThis.platformatic[kFields] ??= new Set()
+  state.initialized = true
 
   for (const [key, value] of Object.entries(updates)) {
-    globalThis.platformatic[key] = value
-    globalThis.platformatic[kFields].add(key)
+    state.values[key] = value
+    state.fields.add(key)
   }
 
-  return globalThis.platformatic
+  return state.values
 }
 
-export function removeGlobals (fields) {
-  if (!globalThis.platformatic?.[kFields]) {
-    return globalThis.platformatic
+export function removeGlobals (names) {
+  if (!state.initialized) {
+    return undefined
   }
 
-  for (const field of fields) {
-    delete globalThis.platformatic[field]
-    globalThis.platformatic[kFields].delete(field)
+  for (const name of names) {
+    delete state.values[name]
+    state.fields.delete(name)
   }
 
-  return globalThis.platformatic
+  return state.values
 }
 
 export function hasField (name) {
-  return globalThis.platformatic?.[kFields]?.has(name) ?? false
+  return state.fields.has(name)
 }
 
 export function isBuilding (options) {
@@ -53,6 +72,22 @@ export function getExecutable (options) {
 
 export function getRuntimeId (options) {
   return getField('runtimeId', options)
+}
+
+export function getCompileCache (options) {
+  return getField('compileCache', options)
+}
+
+export function getResourceLimits (options) {
+  return getField('resourceLimits', options)
+}
+
+export function getUndiciThreadInterceptor (options) {
+  return getField('undiciThreadInterceptor', options)
+}
+
+export function setUndiciThreadInterceptor (interceptor) {
+  updateGlobals({ undiciThreadInterceptor: interceptor })
 }
 
 export function getNextVersion (options) {
@@ -79,8 +114,8 @@ export function getAdditionalServerOptions (options) {
   return getField('additionalServerOptions', options)
 }
 
-export function getTelemetryConfig (options) {
-  return getField('telemetryConfig', options)
+export function getTracingConfig (options) {
+  return getField('tracingConfig', options)
 }
 
 export function getConfig (options) {
@@ -105,10 +140,6 @@ export function getWorkerId (options) {
 
 export function getRoot (options) {
   return getField('root', options)
-}
-
-export function isEntrypoint (options) {
-  return getField('isEntrypoint', options)
 }
 
 export function getBasePath (options) {
@@ -223,6 +254,35 @@ export function getEvents (options) {
   return getField('events', options)
 }
 
+export function registerCloseCallback (callback) {
+  if (callback !== null && typeof callback === 'object' && typeof callback[Symbol.asyncDispose] === 'function') {
+    // Preserve the resource receiver when the shutdown runner invokes the callback.
+    callback = callback[Symbol.asyncDispose].bind(callback)
+  }
+
+  if (typeof callback !== 'function') {
+    throw new InvalidCloseCallbackError()
+  }
+
+  if (state.closeCallbacksStarted) {
+    throw new CloseCallbackRegistrationClosedError()
+  }
+
+  state.closeCallbacks.push(callback)
+}
+
+// Runtime-only operation: take ownership of cleanup and close registration.
+export function consumeCloseCallbacks () {
+  state.closeCallbacksStarted = true
+  const callbacks = state.closeCallbacks
+  state.closeCallbacks = []
+  return callbacks
+}
+
+export function hasCloseCallbacks () {
+  return state.closeCallbacks.length > 0
+}
+
 export function getITC (options) {
   return getField('itc', options)
 }
@@ -251,8 +311,8 @@ export function getSendHealthSignal (options) {
   return getField('sendHealthSignal', options)
 }
 
-export function getTelemetryReady (options) {
-  return getField('telemetryReady', options)
+export function getTracingReady (options) {
+  return getField('tracingReady', options)
 }
 
 export function getTracerProvider (options) {
@@ -262,5 +322,7 @@ export function getTracerProvider (options) {
 export function getNotifyConfig (options) {
   return getField('notifyConfig', options)
 }
+
+export * as errors from './errors.js'
 
 export default getGlobal

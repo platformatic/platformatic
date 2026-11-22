@@ -4,7 +4,7 @@ import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { request } from 'undici'
-import { createRuntime, createTemporaryDirectory } from './helpers.js'
+import { createRuntime, createTemporaryDirectory, configurationFileIn } from './helpers.js'
 const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 
 async function readSpans (path) {
@@ -16,14 +16,14 @@ async function readSpans (path) {
 }
 
 test('propagate the traceId correctly to runtime applications', async t => {
-  const configFile = join(fixturesDir, 'telemetry', 'platformatic.runtime.json')
+  const configFile = configurationFileIn(join(fixturesDir, 'telemetry'))
   const app = await createRuntime(configFile)
 
   t.after(async () => {
     await app.close()
   })
 
-  const entryUrl = await app.start()
+  const { 'echo:0': entryUrl } = await app.start()
 
   const traceId = '5e994e8fb53b27c91dcd2fec22771d15'
   const spanId = '166f3ab30f21800b'
@@ -42,14 +42,14 @@ test('propagate the traceId correctly to runtime applications', async t => {
 })
 
 test('attach x-plt-telemetry-id header', async t => {
-  const configFile = join(fixturesDir, 'telemetry', 'platformatic.runtime.json')
+  const configFile = configurationFileIn(join(fixturesDir, 'telemetry'))
   const app = await createRuntime(configFile)
 
   t.after(async () => {
     await app.close()
   })
 
-  const entryUrl = await app.start()
+  const { 'echo:0': entryUrl } = await app.start()
 
   const res = await request(entryUrl, {
     method: 'GET',
@@ -65,14 +65,28 @@ test('attach x-plt-telemetry-id header', async t => {
 })
 
 test('disabled telemetry', async t => {
-  const configFile = join(fixturesDir, 'telemetry', 'disabled-telemetry.runtime.json')
+  /*
+    The same configuration file as the enabled case, with the variable it reads set. A second file
+    used to be kept beside the first that differed in one key; one configuration is allowed per
+    directory, and a configuration is a program that can read its environment.
+  */
+  const configFile = configurationFileIn(join(fixturesDir, 'telemetry'))
+  const previous = process.env.PLT_TELEMETRY_ENABLED
+  process.env.PLT_TELEMETRY_ENABLED = 'false'
+
   const app = await createRuntime(configFile)
 
   t.after(async () => {
     await app.close()
+
+    if (previous === undefined) {
+      delete process.env.PLT_TELEMETRY_ENABLED
+    } else {
+      process.env.PLT_TELEMETRY_ENABLED = previous
+    }
   })
 
-  const entryUrl = await app.start()
+  const { 'echo:0': entryUrl } = await app.start()
 
   const traceId = '5e994e8fb53b27c91dcd2fec22771d15'
   const spanId = '166f3ab30f21800b'
@@ -93,7 +107,7 @@ test('disabled telemetry', async t => {
 test('propagate telemetry over messaging to pure ITC applications', async t => {
   const spansDir = await createTemporaryDirectory(t, 'telemetry-messaging')
   const spansPath = join(spansDir, 'spans.ndjson')
-  const configFile = join(fixturesDir, 'telemetry-messaging', 'platformatic.runtime.json')
+  const configFile = join(fixturesDir, 'telemetry-messaging', 'watt.config.mjs')
   const originalSpansPath = process.env.PLT_TELEMETRY_SPANS_PATH
   process.env.PLT_TELEMETRY_SPANS_PATH = spansPath
 
@@ -109,7 +123,7 @@ test('propagate telemetry over messaging to pure ITC applications', async t => {
   let response
 
   try {
-    const entryUrl = await app.start()
+    const { 'entrypoint:0': entryUrl } = await app.start()
     const res = await request(entryUrl, {
       method: 'GET',
       path: '/send/abcde'
@@ -155,7 +169,7 @@ test('propagate telemetry over messaging to pure ITC applications', async t => {
 test('allow custom telemetry metadata for ITC messaging', async t => {
   const spansDir = await createTemporaryDirectory(t, 'telemetry-messaging-manual')
   const spansPath = join(spansDir, 'spans.ndjson')
-  const configFile = join(fixturesDir, 'telemetry-messaging', 'platformatic.runtime.json')
+  const configFile = join(fixturesDir, 'telemetry-messaging', 'watt.config.mjs')
   const originalSpansPath = process.env.PLT_TELEMETRY_SPANS_PATH
   process.env.PLT_TELEMETRY_SPANS_PATH = spansPath
 
@@ -174,7 +188,7 @@ test('allow custom telemetry metadata for ITC messaging', async t => {
   let response
 
   try {
-    const entryUrl = await app.start()
+    const { 'entrypoint:0': entryUrl } = await app.start()
     const res = await request(entryUrl, {
       method: 'GET',
       path: '/send-manual/abcde',
@@ -209,7 +223,7 @@ test('allow custom telemetry metadata for ITC messaging', async t => {
 test('mark messaging spans as errors when pure ITC handlers fail', async t => {
   const spansDir = await createTemporaryDirectory(t, 'telemetry-messaging-error')
   const spansPath = join(spansDir, 'spans.ndjson')
-  const configFile = join(fixturesDir, 'telemetry-messaging', 'platformatic.runtime.json')
+  const configFile = join(fixturesDir, 'telemetry-messaging', 'watt.config.mjs')
   const originalSpansPath = process.env.PLT_TELEMETRY_SPANS_PATH
   process.env.PLT_TELEMETRY_SPANS_PATH = spansPath
 
@@ -224,7 +238,7 @@ test('mark messaging spans as errors when pure ITC handlers fail', async t => {
   const app = await createRuntime(configFile)
 
   try {
-    const entryUrl = await app.start()
+    const { 'entrypoint:0': entryUrl } = await app.start()
     const res = await request(entryUrl, {
       method: 'GET',
       path: '/fail'

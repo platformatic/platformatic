@@ -5,7 +5,6 @@ import {
   executeInParallel,
   executeWithTimeout,
   features,
-  kEnvFileFallbackKeys,
   kMetadata,
   kTimeout,
   parseMemorySize,
@@ -14,65 +13,66 @@ import {
 import { getExecutable } from '@platformatic/globals'
 import { ITC } from '@platformatic/itc'
 import {
+  clearRegistry,
   collectProcessMetrics,
-  isHttpMetricsResetEnabled,
   client as metricsClient,
-  openTelemetryITCMessage,
-  RESET_ON_COLLECT_METRICS
+  openTelemetryITCMessage
 } from '@platformatic/metrics'
 import fastify from 'fastify'
+import { randomUUID } from 'node:crypto'
 import { EventEmitter, once } from 'node:events'
 import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { STATUS_CODES } from 'node:http'
 import { createRequire } from 'node:module'
 import { availableParallelism } from 'node:os'
-import { basename, dirname, isAbsolute, join } from 'node:path'
+import { dirname, isAbsolute, join } from 'node:path'
 import { Readable } from 'node:stream'
 import { finished } from 'node:stream/promises'
 import { setImmediate as immediate, setTimeout as sleep } from 'node:timers/promises'
 import { pathToFileURL } from 'node:url'
+import { isDeepStrictEqual } from 'node:util'
 import { Worker } from 'node:worker_threads'
 import SonicBoom from 'sonic-boom'
 import { Agent, request, interceptors as undiciInterceptors } from 'undici'
-import { createThreadInterceptor } from 'undici-thread-interceptor'
+import { createCoordinator, createInterceptor } from 'undici-thread-interceptor'
 import { pprofCapturePreloadPath } from './config.js'
 import {
+  AddressInUseError,
   ApplicationAlreadyStartedError,
   ApplicationNotFoundError,
   ApplicationNotStartedError,
   ApplicationStartTimeoutError,
-  CannotRemoveEntrypointError,
   DuplicateExtensionHealthCheckError,
   DuplicateITCHandlerNameError,
   ExtensionHealthRoutesUnavailableError,
-  FailedToLoadExtensionError,
-  FailedToStartExtensionError,
-  FailedToStopExtensionError,
+  FailedToUpdateMetricsConfigError,
   InvalidArgumentError,
-  InvalidExtensionError,
   LastProfileTimeoutError,
   MessagingError,
   MetricFamilyCollisionError,
+  MetricsDisabledError,
   MissingPprofCapture,
+  MixedServingStateError,
   ReservedITCHandlerNameError,
   RuntimeAbortedError,
   RuntimeExtensionBuildAlreadyCalledError,
-  WorkerInterceptorJoinTimeoutError,
+  WorkerAddressInUseError,
   WorkerNotFoundError
 } from './errors.js'
+import { closeExtensions, loadExtensions, resolveExtensions, startExtensions, stopExtensions } from './extensions.js'
 import { abstractLogger, createLogger } from './logger.js'
 import { startManagementApi } from './management-api.js'
 import { createManagementHandlers } from './management-handlers.js'
 import { OpenTelemetryMetricsForwarder } from './opentelemetry-metrics.js'
-import { createChannelCreationHook } from './policies.js'
+import { createChannelCreationHook, createTargetPermissionHook } from './policies.js'
+import { PredictiveWorkersScaler } from './predictive-worker-scaler.js'
 import { startHealthProbesServer, startPrometheusServer } from './prom-server.js'
 import { startScheduler } from './scheduler.js'
 import { createSharedStore } from './shared-http-cache.js'
 import { topologicalLevels, topologicalSort } from './utils.js'
 import { version } from './version.js'
 import { WorkerMetricsAggregator } from './worker-metrics-aggregator.js'
-import { DynamicWorkersScaler } from './worker-scaler.js'
 import { HealthSignalsQueue } from './worker/health-signals.js'
 import { sendMultipleViaITC, sendViaITC, waitEventFromITC } from './worker/itc.js'
 import { RoundRobinMap } from './worker/round-robin-map.js'
@@ -82,16 +82,21 @@ import {
   kFullId,
   kHealthCheckTimer,
   kId,
-  kInterceptorReadyPromise,
   kIsSubprocessHost,
   kITC,
   kLastHealthCheckELU,
   kStderrMarker,
+  kSubprocessPid,
+  kWorkerExitCode,
   kWorkerHealthSignals,
   kWorkerId,
+  kWorkerPortOffset,
   kWorkersBroadcast,
+  kWorkerServerOptions,
+  kWorkerStartAborted,
   kWorkerStartTime,
-  kWorkerStatus
+  kWorkerStatus,
+  kWorkerUrl
 } from './worker/symbols.js'
 
 const kWorkerFile = join(import.meta.dirname, 'worker/main.js')
@@ -120,6 +125,10 @@ const kLastProfileFallbackCodes = new Set([
 ])
 const kApplicationRestartsMetricName = 'platformatic_application_restarts_total'
 const kApplicationRestartsMetricHelp = 'Total number of restarts triggered by the runtime for an application.'
+
+function normalizeCompileCache (value) {
+  return typeof value === 'boolean' ? { enabled: value } : value ?? {}
+}
 
 const MAX_LISTENERS_COUNT = 100
 
@@ -158,24 +167,62 @@ function formatMetricValue (value) {
 // faux ESM modules, in which the real exports are properties of `module.exports`
 // and therefore only reachable via an additional `default` hop. The setup
 // function can also be exported as a named `setup` export, at both levels.
-function resolveExtensionSetup (imported) {
-  const candidates = [imported?.default, imported?.setup, imported?.default?.default, imported?.default?.setup]
-
-  for (const candidate of candidates) {
-    if (typeof candidate === 'function') {
-      return candidate
-    }
-  }
-
-  return null
-}
-
 // Always run operations in parallel to avoid deadlocks when services have dependencies
 const DEFAULT_CONCURRENCY = availableParallelism() * 2
 const MAX_BOOTSTRAP_ATTEMPTS = 5
 const IMMEDIATE_RESTART_MAX_THRESHOLD = 10
 const MAX_WORKERS = 100
 const DEFAULT_RESTART_ON_ERROR_DELAY = 5000
+
+/*
+  Both public payloads are built from a snapshot and frozen through. What a consumer could observe
+  could once observe was scalars and a file path, so handing out interior state was harmless in
+  practice; the payload now nests resolvedConfig -- an entire capability payload -- inside every
+  entry, and the getters read
+  straight off live state. A consumer mutating what it received would be editing the configuration
+  that later restarts and scale-up workers read, silently, and would make worker generations
+  disagree about what they are running. setApplicationConfigPatch exists precisely so that changing
+  a running application's configuration is explicit, patch-shaped and visible.
+
+  Only plain objects and arrays are copied. Anything carrying its own prototype -- a class
+  instance, a stream, a buffer -- is handed back as it is, because a copy of it would not be the
+  thing; the hazard this closes is a consumer editing configuration, not one editing a socket.
+*/
+function frozenSnapshot (value, seen = new Map()) {
+  if (value === null || typeof value !== 'object') {
+    return value
+  }
+
+  if (seen.has(value)) {
+    return seen.get(value)
+  }
+
+  if (Array.isArray(value)) {
+    const copy = []
+    seen.set(value, copy)
+
+    for (const entry of value) {
+      copy.push(frozenSnapshot(entry, seen))
+    }
+
+    return Object.freeze(copy)
+  }
+
+  const prototype = Object.getPrototypeOf(value)
+
+  if (prototype !== Object.prototype && prototype !== null) {
+    return value
+  }
+
+  const copy = {}
+  seen.set(value, copy)
+
+  for (const [key, entry] of Object.entries(value)) {
+    copy[key] = frozenSnapshot(entry, seen)
+  }
+
+  return Object.freeze(copy)
+}
 
 export class Runtime extends EventEmitter {
   logger
@@ -197,19 +244,22 @@ export class Runtime extends EventEmitter {
   #sharedContext
   #isProduction
   #concurrency
-  #entrypointId
-  #url
-  #entrypointPort
 
   #healthMetricsTimer
   #healthMetricsCollectionActive
 
   #meshInterceptor
+  #meshCoordinator
+  #meshId
   #dispatcher
 
   #managementApi
   #prometheusServer
   #healthProbesServer
+  #metricsServersInitialized
+  #metricsServersStartPromise
+  #metricsConfigUpdatePromise
+  #metricsConfigUpdateFailed
   #opentelemetryMetricsForwarder
   #inspectorServer
   #metricsLabelName
@@ -229,11 +279,11 @@ export class Runtime extends EventEmitter {
   #extensionLivenessChecks
   #extensionHealthRoutes
   #lastOverloadProfiles
+  #servingStates
   #restartingApplications
-  #restartingWorkers
+  #replicas
   #dynamicWorkersScaler
   #nextWorkerIndex
-  #workerPortOffsets
 
   #sharedHttpCache
   #scheduler
@@ -260,22 +310,13 @@ export class Runtime extends EventEmitter {
     this.#applications = new Map()
     this.#applicationRestartCounts = new Map()
     this.#workers = new RoundRobinMap()
-    this.#url = undefined
-    this.#entrypointPort = undefined
     this.#channelCreationHook = createChannelCreationHook(this.#config)
-    this.#meshInterceptor = createThreadInterceptor({
-      domain: '.plt.local',
-      timeout: this.#config.applicationTimeout,
-      meshTimeout: this.#context.meshTimeout ?? true,
-      onChannelCreation: this.#channelCreationHook,
-      onError: this.#onMeshInterceptorError.bind(this)
-    })
+    this.#meshId = `runtime-${randomUUID()}`
     this.logger = abstractLogger // This is replaced by the real logger in init() and eventually removed in close()
     this.#status = undefined
     this.#restartingApplications = new Set()
-    this.#restartingWorkers = new Map()
+    this.#replicas = new Map()
     this.#nextWorkerIndex = new Map()
-    this.#workerPortOffsets = new Map() // fullWorkerId => portOffset
     this.#sharedHttpCache = null
     this.#applicationsConfigsPatches = new Map()
 
@@ -304,20 +345,29 @@ export class Runtime extends EventEmitter {
     // Registered per-worker in #setupWorker, reserved so extensions cannot clobber it
     this.#reservedITCHandlerNames.add('profiling:started')
     this.#extensions = []
+    this.#metricsServersInitialized = false
+    this.#metricsServersStartPromise = null
+    this.#metricsConfigUpdatePromise = Promise.resolve()
+    this.#metricsConfigUpdateFailed = false
+    this.#processMetricsRegistry = null
     this.#extensionsWantHealthMetrics = false
     this.#extensionReadinessChecks = new Map()
     this.#extensionLivenessChecks = new Map()
     this.#extensionHealthRoutes = []
     this.#lastOverloadProfiles = new Map()
+    this.#servingStates = new Map()
     this.#sharedContext = {}
 
-    if (this.#isProduction) {
-      this.#env.PLT_DEV = 'false'
-      this.#env.PLT_ENVIRONMENT = 'production'
-    } else {
-      this.#env.PLT_DEV = 'true'
-      this.#env.PLT_ENVIRONMENT = 'development'
-    }
+    /*
+      `PLT_DEV` and `PLT_ENVIRONMENT` are no longer injected here: an application branches on
+      its own variables, or the decision moves into the configuration, where the context carries
+      `production` and `mode` with types. `NODE_ENV` is the one the runtime still defaults, at the
+      bottom of the env ladder, so anything the project sets outranks it.
+
+      They were worse than redundant by the end -- the worker environment is the one the loader
+      resolved per application, and these were written onto the runtime's own copy, so under
+      `wattpm start` an application still read `PLT_ENVIRONMENT=development`.
+    */
   }
 
   async init () {
@@ -335,10 +385,9 @@ export class Runtime extends EventEmitter {
       this.#metricsLabelName = 'applicationId'
     }
 
-    // Initialize process-level metrics registry in the main thread if metrics or management API is enabled
+    // Initialize process-level metrics registry only when metrics are enabled.
     // These metrics are the same across all workers and only need to be collected once
-    // We need this for management API as it can request metrics even without explicit metrics config
-    if (config.metrics || config.managementApi) {
+    if (config.metrics && config.metrics.enabled !== false) {
       this.#processMetricsRegistry = new metricsClient.Registry()
       collectProcessMetrics(this.#processMetricsRegistry)
     }
@@ -354,18 +403,14 @@ export class Runtime extends EventEmitter {
       this.#managementApi = await startManagementApi(this, config.managementApi)
     }
 
-    await this.#startOpenTelemetryMetricsForwarder(config.metrics?.opentelemetry)
+    if (config.metrics && config.metrics.enabled !== false) {
+      await this.#startOpenTelemetryMetricsForwarder(config.metrics.opentelemetry)
+    }
 
     this.#createWorkersBroadcastChannel()
 
     if (this.#config.workers.dynamic) {
-      if (this.#config.workers.dynamic === false) {
-        this.logger.warn(
-          `Worker scaler disabled because the "workers" configuration is set to ${this.#config.workers.static}.`
-        )
-      } else {
-        this.#dynamicWorkersScaler = new DynamicWorkersScaler(this, this.#config.workers)
-      }
+      this.#dynamicWorkersScaler = new PredictiveWorkersScaler(this, this.#config.workers)
     }
 
     // Load extensions before creating any worker so that custom ITC handlers
@@ -374,18 +419,28 @@ export class Runtime extends EventEmitter {
     // readiness/liveness checks and probe routes before Fastify starts listening.
     await this.#loadExtensions()
 
-    if (config.metrics || (typeof config.healthProbes === 'object' && config.healthProbes !== null)) {
-      this.#prometheusServer = await startPrometheusServer(this, config.metrics ?? false, config.healthProbes)
+    // A runtime without applications exits during start and must not briefly
+    // claim the default health-probe port. Applications added later, including
+    // by extension start hooks, initialize these servers in addApplications().
+    if (config.applications.length > 0) {
+      await this.#ensureMetricsServersStarted()
     }
 
-    this.#healthProbesServer = await startHealthProbesServer(this, config.metrics, config.healthProbes)
-    this.#assertExtensionHealthRoutesApplied()
+    this.#meshCoordinator = createCoordinator({ meshId: this.#meshId })
+    this.#meshInterceptor = createInterceptor({
+      meshId: this.#meshId,
+      domain: '.plt.local',
+      connectTimeout: this.#config.applicationTimeout,
+      bootstrapTimeout: this.#config.applicationTimeout,
+      allowTarget: createTargetPermissionHook(this.#config)
+    })
+    await this.#meshInterceptor.ready
 
     await this.addApplications(this.#config.applications)
     await this.#setDispatcher(config.undici)
 
     if (!this.#context.build) {
-      this.#scheduler = startScheduler(config.scheduler ?? [], this.#dispatcher, logger)
+      this.#scheduler = startScheduler(logger, this.#config.scheduler)
     }
 
     this.#updateStatus('init')
@@ -404,7 +459,7 @@ export class Runtime extends EventEmitter {
       // Dynamic applications started by an extension are excluded from the normal startup pass.
       const configuredApplications = this.getApplicationsIds()
 
-      await this.#startExtensions()
+      await startExtensions(this.#extensions)
 
       const applicationsToStart = configuredApplications.filter(id => !this.#isApplicationStarted(id))
       await this.startApplications(applicationsToStart, silent)
@@ -412,7 +467,7 @@ export class Runtime extends EventEmitter {
       if (this.getApplicationsIds().length === 0) {
         this.#updateStatus('started')
         await this.close(silent)
-        return
+        return {}
       }
 
       if (this.#config.inspectorOptions) {
@@ -455,19 +510,13 @@ export class Runtime extends EventEmitter {
 
     this.#updateStatus('started')
 
-    // The CLI enables the module compile cache for this process. Node.js would only write it when
-    // the process terminates, so flush it now that the boot is complete to not lose it when the
-    // process is killed abruptly. This is a no-op when the compile cache is not enabled.
-    scheduleCompileCacheFlush()
-
     // Start the global health metrics timer for all workers if needed
     this.#startHealthMetricsCollectionIfNeeded()
 
     await this.#dynamicWorkersScaler?.start()
-    if (this.#url) {
-      this.#showUrl()
-    }
-    return this.#url
+    this.#showUrls()
+    scheduleCompileCacheFlush(this.logger)
+    return this.getUrls()
   }
 
   async stop (silent = false) {
@@ -496,18 +545,14 @@ export class Runtime extends EventEmitter {
 
     await this.#dynamicWorkersScaler?.stop()
 
-    // Stop the entrypoint first so that no new requests are accepted
-    if (this.#entrypointId) {
-      await this.stopApplication(this.#entrypointId, silent)
-    }
-
     // Await extension stop hooks before stopping remaining applications so that
     // control-plane extensions can settle work and hand off state first.
-    await this.#stopExtensions()
+    await stopExtensions(this.#extensions, this.logger)
 
     await this.stopApplications(this.getApplicationsIds(), silent)
 
-    await this.#meshInterceptor.close()
+    await this.#meshInterceptor?.close()
+    this.#meshCoordinator?.destroy()
     this.#workersBroadcastChannel?.close()
 
     this.#updateStatus('stopped')
@@ -525,8 +570,6 @@ export class Runtime extends EventEmitter {
     await this.restartApplications(toRestart)
 
     this.emitAndNotify('restarted')
-
-    return this.#url
   }
 
   async close (silent = false) {
@@ -542,11 +585,12 @@ export class Runtime extends EventEmitter {
     clearTimeout(this.#healthMetricsTimer)
     this.#healthMetricsCollectionActive = false
     this.#lastOverloadProfiles.clear()
+    this.#servingStates.clear()
 
     await this.stop(silent)
     this.#updateStatus('closing')
 
-    await this.#closeExtensions()
+    await closeExtensions(this.#extensions, this.logger)
 
     // The management API autocloses by itself via event in management-api.js.
     // This is needed to let management API stop endpoint to reply.
@@ -566,7 +610,7 @@ export class Runtime extends EventEmitter {
 
     // Clean up process metrics registry
     if (this.#processMetricsRegistry) {
-      this.#processMetricsRegistry.clear()
+      clearRegistry(this.#processMetricsRegistry)
       this.#processMetricsRegistry = null
     }
 
@@ -678,25 +722,8 @@ export class Runtime extends EventEmitter {
 
   async addApplications (applications, start = false) {
     const setupInvocations = []
-    // Per-worker ports do not need SO_REUSEPORT because each worker binds a different port.
-    const usesPerWorkerPorts = this.#config.server?.portAssignment === 'perWorkerIncrement'
-
     const toStart = []
     for (const application of applications) {
-      const workers = application.workers
-
-      if (
-        (workers.static > 1 || workers.minimum > 1) &&
-        application.entrypoint &&
-        !features.node.reusePort &&
-        !usesPerWorkerPorts
-      ) {
-        this.logger.warn(
-          `"${application.id}" is set as the entrypoint, but reusePort is not available in your OS; setting workers to 1 instead of ${workers.static}`
-        )
-        application.workers = { dynamic: false, static: 1 }
-      }
-
       this.#applications.set(application.id, application)
       this.#applicationRestartCounts.set(application.id, this.#applicationRestartCounts.get(application.id) ?? 0)
       setupInvocations.push([application])
@@ -705,8 +732,12 @@ export class Runtime extends EventEmitter {
 
     await executeInParallel(this.#setupApplication.bind(this), setupInvocations, this.#concurrency)
 
+    if (applications.length > 0) {
+      await this.#ensureMetricsServersStarted()
+    }
+
     for (const application of applications) {
-      this.logger.debug(`Added application "${application.id}"${application.entrypoint ? ' (entrypoint)' : ''}.`)
+      this.logger.debug(`Added application "${application.id}".`)
       this.emitAndNotify('application:added', application)
     }
 
@@ -716,7 +747,7 @@ export class Runtime extends EventEmitter {
 
     const created = []
     for (const { id } of applications) {
-      created.push(await this.getApplicationDetails(id))
+      created.push(await this.#buildApplicationDetails(id))
     }
 
     this.#updateLoggingPrefixes()
@@ -724,10 +755,6 @@ export class Runtime extends EventEmitter {
   }
 
   async removeApplications (applications, silent = false) {
-    if (applications.includes(this.#entrypointId)) {
-      throw new CannotRemoveEntrypointError()
-    }
-
     const removed = []
     for (const application of applications) {
       if (!this.#applications.has(application)) {
@@ -736,18 +763,23 @@ export class Runtime extends EventEmitter {
 
       // Use allowUnloaded so that applications without a live worker
       // (stopped or crashed with restartOnError: 0) can still be removed.
-      const details = await this.getApplicationDetails(application, true)
+      const details = await this.#buildApplicationDetails(application, true)
       details.status = 'removed'
+
+      // The snapshot is taken while the application is still up, but what it reports is an
+      // application about to be gone: it is not making a claim about how it would serve.
+      delete details.servingState
+
       removed.push(details)
     }
 
     await this.stopApplications(applications, silent, true)
 
     for (const application of applications) {
-      this.#dynamicWorkersScaler?.remove(application)
       await this.#scheduler?.removeApplicationJobs(application)
       this.#applications.delete(application)
       this.#applicationRestartCounts.delete(application)
+      this.#replicas.delete(application)
     }
 
     for (const application of applications) {
@@ -778,8 +810,24 @@ export class Runtime extends EventEmitter {
     const levels = topologicalLevels(applications, dependencies)
 
     for (const level of levels) {
-      const startInvocations = level.map(app => [app, silent])
-      await executeInParallel(this.startApplication.bind(this), startInvocations, this.#concurrency)
+      const applicationsWithPort = await Promise.all(
+        level.map(async applicationId => {
+          const worker = await this.#getWorkerByIdOrNext(applicationId)
+          const applicationConfig = await sendViaITC(worker, 'getApplicationConfig')
+          const port = Number(applicationConfig?.server?.port)
+          return { applicationId, hasPort: Number.isInteger(port) && port > 0 }
+        })
+      )
+
+      for (const hasPort of [true, false]) {
+        const startInvocations = applicationsWithPort
+          .filter(application => application.hasPort === hasPort)
+          .map(({ applicationId }) => [applicationId, silent])
+
+        if (startInvocations.length > 0) {
+          await executeInParallel(this.startApplication.bind(this), startInvocations, this.#concurrency)
+        }
+      }
     }
   }
 
@@ -791,16 +839,21 @@ export class Runtime extends EventEmitter {
 
     if (!skipDependencies) {
       try {
-        const { applications } = await this.getApplications(true)
-        for (const application of applications) {
-          for (const dependency of application.dependencies ?? []) {
-            let applicationDependents = dependents[dependency]
-            if (!applicationDependents) {
-              applicationDependents = new Set()
-              dependents[dependency] = applicationDependents
-            }
+        const details = await executeWithTimeout(
+          this.getApplications(true),
+          this.#config.gracefulShutdown.application
+        )
+        if (details !== kTimeout) {
+          for (const application of details.applications) {
+            for (const dependency of application.dependencies ?? []) {
+              let applicationDependents = dependents[dependency]
+              if (!applicationDependents) {
+                applicationDependents = new Set()
+                dependents[dependency] = applicationDependents
+              }
 
-            applicationDependents.add(application.id)
+              applicationDependents.add(application.id)
+            }
           }
         }
       } catch (e) {
@@ -809,11 +862,6 @@ export class Runtime extends EventEmitter {
     }
 
     for (const application of applicationsToStop) {
-      // The entrypoint has been stopped above
-      if (application === this.#entrypointId) {
-        continue
-      }
-
       stopInvocations.push([application, silent, Array.from(dependents[application] ?? [])])
     }
 
@@ -821,13 +869,39 @@ export class Runtime extends EventEmitter {
   }
 
   async restartApplications (applicationsToRestart) {
-    const restartInvocations = []
+    const restartInvocations = applicationsToRestart.map(application => [application, true])
+    const restarts = await executeInParallel(
+      this.restartApplication.bind(this),
+      restartInvocations,
+      this.#concurrency,
+      false
+    )
+    const failed = restarts.filter(result => result instanceof Error)
+    const succeeded = restarts.filter(result => result && !(result instanceof Error))
 
-    for (const application of applicationsToRestart) {
-      restartInvocations.push([application])
+    if (failed.length > 0) {
+      await Promise.allSettled(succeeded.map(restart => restart.discard()))
+      throw failed[0]
     }
 
-    return executeInParallel(this.restartApplication.bind(this), restartInvocations, this.#concurrency)
+    const results = await executeInParallel(
+      retirement => retirement.retire(),
+      succeeded.flatMap(({ retirements }) => retirements.map(retirement => [retirement])),
+      this.#concurrency,
+      false
+    )
+
+    const error = results.find(result => result instanceof Error)
+    if (error) {
+      for (const restart of succeeded) {
+        restart.release()
+      }
+      throw error
+    }
+
+    for (const restart of succeeded) {
+      await restart.complete()
+    }
   }
 
   async startApplication (id, silent = false) {
@@ -838,26 +912,33 @@ export class Runtime extends EventEmitter {
       throw new ApplicationNotFoundError(id, this.getApplicationsIds().join(', '))
     }
 
-    const workers = applicationConfig.workers.static
-    for (let i = 0; i < workers; i++) {
-      const worker = this.#workers.get(`${id}:${i}`)
-      const status = worker?.[kWorkerStatus]
-
-      if (status && status !== 'boot' && status !== 'init') {
-        throw new ApplicationAlreadyStartedError()
-      }
+    if (this.#isApplicationStarted(id)) {
+      throw new ApplicationAlreadyStartedError()
     }
 
+    const workers = applicationConfig.workers.static
     this.emitAndNotify('application:starting', id)
 
-    for (let i = 0; i < workers; i++) {
+    const compileCache = {
+      ...normalizeCompileCache(config.compileCache),
+      ...normalizeCompileCache(applicationConfig.compileCache)
+    }
+    const awaitFirstWorker =
+      typeof compileCache === 'object' && compileCache.enabled !== false && compileCache.awaitFirstWorker === true
+
+    if (awaitFirstWorker && workers > 0) {
+      await this.#startFirstWorkerWithCompileCache(config, applicationConfig, workers, id, silent)
+    }
+
+    // Keep the first worker separate so compile-cache startup can be made a barrier without changing this loop later.
+    for (let i = awaitFirstWorker ? 1 : 0; i < workers; i++) {
       await this.#startWorker(config, applicationConfig, workers, id, i, silent)
     }
 
     await this.#registerApplicationSchedulerJobs(id)
+    await this.#collectServingState(id)
 
     this.emitAndNotify('application:started', id)
-    await this.#dynamicWorkersScaler?.applyPendingUpdate(id)
   }
 
   async stopApplication (id, silent = false, dependents = []) {
@@ -865,7 +946,17 @@ export class Runtime extends EventEmitter {
       throw new ApplicationNotFoundError(id, this.getApplicationsIds().join(', '))
     }
 
+    this.#dynamicWorkersScaler?.remove(id)
+
+    // Removing the replicas cancels the work in progress for them, i.e. refills of crashed workers and replacements
+    const replicas = this.#replicas.get(id) ?? []
+    this.#replicas.set(id, [])
+    const detached = Promise.all(replicas.map(replica => this.#detachReplica(id, replica)))
+
+    // Workers being discarded by the detach above are already marked as exited
     const workersIds = this.#workers.getKeys(id)
+      .filter(workerId => this.#workers.get(workerId)[kWorkerStatus] !== 'exited')
+
     const workersCount = workersIds.length
 
     this.emitAndNotify('application:stopping', id)
@@ -881,10 +972,17 @@ export class Runtime extends EventEmitter {
       await executeInParallel(this.#stopWorker.bind(this), stopInvocations, this.#concurrency)
     }
 
+    await detached
+
+    // Absent rather than 'inactive': a stopped application is not making a claim about how it
+    // would serve, and conflating "not started" with "started and serving nothing" is the exact
+    // distinction this field exists to draw.
+    this.#servingStates.delete(id)
+
     this.emitAndNotify('application:stopped', id)
   }
 
-  async restartApplication (id) {
+  async restartApplication (id, deferOldWorkerRetirement = false) {
     const applicationConfig = this.#applications.get(id)
 
     if (!applicationConfig) {
@@ -903,31 +1001,75 @@ export class Runtime extends EventEmitter {
     }
 
     this.#restartingApplications.add(id)
+    const retirements = []
+    let deferred = false
 
     try {
       const config = this.#config
-      const workersIds = await this.#workers.getKeys(id)
-      const workersCount = workersIds.length
+      // A copy: while the loop awaits, scale-downs remove replicas from the list, which would shift the remaining ones
+      // and skip some. Replicas added in the meanwhile (scale-up) already run fresh workers.
+      const replicas = [...(this.#replicas.get(id) ?? [])]
+      const replicasCount = replicas.length
 
       this.emitAndNotify('application:restarting', id)
 
-      for (let i = 0; i < workersCount; i++) {
-        const workerId = workersIds[i]
-        const worker = this.#workers.get(workerId)
-        const workerIndex = parseInt(workerId.split(':')[1], 10)
+      for (let i = 0; i < replicasCount; i++) {
+        const replica = replicas[i]
 
         if (i > 0 && config.workersRestartDelay > 0) {
           await sleep(config.workersRestartDelay)
         }
 
-        await this.#replaceWorker(config, applicationConfig, workersCount, id, workerIndex, worker, true)
+        // The replica might have been removed while the previous ones were being replaced,
+        // or its worker crashed and the replica is being refilled with a fresh worker.
+        const worker = replica.worker
+        if (replica.abortController.signal.aborted || !worker) {
+          continue
+        }
+
+        const retirement = await this.#replaceWorker(
+          config,
+          applicationConfig,
+          replicasCount,
+          id,
+          worker[kWorkerId],
+          worker,
+          true,
+          deferOldWorkerRetirement
+        )
+        if (retirement) {
+          retirements.push(retirement)
+        }
+      }
+
+      if (deferOldWorkerRetirement) {
+        deferred = true
+        return {
+          retirements,
+          release: () => this.#restartingApplications.delete(id),
+          discard: async () => {
+            await Promise.allSettled(retirements.map(retirement => retirement.discard()))
+            this.#restartingApplications.delete(id)
+          },
+          complete: async () => {
+            try {
+              await this.#registerApplicationSchedulerJobs(id)
+              this.#incrementApplicationRestartCount(id)
+              this.emitAndNotify('application:restarted', id)
+            } finally {
+              this.#restartingApplications.delete(id)
+            }
+          }
+        }
       }
 
       await this.#registerApplicationSchedulerJobs(id)
       this.#incrementApplicationRestartCount(id)
       this.emitAndNotify('application:restarted', id)
     } finally {
-      this.#restartingApplications.delete(id)
+      if (!deferred) {
+        this.#restartingApplications.delete(id)
+      }
     }
   }
 
@@ -1276,7 +1418,8 @@ export class Runtime extends EventEmitter {
   }
 
   /**
-   * Updates the metrics configuration at runtime without restarting the runtime or workers.
+   * Merges top-level metrics options without restarting the runtime or workers.
+   * Nested objects are replaced when supplied. Identical successful updates are no-ops.
    *
    * This method allows you to:
    * - Enable or disable metrics collection
@@ -1295,55 +1438,141 @@ export class Runtime extends EventEmitter {
    * await runtime.updateMetricsConfig({ enabled: false })
    */
   async updateMetricsConfig (metricsConfig) {
-    if (this.#prometheusServer) {
-      await this.#prometheusServer.close()
-      this.#prometheusServer = null
-    }
+    // Serialize changes because they share listeners and worker registries.
+    const previousUpdate = this.#metricsConfigUpdatePromise
+    const { promise, resolve } = Promise.withResolvers()
+    this.#metricsConfigUpdatePromise = promise
+    await previousUpdate
 
-    if (this.#healthProbesServer) {
-      await this.#healthProbesServer.close()
-      this.#healthProbesServer = null
-    }
+    try {
+      const currentConfig = this.#config.metrics
+      const previousConfig = typeof currentConfig === 'boolean' ? { enabled: currentConfig } : (currentConfig ?? {})
+      metricsConfig = { ...previousConfig, ...metricsConfig }
 
-    if (this.#opentelemetryMetricsForwarder) {
-      await this.#opentelemetryMetricsForwarder.close()
-      this.#opentelemetryMetricsForwarder = null
-    }
-
-    this.#config.metrics = metricsConfig
-    this.#metricsLabelName = metricsConfig?.applicationLabel || 'applicationId'
-
-    // Allow extension health routes to be re-applied on the restarted servers.
-    for (const entry of this.#extensionHealthRoutes) {
-      entry.applied = false
-    }
-
-    this.#prometheusServer = await startPrometheusServer(this, metricsConfig, this.#config.healthProbes)
-
-    this.#healthProbesServer = await startHealthProbesServer(this, metricsConfig, this.#config.healthProbes)
-    this.#assertExtensionHealthRoutesApplied()
-
-    await this.#startOpenTelemetryMetricsForwarder(metricsConfig?.opentelemetry)
-
-    const promises = []
-    for (const worker of this.#workers.values()) {
-      if (worker[kWorkerStatus] === 'started') {
-        promises.push(sendViaITC(worker, 'updateMetricsConfig', metricsConfig))
+      // An omitted enabled option already means enabled for an object configuration.
+      const previousOptions = { ...previousConfig, enabled: previousConfig.enabled !== false }
+      const nextOptions = { ...metricsConfig, enabled: metricsConfig.enabled !== false }
+      if (!this.#metricsConfigUpdateFailed && isDeepStrictEqual(previousOptions, nextOptions)) {
+        this.#config.metrics = metricsConfig
+        return { success: true, config: structuredClone(metricsConfig) }
       }
-    }
 
-    const results = await Promise.allSettled(promises)
-    for (const result of results) {
-      if (result.status === 'rejected') {
-        this.logger.error({ err: result.reason }, 'Cannot update metrics config on worker')
+      // Failed updates can be retried even when the main-thread configuration already changed.
+      this.#metricsConfigUpdateFailed = true
+
+      if (this.#metricsServersStartPromise) {
+        await this.#metricsServersStartPromise
       }
+
+      if (this.#prometheusServer) {
+        await this.#prometheusServer.close()
+        this.#prometheusServer = null
+      }
+
+      if (this.#healthProbesServer) {
+        await this.#healthProbesServer.close()
+        this.#healthProbesServer = null
+      }
+
+      this.#metricsServersInitialized = false
+
+      if (this.#opentelemetryMetricsForwarder) {
+        await this.#opentelemetryMetricsForwarder.close()
+        this.#opentelemetryMetricsForwarder = null
+      }
+
+      this.#config.metrics = metricsConfig
+      this.#metricsLabelName = metricsConfig?.applicationLabel || 'applicationId'
+
+      if (metricsConfig.enabled === false) {
+        if (this.#processMetricsRegistry) {
+          clearRegistry(this.#processMetricsRegistry)
+          this.#processMetricsRegistry = null
+        }
+      } else if (!this.#processMetricsRegistry) {
+        this.#processMetricsRegistry = new metricsClient.Registry()
+        collectProcessMetrics(this.#processMetricsRegistry)
+      }
+
+      // Allow extension health routes to be re-applied on the restarted servers.
+      for (const entry of this.#extensionHealthRoutes) {
+        entry.applied = false
+      }
+
+      await this.#ensureMetricsServersStarted()
+
+      if (metricsConfig.enabled !== false) {
+        await this.#startOpenTelemetryMetricsForwarder(metricsConfig.opentelemetry)
+      }
+
+      const promises = []
+      for (const worker of this.#workers.values()) {
+        if (worker[kWorkerStatus] === 'started') {
+          promises.push(
+            sendViaITC(worker, 'updateMetricsConfig', metricsConfig).catch(err => {
+              throw new FailedToUpdateMetricsConfigError(worker[kFullId], err.message)
+            })
+          )
+        }
+      }
+
+      const results = await Promise.allSettled(promises)
+      for (const result of results) {
+        if (result.status === 'rejected') {
+          this.logger.error({ err: result.reason }, 'Cannot update metrics config on worker')
+        }
+      }
+
+      const failure = results.find(result => result.status === 'rejected')
+      if (failure) {
+        throw failure.reason
+      }
+
+      // The workers have recreated their metrics, possibly with different labels: start over
+      this.#workerMetricsAggregator = null
+
+      this.#metricsConfigUpdateFailed = false
+      this.logger.info('Metrics configuration updated')
+      return { success: true, config: structuredClone(metricsConfig) }
+    } finally {
+      // Failed and no-op updates must also release the next queued request.
+      resolve()
+    }
+  }
+
+  async #ensureMetricsServersStarted () {
+    if (this.#metricsServersInitialized) {
+      return
     }
 
-    // The workers have recreated their metrics, possibly with different labels: start over
-    this.#workerMetricsAggregator = null
+    if (this.#metricsServersStartPromise) {
+      return this.#metricsServersStartPromise
+    }
 
-    this.logger.info({ metricsConfig }, 'Metrics configuration updated')
-    return { success: true, config: metricsConfig }
+    this.#metricsServersStartPromise = (async () => {
+      const config = this.#config
+
+      try {
+        if (config.metrics || (typeof config.healthProbes === 'object' && config.healthProbes !== null)) {
+          this.#prometheusServer = await startPrometheusServer(this, config.metrics ?? false, config.healthProbes)
+        }
+
+        this.#healthProbesServer = await startHealthProbesServer(this, config.metrics, config.healthProbes)
+        this.#assertExtensionHealthRoutesApplied()
+        this.#metricsServersInitialized = true
+      } catch (err) {
+        await Promise.allSettled([this.#prometheusServer?.close(), this.#healthProbesServer?.close()])
+        this.#prometheusServer = null
+        this.#healthProbesServer = null
+        throw err
+      }
+    })()
+
+    try {
+      await this.#metricsServersStartPromise
+    } finally {
+      this.#metricsServersStartPromise = null
+    }
   }
 
   async #startOpenTelemetryMetricsForwarder (config) {
@@ -1498,7 +1727,7 @@ export class Runtime extends EventEmitter {
       const { applicationId, config: applicationConfig, workers, health, currentWorkers, currentHealth } = update
 
       if (workers && health) {
-        const r = await this.#updateApplicationWorkersAndHealth(
+        const resourceReport = await this.#updateApplicationWorkersAndHealth(
           applicationId,
           config,
           applicationConfig,
@@ -1509,11 +1738,11 @@ export class Runtime extends EventEmitter {
         )
         report.push({
           application: applicationId,
-          workers: r.workers,
-          health: r.health
+          workers: resourceReport.workers,
+          health: resourceReport.health
         })
       } else if (health) {
-        const r = await this.#updateApplicationHealth(
+        const healthReport = await this.#updateApplicationHealth(
           applicationId,
           config,
           applicationConfig,
@@ -1523,10 +1752,10 @@ export class Runtime extends EventEmitter {
         )
         report.push({
           application: applicationId,
-          health: r.health
+          health: healthReport
         })
       } else if (workers) {
-        const r = await this.#updateApplicationWorkers(
+        const workersReport = await this.#updateApplicationWorkers(
           applicationId,
           config,
           applicationConfig,
@@ -1535,7 +1764,7 @@ export class Runtime extends EventEmitter {
         )
         report.push({
           application: applicationId,
-          workers: r.workers
+          workers: workersReport
         })
       }
     }
@@ -1551,8 +1780,20 @@ export class Runtime extends EventEmitter {
     return this.#root
   }
 
-  getUrl () {
-    return this.#url
+  getUrls (applicationId) {
+    const urls = {}
+    const applicationIds = applicationId ? [applicationId] : this.#applications.keys()
+
+    for (const id of applicationIds) {
+      for (const workerId of this.#workers.getKeys(id)) {
+        const url = this.#workers.get(workerId)?.[kWorkerUrl]
+        if (url) {
+          urls[workerId] = url
+        }
+      }
+    }
+
+    return urls
   }
 
   getRuntimeStatus () {
@@ -1561,8 +1802,6 @@ export class Runtime extends EventEmitter {
 
   async getRuntimeMetadata () {
     const packageJson = await this.#getRuntimePackageJson()
-    const entrypointDetails = await this.getEntrypointDetails()
-
     return {
       pid: process.pid,
       cwd: process.cwd(),
@@ -1571,10 +1810,18 @@ export class Runtime extends EventEmitter {
       execPath: process.execPath,
       nodeVersion: process.version,
       projectDir: this.#root,
+      /*
+        What `applications:add`/`remove --save` actually consume, so they can stop reading the whole
+        runtime configuration over HTTP to get at three values. `autoload` is the declaration as
+        authored, not the expansion: it is expanded in the eval worker, and --save has to edit what
+        the file says rather than what it produced.
+      */
+      configPath: this.#config[kMetadata]?.path ?? null,
+      autoload: this.#config.autoload ?? null,
       packageName: packageJson.name ?? null,
       packageVersion: packageJson.version ?? null,
-      url: entrypointDetails?.url ?? null,
-      platformaticVersion: version
+      platformaticVersion: version,
+      urls: this.getUrls()
     }
   }
 
@@ -1582,13 +1829,31 @@ export class Runtime extends EventEmitter {
     return this.#env
   }
 
+  /*
+    What a watcher has to follow to know this configuration changed. The whole set the evaluation
+    read is reported; resolving per worker had no such set, so it was the deciding file alone --
+    which is what dev watched before either way.
+  */
+  getConfigurationWatchTargets () {
+    const metadata = this.#config[kMetadata]
+    const targets = metadata?.loader?.watchTargets
+
+    if (targets) {
+      return { files: [...targets.files], directories: [...targets.directories] }
+    }
+
+    return { files: metadata?.path ? [metadata.path] : [], directories: [] }
+  }
+
   getRuntimeConfig (includeMeta = false) {
+    // includeMeta is an internal contract and hands back live state, symbol key and all. It leaves
+    // the public surface with the DTO change; until then, its in-tree callers depend on identity.
     if (includeMeta) {
       return this.#config
     }
 
     const { [kMetadata]: _, ...config } = this.#config
-    return config
+    return frozenSnapshot(config)
   }
 
   getInterceptor () {
@@ -1607,12 +1872,39 @@ export class Runtime extends EventEmitter {
     return this.#managementApi?.server.address() ?? null
   }
 
-  async getEntrypointDetails () {
-    if (!this.#entrypointId) {
-      return null
+  /*
+    servingState is computed per worker: for a worker-classified capability it depends on what the
+    application's factory returned in *that* worker, and nothing stops arbitrary code from returning
+    a server from worker 0 and a background result from worker 1. Sampling one worker -- which is
+    what getApplicationDetails does for every other field -- would make the reported value depend on
+    which worker the selector picked, and, worse, would leave mesh dispatch routing a share of
+    requests to a worker that destroys them. So every worker answers and a mixed answer is refused,
+    naming each worker and the state it reported.
+  */
+  async #collectServingState (id) {
+    const invocations = this.#workers.getKeys(id).map(workerId => [workerId, this.#workers.get(workerId)])
+
+    if (invocations.length === 0) {
+      this.#servingStates.delete(id)
+      return
     }
 
-    return this.getApplicationDetails(this.#entrypointId)
+    const states = await sendMultipleViaITC(invocations, 'getServingState', undefined, [], this.#concurrency)
+    const reported = Object.entries(states).filter(([, state]) => typeof state === 'string')
+
+    if (reported.length === 0) {
+      this.#servingStates.delete(id)
+      return
+    }
+
+    const distinct = new Set(reported.map(([, state]) => state))
+
+    if (distinct.size > 1) {
+      this.#servingStates.delete(id)
+      throw new MixedServingStateError(id, reported.map(([worker, state]) => `${worker} reported ${state}`).join(', '))
+    }
+
+    this.#servingStates.set(id, reported[0][1])
   }
 
   async getCustomHealthChecks () {
@@ -1675,7 +1967,7 @@ export class Runtime extends EventEmitter {
 
   async #getMetrics (format, aggregateWorkers) {
     if (this.#config.metrics === false || this.#config.metrics?.enabled === false) {
-      throw new Error('Metrics are disabled')
+      throw new MetricsDisabledError()
     }
 
     const applicationRestartMetrics = this.#getApplicationRestartMetricsJson()
@@ -1733,7 +2025,7 @@ export class Runtime extends EventEmitter {
       // Drop any configured custom label that shares the name of the application
       // label (a config can set both `applicationLabel: 'serviceId'` and a static
       // `serviceId` label): keeping it would make these runtime-wide metrics look
-      // like they belong to an application, both here and in getFormattedMetrics().
+      // like they belong to an application during metrics aggregation.
       const processLabels = { ...this.#config.metrics?.labels }
       delete processLabels[this.#metricsLabelName]
       this.#applyLabelsToMetrics(processMetricsJson, processLabels, processMetrics)
@@ -1829,11 +2121,8 @@ export class Runtime extends EventEmitter {
   async #collectAggregatedWorkersMetrics () {
     const workers = await this.#collectWorkersMetrics()
 
-    // The aggregator is recreated when the metrics config is updated, so the reset setting cannot change
-    this.#workerMetricsAggregator ??= new WorkerMetricsAggregator({
-      workerLabel: 'workerId',
-      nonCumulativeMetrics: isHttpMetricsResetEnabled(this.#config.metrics) ? RESET_ON_COLLECT_METRICS : []
-    })
+    // HTTP metrics are never reset on collection, so every metric is cumulative
+    this.#workerMetricsAggregator ??= new WorkerMetricsAggregator({ workerLabel: 'workerId' })
 
     const metrics = this.#workerMetricsAggregator.aggregate(workers, new Set(this.#applications.keys()))
 
@@ -1988,181 +2277,41 @@ export class Runtime extends EventEmitter {
     return output
   }
 
-  async getFormattedMetrics () {
-    try {
-      // Always use the per-worker metrics: the values below are read from a single worker
-      const { metrics } = await this.#getMetrics('json', false)
-
-      if (metrics === null || metrics.length === 0) {
-        return null
-      }
-
-      const metricsNames = [
-        'process_cpu_percent_usage',
-        'process_resident_memory_bytes',
-        'nodejs_heap_size_total_bytes',
-        'nodejs_heap_size_used_bytes',
-        'nodejs_heap_space_size_total_bytes',
-        'nodejs_eventloop_utilization',
-        'http_request_all_summary_seconds'
-      ]
-
-      const applicationsMetrics = {}
-
-      // Process-level metrics are reported only once for the whole runtime, without
-      // an application label, since they are shared by all the applications running
-      // in worker threads (see issue #3332). Applications running as separate OS
-      // processes report their own labeled values, which take precedence below.
-      const runtimeProcessMetrics = {}
-      const applicationProcessMetrics = new Set()
-
-      for (const metric of metrics) {
-        const { name, values } = metric
-
-        if (!metricsNames.includes(name)) continue
-        if (!values || values.length === 0) continue
-
-        const labels = values[0].labels
-        // Use the configured label name (serviceId for v2 compatibility, applicationId for v3+)
-        const applicationId = labels?.[this.#metricsLabelName]
-
-        if (!applicationId) {
-          if (name === 'process_cpu_percent_usage') {
-            runtimeProcessMetrics.cpu = values[0].value
-            continue
-          }
-          if (name === 'process_resident_memory_bytes') {
-            runtimeProcessMetrics.rss = values[0].value
-            continue
-          }
-
-          throw new Error(`Missing ${this.#metricsLabelName} label in metrics`)
-        }
-
-        if (name === 'process_cpu_percent_usage' || name === 'process_resident_memory_bytes') {
-          applicationProcessMetrics.add(`${applicationId}:${name}`)
-        }
-
-        let applicationMetrics = applicationsMetrics[applicationId]
-        if (!applicationMetrics) {
-          applicationMetrics = {
-            cpu: 0,
-            rss: 0,
-            totalHeapSize: 0,
-            usedHeapSize: 0,
-            newSpaceSize: 0,
-            oldSpaceSize: 0,
-            elu: 0,
-            latency: {
-              p50: 0,
-              p90: 0,
-              p95: 0,
-              p99: 0
-            }
-          }
-          applicationsMetrics[applicationId] = applicationMetrics
-        }
-
-        parsePromMetric(applicationMetrics, metric)
-      }
-
-      // Apply the runtime-wide process-level values to every application that did
-      // not report its own (i.e. every application running in a worker thread).
-      for (const [applicationId, applicationMetrics] of Object.entries(applicationsMetrics)) {
-        if (
-          runtimeProcessMetrics.cpu !== undefined &&
-          !applicationProcessMetrics.has(`${applicationId}:process_cpu_percent_usage`)
-        ) {
-          applicationMetrics.cpu = runtimeProcessMetrics.cpu
-        }
-
-        if (
-          runtimeProcessMetrics.rss !== undefined &&
-          !applicationProcessMetrics.has(`${applicationId}:process_resident_memory_bytes`)
-        ) {
-          applicationMetrics.rss = runtimeProcessMetrics.rss
-        }
-      }
-
-      function parsePromMetric (applicationMetrics, promMetric) {
-        const { name } = promMetric
-
-        if (name === 'process_cpu_percent_usage') {
-          applicationMetrics.cpu = promMetric.values[0].value
-          return
-        }
-        if (name === 'process_resident_memory_bytes') {
-          applicationMetrics.rss = promMetric.values[0].value
-          return
-        }
-        if (name === 'nodejs_heap_size_total_bytes') {
-          applicationMetrics.totalHeapSize = promMetric.values[0].value
-          return
-        }
-        if (name === 'nodejs_heap_size_used_bytes') {
-          applicationMetrics.usedHeapSize = promMetric.values[0].value
-          return
-        }
-        if (name === 'nodejs_heap_space_size_total_bytes') {
-          const newSpaceSize = promMetric.values.find(value => value.labels.space === 'new')
-          const oldSpaceSize = promMetric.values.find(value => value.labels.space === 'old')
-
-          applicationMetrics.newSpaceSize = newSpaceSize.value
-          applicationMetrics.oldSpaceSize = oldSpaceSize.value
-          return
-        }
-        if (name === 'nodejs_eventloop_utilization') {
-          applicationMetrics.elu = promMetric.values[0].value
-          return
-        }
-        if (name === 'http_request_all_summary_seconds') {
-          applicationMetrics.latency = {
-            p50: promMetric.values.find(value => value.labels.quantile === 0.5)?.value || 0,
-            p90: promMetric.values.find(value => value.labels.quantile === 0.9)?.value || 0,
-            p95: promMetric.values.find(value => value.labels.quantile === 0.95)?.value || 0,
-            p99: promMetric.values.find(value => value.labels.quantile === 0.99)?.value || 0
-          }
-        }
-      }
-
-      return {
-        version: 1,
-        date: new Date().toISOString(),
-        applications: applicationsMetrics
-      }
-    } catch (err) {
-      // If any metric is missing, return nothing
-      this.logger.warn({ err }, 'Cannot fetch metrics')
-
-      return null
-    }
-  }
-
   getSharedContext () {
     return this.#sharedContext
   }
 
   async getApplicationResourcesInfo (id) {
-    const workersCount = this.#workers.getKeys(id).length
+    const workers = this.#replicas.get(id)?.length ?? 0
     // Use round-robin to get any available worker instead of assuming index 0 exists
     const worker = await this.#getWorkerByIdOrNext(id, null, false, false)
-    const health = worker[kConfig].health
 
-    return { workers: workersCount, health }
+    if (worker) {
+      return { workers, health: worker[kConfig].health }
+    }
+
+    // No worker can answer (the application is stopped or its only worker is being restarted), use the configuration
+    const applicationConfig = this.#applications.get(id)
+    const health = deepmerge(this.#config.health ?? {}, applicationConfig.health ?? {})
+
+    return { workers, health }
   }
 
   getApplicationsIds () {
-    return Array.from(this.#applications.keys())
+    return Array.from(this.#applications.keys()).sort()
   }
 
   async getApplications (allowUnloaded = false) {
-    return {
-      entrypoint: this.#entrypointId,
+    return frozenSnapshot({
       production: this.#isProduction,
       applications: await Promise.all(
-        this.getApplicationsIds().map(id => this.getApplicationDetails(id, allowUnloaded))
+        this.getApplicationsIds().map(id => this.#buildApplicationDetails(id, allowUnloaded))
       )
-    }
+    })
+  }
+
+  async getApplicationDetails (id, allowUnloaded = false) {
+    return frozenSnapshot(await this.#buildApplicationDetails(id, allowUnloaded))
   }
 
   async getApplicationMeta (id) {
@@ -2190,7 +2339,7 @@ export class Runtime extends EventEmitter {
     }
   }
 
-  async getApplicationDetails (id, allowUnloaded = false) {
+  async #buildApplicationDetails (id, allowUnloaded = false) {
     let application
 
     try {
@@ -2203,7 +2352,7 @@ export class Runtime extends EventEmitter {
       throw e
     }
 
-    const { entrypoint, localUrl, config, path } = application[kConfig]
+    const { localUrl, config, configPath, path } = application[kConfig]
 
     const sourceMaps = application[kConfig].sourceMaps ?? this.#config.sourceMaps
     const status = await sendViaITC(application, 'getStatus')
@@ -2212,23 +2361,42 @@ export class Runtime extends EventEmitter {
     const applicationDetails = {
       id,
       type,
-      config,
       path,
       status,
       dependencies,
       version,
       localUrl,
-      entrypoint,
       sourceMaps
     }
 
-    if (this.#isProduction) {
-      applicationDetails.workers = this.#workers.getKeys(id).length
+    /*
+      The `config` key once held the application's configuration file path. That file is now
+      evaluated main-side and the worker receives the payload, so the path becomes `configPath` and the entry's own
+      `config` is no longer a path to report. Emitting the key that matches the dialect keeps a
+      consumer from reading one and silently getting the other.
+    */
+    if (typeof config === 'string') {
+      applicationDetails.config = config
+    } else if (configPath) {
+      applicationDetails.configPath = configPath
     }
 
-    if (entrypoint) {
-      applicationDetails.url = status === 'started' ? this.#url : null
+    // status is worker lifecycle; servingState is how the thing serves. They are different
+    // questions, and the runtime gates URL emission on status === 'started', so they cannot share
+    // a field.
+    const servingState = this.#servingStates.get(id)
+
+    if (servingState) {
+      applicationDetails.servingState = servingState
     }
+
+    if (this.#isProduction) {
+      applicationDetails.workers = this.#replicas.get(id)?.length ?? 0
+    }
+
+    const urls = status === 'started' ? Object.values(this.getUrls(id)) : []
+    applicationDetails.urls = urls
+    applicationDetails.url = urls[0] ?? null
 
     return applicationDetails
   }
@@ -2275,10 +2443,6 @@ export class Runtime extends EventEmitter {
 
   getSchedulerJobs () {
     return this.#scheduler?.getJobs() ?? []
-  }
-
-  getScheduler () {
-    return this.getSchedulerJobs()
   }
 
   pauseSchedulerJob (name) {
@@ -2349,6 +2513,7 @@ export class Runtime extends EventEmitter {
         worker: index,
         status: worker[kWorkerStatus],
         thread: worker.threadId,
+        url: worker[kWorkerUrl] ?? null,
         raw: includeRaw ? worker : undefined
       }
     }
@@ -2373,10 +2538,6 @@ export class Runtime extends EventEmitter {
     let elu = currentELU
     if (previousELU) {
       elu = worker.performance.eventLoopUtilization(elu, previousELU)
-    }
-
-    if (!features.node.worker.getHeapStatistics) {
-      return { elu: elu.utilization, currentELU }
     }
 
     // Only refresh heap statistics every 60 health checks (once per minute).
@@ -2470,12 +2631,37 @@ export class Runtime extends EventEmitter {
     this.emitAndNotify(status, args)
   }
 
-  #showUrl () {
-    if (!this.#url) {
-      return
-    }
+  #showUrls (workerIds) {
+    const whitelist = workerIds ? new Set(workerIds) : null
 
-    this.logger.info(`Platformatic is now listening at ${this.#url}`)
+    for (const applicationId of this.#applications.keys()) {
+      for (const workerId of this.#workers.getKeys(applicationId)) {
+        if (whitelist && !whitelist.has(workerId)) {
+          continue
+        }
+
+        const worker = this.#workers.get(workerId)
+        const url = worker?.[kWorkerUrl]
+        if (!url) {
+          continue
+        }
+
+        this.logger.info(
+          `Platformatic is now listening at ${url} for ${this.#workerExtendedLabel(applicationId, worker[kWorkerId])}`
+        )
+      }
+    }
+  }
+
+  async #refuseUnresolvedApplication (id) {
+    const executable = getExecutable() ?? 'wattpm'
+
+    this.logger.error(
+      `The path for application "%s" does not exist. Please run "${executable} resolve" and try again.`,
+      id
+    )
+
+    await this.closeAndThrow(new RuntimeAbortedError())
   }
 
   async #setupApplication (applicationConfig) {
@@ -2493,13 +2679,7 @@ export class Runtime extends EventEmitter {
         applicationConfig.path = join(this.#root, config.resolvedApplicationsBasePath, id)
 
         if (!existsSync(applicationConfig.path)) {
-          const executable = getExecutable() ?? 'platformatic'
-          this.logger.error(
-            `The path for application "%s" does not exist. Please run "${executable} resolve" and try again.`,
-            id
-          )
-
-          await this.closeAndThrow(new RuntimeAbortedError())
+          await this.#refuseUnresolvedApplication(id)
         }
       } else {
         this.logger.error(
@@ -2509,17 +2689,47 @@ export class Runtime extends EventEmitter {
 
         await this.closeAndThrow(new RuntimeAbortedError())
       }
+    } else if (applicationConfig.unresolved) {
+      /*
+        A remote application that declares where its clone belongs, and whose clone is not there --
+        either the directory is missing or it holds no application at all. The pathless case above
+        is the same state said differently, and both are what `resolve` exists to fix, so both get
+        the message that names it rather than the capability detector's report that the directory
+        holds nothing.
+      */
+      await this.#refuseUnresolvedApplication(id)
     }
 
-    const workers = applicationConfig.workers.static
+    let workers = applicationConfig.workers.static
+
+    this.#replicas.set(id, [])
+
+    let firstIndex = 0
+
+    // On platforms where reusePort is not available, multiple workers cannot listen on the same fixed port.
+    // The listener configuration is owned by the capability, so it can only be inspected after setting up the first
+    // worker: if the application would try to share a fixed port between workers, clamp it to a single worker.
+    if (!features.node.reusePort && (workers > 1 || applicationConfig.workers.dynamic)) {
+      const { worker } = await this.#setupReplica(config, applicationConfig, workers, id, 0, 0)
+      firstIndex = 1
+
+      if (await this.#usesSharedFixedPort(worker)) {
+        this.logger.warn(
+          `The application "${id}" is configured to listen on a fixed port with multiple workers, but reusePort is not available in your OS. ${workers > 1 ? `Setting workers to 1 instead of ${workers}` : 'Disabling dynamic workers scaling'}. To run multiple workers, set "server.portAssignment" to "perWorkerIncrement" in the application configuration.`
+        )
+
+        applicationConfig.workers = { dynamic: false, static: 1 }
+        workers = 1
+        await sendViaITC(worker, 'updateWorkersCount', { applicationId: id, workers })
+      }
+    }
+
     const setupInvocations = []
-
-    for (let i = 0; i < workers; i++) {
-      this.#workerPortOffsets.set(`${id}:${i}`, i)
-      setupInvocations.push([config, applicationConfig, workers, id, i])
+    for (let i = firstIndex; i < workers; i++) {
+      setupInvocations.push([config, applicationConfig, workers, id, i, i])
     }
 
-    await executeInParallel(this.#setupWorker.bind(this), setupInvocations, this.#concurrency)
+    await executeInParallel(this.#setupReplica.bind(this), setupInvocations, this.#concurrency)
 
     // Initialize the next worker index counter (next index starts after initial workers)
     this.#nextWorkerIndex.set(id, workers)
@@ -2528,7 +2738,51 @@ export class Runtime extends EventEmitter {
     this.emitAndNotify('application:init', id)
   }
 
-  async #setupWorker (config, applicationConfig, workersCount, applicationId, index, enabled = true, attempt = 0) {
+  // Adds a replica to the application (see the #replicas field) and sets up its worker.
+  // Returns null if the replica was removed in the meanwhile.
+  async #setupReplica (config, applicationConfig, workersCount, applicationId, index, portOffset) {
+    const replica = {
+      portOffset,
+      // The worker serving the replica, null while the replica is being refilled
+      worker: null,
+      // The worker being started to refill the replica or to replace its worker
+      replacement: null,
+      // The operation in progress: 'refill' or 'replace'
+      pending: null,
+      abortController: new AbortController()
+    }
+
+    // Added right away, so that concurrent operations see the requested workers
+    this.#replicas.get(applicationId).push(replica)
+
+    let worker
+    try {
+      worker = await this.#setupWorker(config, applicationConfig, workersCount, applicationId, index, portOffset)
+    } catch (err) {
+      await this.#detachReplica(applicationId, replica)
+      throw err
+    }
+
+    // The replica was removed in the meanwhile (i.e. scale-down or application stopped)
+    if (replica.abortController.signal.aborted) {
+      await this.#discardWorker(worker)
+      return null
+    }
+
+    replica.worker = worker
+    return replica
+  }
+
+  async #setupWorker (
+    config,
+    applicationConfig,
+    workersCount,
+    applicationId,
+    index,
+    portOffset,
+    enabled = true,
+    attempt = 0
+  ) {
     const restartOnError = this.#getApplicationRestartOnError(config, applicationConfig)
     const workerId = `${applicationId}:${index}`
 
@@ -2543,17 +2797,11 @@ export class Runtime extends EventEmitter {
       inspectorOptions.port = inspectorOptions.port + this.#workers.size + 1
     }
 
-    let serverConfigOverride
-    if (this.#config.server?.portAssignment === 'perWorkerIncrement') {
-      const portOffset = this.#workerPortOffsets.get(workerId)
-      serverConfigOverride = { port: Number(this.#config.server.port) + portOffset }
-    }
-
-    if (config.telemetry) {
-      applicationConfig.telemetry = {
-        ...config.telemetry,
-        ...applicationConfig.telemetry,
-        applicationName: `${config.telemetry.applicationName}-${applicationConfig.id}`
+    if (config.tracing) {
+      applicationConfig.tracing = {
+        ...config.tracing,
+        ...applicationConfig.tracing,
+        applicationName: `${config.tracing.applicationName}-${applicationConfig.id}`
       }
     }
 
@@ -2563,9 +2811,9 @@ export class Runtime extends EventEmitter {
     // A copy, since the options below are appended each time a worker of the application is set up
     const execArgv = [...(applicationConfig.execArgv ?? [])]
 
-    if (!applicationConfig.skipTelemetryHooks && config.telemetry && config.telemetry.enabled !== false) {
+    if (!applicationConfig.skipTracingHooks && config.tracing && config.tracing.enabled !== false) {
       const require = createRequire(import.meta.url)
-      const telemetryPath = require.resolve('@platformatic/telemetry')
+      const telemetryPath = require.resolve('@platformatic/tracing')
       const openTelemetrySetupPath = join(telemetryPath, '..', 'lib', 'node-telemetry.js')
       const hookUrl = pathToFileURL(require.resolve('@opentelemetry/instrumentation/hook.mjs'))
 
@@ -2590,7 +2838,10 @@ export class Runtime extends EventEmitter {
       preload = preload.filter(p => p !== pprofCapturePath)
     }
 
-    const workerEnv = structuredClone(this.#env)
+    // Each application's worker environment is resolved main-side, with its own env-file chain, the
+    // two env blocks and the injected topology URLs. Every worker used to be seeded from one loadEnv
+    // at the runtime root, which is what #env still holds.
+    const workerEnv = structuredClone(applicationConfig.workerEnv ?? this.#env)
 
     if (applicationConfig.nodeOptions?.trim().length > 0) {
       const originalNodeOptions = workerEnv.NODE_OPTIONS ?? ''
@@ -2613,21 +2864,12 @@ export class Runtime extends EventEmitter {
     const maxYoungGenerationSizeMb = maxYoungGeneration ? Math.floor(maxYoungGeneration / (1024 * 1024)) : undefined
     const codeRangeSizeMb = codeRangeSize ? Math.floor(codeRangeSize / (1024 * 1024)) : undefined
 
-    const workerConfig = {
-      ...config,
-      preload
-    }
-
-    if (config.server && serverConfigOverride) {
-      workerConfig.server = {
-        ...config.server,
-        ...serverConfigOverride
-      }
-    }
+    const workerConfig = { ...config, preload }
 
     const worker = new Worker(kWorkerFile, {
       workerData: {
         config: workerConfig,
+        meshId: this.#meshId,
         applicationConfig: {
           ...applicationConfig,
           isProduction: this.#isProduction,
@@ -2636,7 +2878,8 @@ export class Runtime extends EventEmitter {
         worker: {
           id: workerId,
           index,
-          count: workersCount
+          count: workersCount,
+          portOffset
         },
         resourceLimits: {
           maxOldGenerationSizeMb,
@@ -2644,10 +2887,7 @@ export class Runtime extends EventEmitter {
           codeRangeSizeMb
         },
         inspectorOptions,
-        dirname: this.#root,
-        // Keys of the worker environment which only come from an env file of the runtime:
-        // the env file of the application is allowed to override those.
-        envFileFallbackKeys: this.#env[kEnvFileFallbackKeys] ?? []
+        dirname: this.#root
       },
       argv: applicationConfig.arguments,
       execArgv,
@@ -2671,15 +2911,24 @@ export class Runtime extends EventEmitter {
     const eventPayload = { application: applicationId, worker: index, workersCount }
 
     worker.once('exit', code => {
+      worker[kWorkerExitCode] = code
+
       if (worker[kWorkerStatus] === 'exited') {
         return
       }
 
       const started = worker[kWorkerStatus] === 'started'
+
+      // A crashed worker leaves its replica empty until the replica is refilled below.
+      // Workers which crash while starting are handled by #startWorker.
+      const replica = started ? this.#getWorkerReplica(applicationId, worker) : undefined
+      if (replica) {
+        replica.worker = null
+      }
+
       worker[kWorkerStatus] = 'exited'
       this.emitAndNotify('application:worker:exited', eventPayload)
 
-      const portOffset = this.#workerPortOffsets.get(worker[kFullId]) ?? index
       this.#cleanupWorker(worker)
 
       if (this.#status === 'stopping') {
@@ -2695,8 +2944,9 @@ export class Runtime extends EventEmitter {
           this.logger.warn(`The ${errorLabel} unexpectedly exited with code ${code}.`)
         }
 
-        // Restart the application if it was started
-        if (started && this.#status === 'started') {
+        // Refill the replica of the worker if it was started. Workers which were not serving a replica anymore
+        // (i.e. being retired after a restart) are not replaced, and a replica being replaced gets the replacement.
+        if (started && this.#status === 'started' && replica && replica.pending !== 'replace') {
           if (restartOnError > 0) {
             if (restartOnError < IMMEDIATE_RESTART_MAX_THRESHOLD) {
               this.logger.warn(`The ${errorLabel} is being restarted ...`)
@@ -2704,14 +2954,16 @@ export class Runtime extends EventEmitter {
               this.logger.warn(`The ${errorLabel} will be restarted in ${restartOnError}ms ...`)
             }
 
-            this.#restartCrashedWorker(config, applicationConfig, workersCount, applicationId, index, false, 0, portOffset).catch(
+            this.#refillReplica(config, applicationConfig, workersCount, applicationId, replica, false, 0).catch(
               err => {
                 this.logger.error({ err: ensureLoggableError(err) }, `${errorLabel} could not be restarted.`)
+                this.#detachReplica(applicationId, replica)
               }
             )
           } else {
             this.emitAndNotify('application:worker:unvailable', eventPayload)
             this.logger.warn(`The ${errorLabel} is no longer available.`)
+            this.#detachReplica(applicationId, replica)
           }
         }
       })
@@ -2721,6 +2973,7 @@ export class Runtime extends EventEmitter {
     worker[kFullId] = workerId
     worker[kApplicationId] = applicationId
     worker[kWorkerId] = index
+    worker[kWorkerPortOffset] = portOffset
     worker[kWorkerStatus] = 'boot'
 
     if (inspectorOptions) {
@@ -2761,18 +3014,47 @@ export class Runtime extends EventEmitter {
     // Forward events from the worker
     // Do not use emitAndNotify here since we don't want to forward unknown events
     worker[kITC].on('event', ({ event, payload }) => {
+      if (event === 'serverOptions') {
+        worker[kWorkerServerOptions] = payload[0]
+      }
+
       event = `application:worker:event:${event}`
 
       this.emit(event, ...payload, workerId, applicationId, index)
       this.logger.trace({ event, payload, id: workerId, application: applicationId, worker: index }, 'Runtime event')
     })
 
+    worker[kITC].on('compile-cache:flushed', ({ flushed, source }) => {
+      this.emit('application:worker:compile-cache:flushed', {
+        application: applicationId,
+        worker: index,
+        workersCount,
+        flushed,
+        source
+      })
+    })
+
+    worker[kITC].on('compile-cache:unavailable', ({ source }) => {
+      this.emit('application:worker:compile-cache:unavailable', {
+        application: applicationId,
+        worker: index,
+        workersCount,
+        source
+      })
+    })
+
     // The worker notifies us when its capability has spawned a child process
     // (e.g. Next.js in dev mode). From that point on health metrics must come
     // from the child via ITC; for thread-only workers we keep reading the
     // handle directly in getWorkerHealth().
-    worker[kITC].on('subprocess:started', () => {
+    worker[kITC].on('subprocess:started', ({ pid } = {}) => {
       worker[kIsSubprocessHost] = true
+      worker[kSubprocessPid] = pid
+    })
+    worker[kITC].on('subprocess:exited', ({ pid }) => {
+      if (worker[kSubprocessPid] === pid) {
+        worker[kSubprocessPid] = undefined
+      }
     })
 
     worker[kITC].on(openTelemetryITCMessage, resourceMetrics => {
@@ -2934,9 +3216,7 @@ export class Runtime extends EventEmitter {
           this.logger.info(`The application "${applicationId}" has been successfully reloaded.`)
           this.emitAndNotify('application:worker:reloaded', eventPayload)
 
-          if (applicationConfig.entrypoint) {
-            this.#showUrl()
-          }
+          this.#showUrls(this.#workers.getKeys(applicationId))
         } catch (e) {
           this.logger.error(e)
         }
@@ -2947,25 +3227,6 @@ export class Runtime extends EventEmitter {
       // Store locally
       this.#workers.set(workerId, worker)
     }
-
-    // Setup the interceptor
-    // kInterceptorReadyPromise resolves when the worker
-    // is ready to receive requests: after calling the replaceServer method
-    //
-    // It is stored, not awaited: #startWorker awaits it later, and only if the
-    // worker is actually started. A worker that is discarded or torn down
-    // before that — a replacement abandoned because the runtime stopped
-    // mid-restart, for instance — leaves the promise with nobody to observe
-    // it. Closing the mesh interceptor rejects any routing still in flight
-    // ('The dispatcher has been closed.'), so that is a routine shutdown
-    // outcome, not an exotic one, and it surfaced as an unhandledRejection
-    // that could take the process down before graceful shutdown finished.
-    //
-    // Attaching a no-op handler marks the rejection observed WITHOUT
-    // swallowing it: the await in #startWorker still sees and reports it.
-    const interceptorReady = this.#meshInterceptor.route(applicationId, worker)
-    interceptorReady.catch(() => {})
-    worker[kInterceptorReadyPromise] = interceptorReady
 
     // Wait for initialization
     try {
@@ -2985,11 +3246,16 @@ export class Runtime extends EventEmitter {
       }
 
       this.#workers.delete(workerId)
-      return this.#setupWorker(config, applicationConfig, workersCount, applicationId, index, enabled, attempt + 1)
-    }
-
-    if (applicationConfig.entrypoint) {
-      this.#entrypointId = applicationId
+      return this.#setupWorker(
+        config,
+        applicationConfig,
+        workersCount,
+        applicationId,
+        index,
+        portOffset,
+        enabled,
+        attempt + 1
+      )
     }
 
     worker[kConfig] = { ...applicationConfig, health, workers: workersCount }
@@ -3365,8 +3631,7 @@ export class Runtime extends EventEmitter {
     silent,
     bootstrapAttempt = 0,
     worker = undefined,
-    disableRestartAttempts = false,
-    returnStartError = false
+    disableRestartAttempts = false
   ) {
     const label = this.#workerExtendedLabel(id, index, workersCount)
 
@@ -3408,29 +3673,8 @@ export class Runtime extends EventEmitter {
 
       const { url: workerUrl, scheduledTasks } = workerStartResult
       worker[kWorkerScheduledTasks] = scheduledTasks
-      if (workerUrl) {
-        this.#url = workerUrl
 
-        // Pin the entrypoint port so that subsequent restarts (especially with
-        // stopBeforeStart when reuseTcpPorts is false) bind to the same port
-        // instead of getting a new random one.
-        if (applicationConfig.entrypoint) {
-          try {
-            const boundPort = Number(new URL(workerUrl).port)
-            if (boundPort) {
-              this.#entrypointPort = boundPort
-            }
-          } catch {
-            // URL parsing failed, leave unchanged
-          }
-        }
-      }
-
-      // Wait for the interceptor to be ready
-      const interceptorResult = await executeWithTimeout(worker[kInterceptorReadyPromise], config.startTimeout)
-      if (interceptorResult === kTimeout) {
-        throw new WorkerInterceptorJoinTimeoutError(label, config.startTimeout)
-      }
+      this.#recordWorkerUrl(worker, id, workerUrl)
 
       worker[kWorkerStatus] = 'started'
       worker[kWorkerStartTime] = Date.now()
@@ -3454,12 +3698,28 @@ export class Runtime extends EventEmitter {
         ).unref()
       }
     } catch (err) {
-      const error = ensureError(err)
+      let error = ensureError(err)
+      // Forced shutdown may terminate the thread before its start handler can report the abort.
+      if (
+        worker[kWorkerStartAborted] &&
+        error.code === 'PLT_RUNTIME_APPLICATION_WORKER_EXIT'
+      ) {
+        error = new RuntimeAbortedError({ cause: error })
+      }
       worker[kITC].notify('application:worker:start:processed')
-      const portOffset = this.#workerPortOffsets.get(worker[kFullId]) ?? index
 
-      // TODO: handle port allocation error here
-      if (error.code === 'EADDRINUSE' || error.code === 'EACCES') throw error
+      if (error.code === 'EADDRINUSE' && Number.isInteger(Number(error.port))) {
+        const port = Number(error.port)
+        const owner = this.#getPortOwner(port, id)
+
+        if (owner) {
+          error = new AddressInUseError(port, owner, id)
+        } else if (this.#getPortOwner(port, id, undefined, true)) {
+          error = new WorkerAddressInUseError(port, id)
+        }
+        // Otherwise the port is used by an external process: keep the original error, which already describes it
+      }
+      if (error.code === 'EACCES') throw error
 
       this.#cleanupWorker(worker)
 
@@ -3475,22 +3735,24 @@ export class Runtime extends EventEmitter {
         }
       }
 
-      // A replacement that can start another worker gets the failure back, and reports it when it gives up
-      if (!returnStartError) {
-        this.emitAndNotify('application:worker:start:error', { ...eventPayload, error })
-      }
+      this.emitAndNotify('application:worker:start:error', { ...eventPayload, error })
 
       if (error.code !== 'PLT_RUNTIME_APPLICATION_START_TIMEOUT') {
         this.logger.error({ err: ensureLoggableError(error) }, `Failed to start ${label}: ${error.message}`)
       }
 
-      if (returnStartError) {
-        return { ...eventPayload, error }
-      }
-
       const restartOnError = this.#getApplicationRestartOnError(config, applicationConfig)
 
-      if (disableRestartAttempts || !restartOnError) {
+      if (
+        disableRestartAttempts ||
+        !restartOnError ||
+        error.code === 'EACCES' ||
+        error.code === 'EADDRINUSE' ||
+        error.code === 'EADDRNOTAVAIL' ||
+        error.code === 'PLT_RUNTIME_EADDR_IN_USE' ||
+        error.code === 'PLT_RUNTIME_RUNTIME_ABORT' ||
+        error.code === 'PLT_RUNTIME_WORKER_EADDR_IN_USE'
+      ) {
         throw error
       }
 
@@ -3510,7 +3772,64 @@ export class Runtime extends EventEmitter {
         )
       }
 
-      await this.#restartCrashedWorker(config, applicationConfig, workersCount, id, index, silent, bootstrapAttempt, portOffset)
+      // The replica was removed while the worker was starting, there is nothing to refill
+      const replica = this.#getWorkerReplica(id, worker)
+      if (!replica) {
+        throw error
+      }
+      replica.worker = null
+      await this.#refillReplica(config, applicationConfig, workersCount, id, replica, silent, bootstrapAttempt)
+    }
+  }
+
+  async #startFirstWorkerWithCompileCache (config, applicationConfig, workers, id, silent) {
+    const cacheFlushEvent = 'application:worker:compile-cache:flushed'
+    const cacheUnavailableEvent = 'application:worker:compile-cache:unavailable'
+    const { promise, resolve } = Promise.withResolvers()
+    const cacheEvents = []
+    const runtime = this
+    let expectedSource
+
+    function removeCacheFlushListener () {
+      runtime.off(cacheFlushEvent, cacheFlushListener)
+      runtime.off(cacheUnavailableEvent, cacheUnavailableListener)
+    }
+
+    function resolveIfReady () {
+      if (expectedSource && cacheEvents.some(function (event) {
+        return event.source === expectedSource
+      })) {
+        removeCacheFlushListener()
+        resolve()
+      }
+    }
+
+    function cacheFlushListener (event) {
+      if (event.application === id && event.worker === 0) {
+        cacheEvents.push(event)
+        resolveIfReady()
+      }
+    }
+
+    function cacheUnavailableListener (event) {
+      if (event.application === id && event.worker === 0) {
+        cacheEvents.push(event)
+        resolveIfReady()
+      }
+    }
+
+    runtime.on(cacheFlushEvent, cacheFlushListener)
+    runtime.on(cacheUnavailableEvent, cacheUnavailableListener)
+
+    try {
+      await this.#startWorker(config, applicationConfig, workers, id, 0, silent)
+      const firstWorker = this.#workers.get(`${id}:0`)
+      expectedSource = firstWorker?.[kIsSubprocessHost] === true ? 'child-process' : 'worker'
+      resolveIfReady()
+      await promise
+    } catch (err) {
+      removeCacheFlushListener()
+      throw err
     }
   }
 
@@ -3530,6 +3849,9 @@ export class Runtime extends EventEmitter {
 
     const eventPayload = { application: id, worker: index, workersCount }
 
+    if (worker[kWorkerStatus] === 'starting' && this.error) {
+      worker[kWorkerStartAborted] = true
+    }
     worker[kWorkerStatus] = 'stopping'
     worker[kITC].removeAllListeners('changed')
     this.emitAndNotify('application:worker:stopping', eventPayload)
@@ -3548,13 +3870,18 @@ export class Runtime extends EventEmitter {
 
     // Always send the stop message, it will shut down workers that only had ITC and interceptors setup
     try {
-      const res = await executeWithTimeout(sendViaITC(worker, 'stop', { force: !!this.error, dependents }), exitTimeout)
+      const res = await executeWithTimeout(
+        sendViaITC(worker, 'stop', { force: !!this.error, dependents, shutdownTimeout: exitTimeout }),
+        exitTimeout
+      )
 
       if (res === kTimeout) {
+        this.#terminateSubprocess(worker)
         this.emitAndNotify('application:worker:stop:timeout', eventPayload)
         this.logger.error(`Timeout while stopping ${label}. Killing a worker thread.`)
       }
     } catch (error) {
+      this.#terminateSubprocess(worker)
       this.emitAndNotify('application:worker:stop:error', eventPayload)
       this.logger.error({ err: ensureLoggableError(error) }, `Failed to stop ${label}. Killing a worker thread.`)
     } finally {
@@ -3598,13 +3925,32 @@ export class Runtime extends EventEmitter {
     await this.#avoidOutOfOrderThreadLogs()
 
     worker[kWorkerStatus] = 'stopped'
+    worker[kWorkerUrl] = undefined
     this.emitAndNotify('application:worker:stopped', eventPayload)
     this.#broadcastWorkers()
   }
 
+  #terminateSubprocess (worker) {
+    const pid = worker[kSubprocessPid]
+    if (!Number.isInteger(pid) || pid <= 0) {
+      return
+    }
+    try {
+      // The main thread owns the fallback when a worker cannot supervise its child.
+      this.logger.debug({ pid }, 'Terminating application child process from the runtime.')
+      process.kill(pid, 'SIGKILL')
+    } catch (error) {
+      if (error.code === 'ESRCH') {
+        // ESRCH means no such process: the child exited before the fallback signal arrived.
+        this.logger.debug({ pid }, 'Application child process already exited before termination.')
+      } else {
+        this.logger.error({ err: ensureLoggableError(error) }, 'Failed to terminate application child process.')
+      }
+    }
+  }
+
   #cleanupWorker (worker) {
     clearTimeout(worker[kHealthCheckTimer])
-    this.#workerPortOffsets.delete(worker[kFullId])
 
     const currentWorker = this.#workers.get(worker[kFullId])
 
@@ -3616,8 +3962,8 @@ export class Runtime extends EventEmitter {
   }
 
   async #discardWorker (worker) {
-    await this.#meshInterceptor.unroute(worker[kApplicationId], worker, true)
-    worker.removeAllListeners('exit')
+    // Marked synchronously, so that the exit handler ignores the worker and nobody else tries to stop it
+    worker[kWorkerStatus] = 'exited'
     await worker.terminate()
 
     return this.#cleanupWorker(worker)
@@ -3631,6 +3977,57 @@ export class Runtime extends EventEmitter {
     const index = this.#nextWorkerIndex.get(applicationId) ?? 0
     this.#nextWorkerIndex.set(applicationId, index + 1)
     return index
+  }
+
+  #getWorkerReplica (applicationId, worker) {
+    return this.#replicas.get(applicationId)?.find(replica => replica.worker === worker)
+  }
+
+  // Removes a replica and cancels the work in progress for it. Stopping its worker is up to the caller.
+  async #detachReplica (applicationId, replica) {
+    const replicas = this.#replicas.get(applicationId)
+    const position = replicas?.indexOf(replica) ?? -1
+
+    if (position !== -1) {
+      replicas.splice(position, 1)
+    }
+
+    replica.abortController.abort()
+
+    if (replica.replacement) {
+      await this.#discardWorker(replica.replacement)
+    }
+  }
+
+  // Returns the lowest port offset which is not used by any replica of the application.
+  // Empty replicas keep their port offset, as they will be refilled.
+  #getNextReplicaPortOffset (applicationId) {
+    const used = new Set(this.#replicas.get(applicationId)?.map(replica => replica.portOffset))
+
+    let offset = 0
+    while (used.has(offset)) {
+      offset++
+    }
+
+    return offset
+  }
+
+  // Returns true if the application of the worker is configured to listen on a fixed port shared by all its workers
+  async #usesSharedFixedPort (worker) {
+    let server
+
+    try {
+      server = (await sendViaITC(worker, 'getApplicationConfig'))?.server
+    } catch {
+      return false
+    }
+
+    if (!server || server.portAssignment === 'perWorkerIncrement') {
+      return false
+    }
+
+    const port = Number(server.port)
+    return Number.isInteger(port) && port > 0
   }
 
   // Returns the effective restartOnError value for an application: the application-level
@@ -3649,95 +4046,101 @@ export class Runtime extends EventEmitter {
     return restartOnError
   }
 
-  async #restartCrashedWorker (config, applicationConfig, workersCount, id, oldIndex, silent, bootstrapAttempt, portOffset) {
+  // Starts a new worker for a replica whose worker crashed (or failed to start), after the restartOnError delay
+  async #refillReplica (config, applicationConfig, workersCount, id, replica, silent, bootstrapAttempt) {
     const restartOnError = this.#getApplicationRestartOnError(config, applicationConfig)
+    const { signal } = replica.abortController
+    replica.pending = 'refill'
 
-    // Use oldIndex for tracking to prevent duplicate restarts of the same crashed worker
-    const restartKey = `${id}:${oldIndex}`
+    try {
+      try {
+        if (restartOnError < IMMEDIATE_RESTART_MAX_THRESHOLD) {
+          await new Promise(resolve => process.nextTick(resolve))
+        } else {
+          await sleep(restartOnError, undefined, { signal })
+        }
+      } catch {
+        // The replica was removed in the meanwhile
+        return
+      }
 
-    let restartPromise = this.#restartingWorkers.get(restartKey)
-    if (restartPromise) {
-      await restartPromise
-      return
-    }
+      // If the replica was removed or the runtime was stopped in the meanwhile, ignore it
+      if (signal.aborted || !this.#status.startsWith('start')) {
+        return
+      }
 
-    restartPromise = new Promise((resolve, reject) => {
-      async function restart () {
-        this.#restartingWorkers.delete(restartKey)
+      // Get a new unique index for the worker, which inherits the port offset of the replica
+      const newIndex = this.#getNextWorkerIndex(id)
 
-        // If some processes were scheduled to restart
-        // but the runtime is stopped, ignore it
-        if (!this.#status.startsWith('start')) {
+      try {
+        const worker = await this.#setupWorker(
+          config,
+          applicationConfig,
+          workersCount,
+          id,
+          newIndex,
+          replica.portOffset
+        )
+
+        if (signal.aborted) {
+          await this.#discardWorker(worker)
           return
         }
 
-        // Get a new unique index for the restarted worker
-        const newIndex = this.#getNextWorkerIndex(id)
-        const newWorkerId = `${id}:${newIndex}`
-        this.#workerPortOffsets.set(newWorkerId, portOffset)
-
-        try {
-          await this.#setupWorker(config, applicationConfig, workersCount, id, newIndex)
-          await this.#startWorker(config, applicationConfig, workersCount, id, newIndex, silent, bootstrapAttempt)
-          this.#incrementApplicationRestartCount(id)
-
-          this.logger.info(
-            `The ${this.#workerExtendedLabel(id, newIndex, workersCount)} has been successfully restarted ...`
-          )
-          resolve()
-        } catch (err) {
-          this.#workerPortOffsets.delete(newWorkerId)
-
-          // The runtime was stopped while the restart was happening, ignore any error.
-          if (!this.#status.startsWith('start')) {
-            resolve()
-          }
-
-          reject(err)
+        replica.worker = worker
+        await this.#startWorker(config, applicationConfig, workersCount, id, newIndex, silent, bootstrapAttempt, worker)
+      } catch (err) {
+        // The replica was removed or the runtime was stopped while the worker was starting, ignore any error.
+        if (signal.aborted || !this.#status.startsWith('start')) {
+          return
         }
+
+        throw err
       }
 
-      if (restartOnError < IMMEDIATE_RESTART_MAX_THRESHOLD) {
-        process.nextTick(restart.bind(this))
-      } else {
-        setTimeout(restart.bind(this), restartOnError)
+      this.#incrementApplicationRestartCount(id)
+      this.logger.info(`The ${this.#workerExtendedLabel(id, newIndex, workersCount)} has been successfully restarted ...`)
+    } finally {
+      if (replica.pending === 'refill') {
+        replica.pending = null
       }
-    })
-
-    this.#restartingWorkers.set(restartKey, restartPromise)
-    await restartPromise
+    }
   }
 
-  async #replaceWorker (config, applicationConfig, workersCount, applicationId, oldIndex, worker, silent) {
-    const oldLabel = this.#workerExtendedLabel(applicationId, oldIndex, workersCount)
-    let newWorker
+  // Replaces the worker of a replica with a new one. Only one operation at a time is performed on a replica.
+  async #replaceWorker (
+    config,
+    applicationConfig,
+    workersCount,
+    applicationId,
+    oldIndex,
+    worker,
+    silent,
+    deferOldWorkerRetirement = false
+  ) {
+    const replica = this.#getWorkerReplica(applicationId, worker)
 
-    // Get a new unique index for the replacement worker
-    let newIndex = this.#getNextWorkerIndex(applicationId)
-    let newWorkerId = `${applicationId}:${newIndex}`
-    const newLabel = this.#workerExtendedLabel(applicationId, newIndex, workersCount)
-    const portOffset = this.#workerPortOffsets.get(`${applicationId}:${oldIndex}`)
-    this.#workerPortOffsets.set(newWorkerId, portOffset)
-
-    const stopBeforeStart =
-      applicationConfig.entrypoint &&
-      (config.reuseTcpPorts === false || applicationConfig.reuseTcpPorts === false || !features.node.reusePort)
-
-    // When we must stop before start (no reusePort available), pin the entrypoint
-    // port in the config so the replacement worker binds to the same port.
-    // We only do this for stopBeforeStart because when reusePort is available
-    // the new worker starts alongside the old one and must use port 0 to avoid
-    // SO_REUSEPORT routing requests to the stale old worker.
-    let configForNewWorker = config
-    if (stopBeforeStart && this.#entrypointPort && config.server) {
-      configForNewWorker = { ...config, server: { ...config.server, port: this.#entrypointPort } }
+    // The worker is not serving a replica anymore, or the replica is already being refilled or replaced
+    if (!replica || replica.pending) {
+      return
     }
 
-    // When the old worker is stopped first, no worker serves its place while the new one starts.
-    // A new worker that fails to start is then followed by another one, after the delay and for
-    // the number of attempts of a worker that fails to start when the runtime boots.
-    const restartOnError = stopBeforeStart ? this.#getApplicationRestartOnError(config, applicationConfig) : 0
-    let startFailure
+    const { signal } = replica.abortController
+    const oldLabel = this.#workerExtendedLabel(applicationId, oldIndex, workersCount)
+    let newWorker
+    let error
+
+    // Get a new unique index for the replacement worker, which inherits the port offset of the replica
+    const newIndex = this.#getNextWorkerIndex(applicationId)
+    const newWorkerId = `${applicationId}:${newIndex}`
+    const newLabel = this.#workerExtendedLabel(applicationId, newIndex, workersCount)
+
+    const stopBeforeStart =
+      Boolean(worker[kWorkerUrl]) &&
+      worker[kWorkerServerOptions]?.port !== 0 &&
+      (config.reuseTcpPorts === false || applicationConfig.reuseTcpPorts === false || !features.node.reusePort)
+
+    replica.pending = 'replace'
 
     try {
       if (!silent) {
@@ -3746,89 +4149,105 @@ export class Runtime extends EventEmitter {
 
       if (stopBeforeStart) {
         await this.#removeWorker(workersCount, applicationId, oldIndex, worker, silent, oldLabel)
+        replica.worker = null
       }
 
-      for (let attempt = 1; ; attempt++) {
-        // Create a new worker with a new index, preserving any pinned port when stopBeforeStart is required.
-        newWorker = await this.#setupWorker(configForNewWorker, applicationConfig, workersCount, applicationId, newIndex, false)
+      newWorker = await this.#setupWorker(
+        config,
+        applicationConfig,
+        workersCount,
+        applicationId,
+        newIndex,
+        replica.portOffset,
+        false
+      )
+      replica.replacement = newWorker
 
-        // Make sure the runtime hasn't been stopped in the meanwhile
-        if (this.#status !== 'started') {
-          return this.#discardWorker(newWorker)
-        }
-
-        // Register the worker before starting it, like in the regular startup flow,
-        // so that it is addressable when the application:worker:started event is emitted.
-        // The discard paths below remove it from the map via #cleanupWorker.
-        this.#workers.set(newWorkerId, newWorker)
-
-        // Add the worker to the mesh. When other workers can follow, a worker that fails to start is
-        // disposed of and its failure is returned. Any other error is thrown, as for a single start.
-        startFailure = await this.#startWorker(
-          configForNewWorker,
-          applicationConfig,
-          workersCount,
-          applicationId,
-          newIndex,
-          false,
-          0,
-          newWorker,
-          true,
-          restartOnError > 0
-        )
-
-        if (!startFailure) {
-          break
-        }
-
-        newWorker = undefined
-
-        if (attempt > MAX_BOOTSTRAP_ATTEMPTS) {
-          throw startFailure.error
-        }
-
-        this.logger.warn(
-          `Attempt ${attempt} of ${MAX_BOOTSTRAP_ATTEMPTS} to start a replacement for ${oldLabel} again will be performed in ${restartOnError}ms ...`
-        )
-
-        await sleep(restartOnError)
-
-        if (this.#status !== 'started') {
-          throw startFailure.error
-        }
-
-        newIndex = this.#getNextWorkerIndex(applicationId)
-        newWorkerId = `${applicationId}:${newIndex}`
-        this.#workerPortOffsets.set(newWorkerId, portOffset)
+      // Make sure the runtime hasn't been stopped and the replica hasn't been removed in the meanwhile
+      if (this.#status !== 'started' || signal.aborted) {
+        return this.#discardWorker(newWorker)
       }
 
-      // Make sure the runtime hasn't been stopped in the meanwhile
-      if (this.#status !== 'started') {
+      // Register the worker before starting it, like in the regular startup flow,
+      // so that it is addressable when the application:worker:started event is emitted.
+      // The discard paths below remove it from the map via #cleanupWorker.
+      this.#workers.set(newWorkerId, newWorker)
+
+      // Add the worker to the mesh
+      await this.#startWorker(
+        config,
+        applicationConfig,
+        workersCount,
+        applicationId,
+        newIndex,
+        false,
+        0,
+        newWorker,
+        true
+      )
+
+      // Make sure the runtime hasn't been stopped and the replica hasn't been removed in the meanwhile
+      if (this.#status !== 'started' || signal.aborted) {
         return this.#discardWorker(newWorker)
       }
     } catch (e) {
-      this.#workerPortOffsets.delete(newWorkerId)
+      error = e
+    } finally {
+      replica.pending = null
+      replica.replacement = null
+    }
 
+    if (error) {
       if (this.#workers.get(newWorkerId) === newWorker) {
         this.#workers.delete(newWorkerId)
       }
 
       newWorker?.terminate?.()
 
-      // The last failed start is reported once, now that no other worker follows it
-      if (startFailure) {
-        this.emitAndNotify('application:worker:start:error', startFailure)
+      // The replica was removed in the meanwhile, the new worker was meant to be discarded anyway
+      if (signal.aborted) {
+        return
       }
 
-      throw e
+      // The replaced worker crashed (or was stopped before starting the new one): the replica must be refilled
+      if (!replica.worker && this.#getApplicationRestartOnError(config, applicationConfig) > 0) {
+        this.#refillReplica(config, applicationConfig, workersCount, applicationId, replica, true, 0).catch(err => {
+          this.logger.error({ err: ensureLoggableError(err) }, `${oldLabel} could not be restarted.`)
+          this.#detachReplica(applicationId, replica)
+        })
+      }
+
+      throw error
     }
 
+    // The replaced worker might have crashed in the meanwhile, in which case it is not in the replica anymore
+    replica.worker = newWorker
+
     if (!stopBeforeStart) {
+      if (deferOldWorkerRetirement) {
+        return {
+          discard: async () => {
+            // Roll back: the replaced worker serves the replica again
+            if (replica.worker === newWorker) {
+              replica.worker = typeof worker[kWorkerExitCode] === 'number' ? null : worker
+            }
+
+            await this.#discardWorker(newWorker)
+          },
+          retire: () => this.#removeWorker(workersCount, applicationId, oldIndex, worker, silent, oldLabel)
+        }
+      }
+
       await this.#removeWorker(workersCount, applicationId, oldIndex, worker, silent, oldLabel)
     }
   }
 
   async #removeWorker (workersCount, applicationId, index, worker, silent, label) {
+    // The worker crashed in the meanwhile, there is nothing left to remove
+    if (typeof worker[kWorkerExitCode] === 'number') {
+      return
+    }
+
     if (!silent) {
       this.logger.debug(`Preparing to stop the old version of ${label} ...`)
     }
@@ -3920,7 +4339,13 @@ export class Runtime extends EventEmitter {
 
     // Note that in this class "== null" is purposely used instead of "===" to check for both null and undefined
     if (workerId == null) {
-      worker = this.#workers.next(applicationId)
+      // During restarts and scaling the application also has workers which are still booting or being stopped:
+      // only pick a worker which can serve the call. Booting workers cannot handle ITC calls yet,
+      // stopping ones might exit before replying.
+      worker = this.#workers.next(applicationId, worker => {
+        const status = worker[kWorkerStatus]
+        return status === 'started' || (!ensureStarted && (status === 'init' || status === 'starting'))
+      })
     } else {
       worker = this.#workers.get(`${applicationId}:${workerId}`)
     }
@@ -3930,6 +4355,11 @@ export class Runtime extends EventEmitter {
     if (!worker) {
       if (!mustExist && applicationsIds.includes(applicationId)) {
         return null
+      }
+
+      // The application has workers, but they are all booting or being stopped
+      if (workerId == null && this.#workers.getKeys(applicationId).length > 0) {
+        throw new ApplicationNotStartedError(applicationId)
       }
 
       if (applicationsIds.includes(applicationId)) {
@@ -4025,11 +4455,20 @@ export class Runtime extends EventEmitter {
   }
 
   async #getRuntimePackageJson () {
-    const runtimeDir = this.#root
-    const packageJsonPath = join(runtimeDir, 'package.json')
-    const packageJsonFile = await readFile(packageJsonPath, 'utf8')
-    const packageJson = JSON.parse(packageJsonFile)
-    return packageJson
+    const packageJsonPath = join(this.#root, 'package.json')
+
+    /*
+      A project need not have one, and a runtime that cannot report its metadata without one is a
+      runtime whose `applications:add --save` stops working -- that command reads `projectDir`,
+      `configPath` and `autoload` from this, and has done since `GET /config` was removed. The
+      metadata already declares `packageName` and `packageVersion` as nullable, so absence is a
+      state its shape allows.
+    */
+    try {
+      return JSON.parse(await readFile(packageJsonPath, 'utf8'))
+    } catch {
+      return {}
+    }
   }
 
   #handleWorkerStandardStreams (worker, applicationId, workerId) {
@@ -4378,16 +4817,21 @@ export class Runtime extends EventEmitter {
         await this.#updateApplicationConfigHealth(applicationId, health)
       }
 
-      // Get actual worker keys to iterate over existing workers (snapshot to avoid mutation during iteration)
-      const workerKeys = [...this.#workers.getKeys(applicationId)]
-      for (const workerKey of workerKeys) {
-        const workerIndex = parseInt(workerKey.split(':')[1], 10)
+      // A copy: while the loop awaits, scale-downs remove replicas from the list, which would shift the remaining ones
+      // and skip some. Replicas added in the meanwhile (scale-up) already use the new health config.
+      for (const replica of [...(this.#replicas.get(applicationId) ?? [])]) {
+        // The worker crashed, the replica is refilled with a fresh worker which uses the new health config
+        const worker = replica.worker
+        if (!worker) {
+          continue
+        }
+
+        const workerIndex = worker[kWorkerId]
         this.logger.info(
           { health: { current: currentHealth, new: health } },
           `Restarting application "${applicationId}" worker ${workerIndex} to update config health heap...`
         )
 
-        const worker = this.#workers.get(workerKey)
         if (health.maxHeapTotal) {
           worker[kConfig].health.maxHeapTotal = health.maxHeapTotal
         }
@@ -4430,24 +4874,51 @@ export class Runtime extends EventEmitter {
 
     if (currentWorkers < workers) {
       report.started = []
-      let pendingWorkerId
+
+      let pendingReplica
 
       try {
         for (let i = currentWorkers; i < workers; i++) {
           const newIndex = this.#getNextWorkerIndex(applicationId)
-          pendingWorkerId = `${applicationId}:${newIndex}`
-          this.#workerPortOffsets.set(pendingWorkerId, i)
+          pendingReplica = await this.#setupReplica(
+            config,
+            applicationConfig,
+            workers,
+            applicationId,
+            newIndex,
+            this.#getNextReplicaPortOffset(applicationId)
+          )
 
-          await this.#setupWorker(config, applicationConfig, workers, applicationId, newIndex)
-          await this.#startWorker(config, applicationConfig, workers, applicationId, newIndex, false, 0)
+          // The replica was removed in the meanwhile (i.e. scale-down or application stopped)
+          if (!pendingReplica) {
+            continue
+          }
 
-          pendingWorkerId = undefined
+          await this.#startWorker(
+            config,
+            applicationConfig,
+            workers,
+            applicationId,
+            newIndex,
+            false,
+            0,
+            pendingReplica.worker
+          )
+
+          pendingReplica = undefined
           report.started.push(newIndex)
           startedWorkersCount++
         }
+
+        // A worker added after boot re-runs the application's code, so it can answer differently
+        // from the workers already running. Scale-up is the second place the answers must agree.
+        await this.#collectServingState(applicationId)
         report.success = true
       } catch (err) {
-        pendingWorkerId && this.#workerPortOffsets.delete(pendingWorkerId)
+        // The worker of the replica could not be started
+        if (pendingReplica && !pendingReplica.worker) {
+          await this.#detachReplica(applicationId, pendingReplica)
+        }
 
         if (startedWorkersCount < 1) {
           this.logger.error({ err }, 'Cannot start application workers, no worker started')
@@ -4464,30 +4935,29 @@ export class Runtime extends EventEmitter {
       report.stopped = []
       try {
         const workersToStop = currentWorkers - workers
-        const allInOnePort = this.#config.server?.portAssignment !== 'perWorkerIncrement'
-        const workerIdsToStop = this.#workers
-          .getKeys(applicationId)
-          .map(key => parseInt(key.split(':')[1], 10))
+        // Remove the empty replicas first (their worker crashed and they are waiting to be refilled), then the ones
+        // with the highest port offsets, so that applications using server.portAssignment=perWorkerIncrement keep
+        // listening on a contiguous range of ports starting from the configured one.
+        const removed = (this.#replicas.get(applicationId) ?? [])
+          .toSorted((a, b) => Number(Boolean(a.worker)) - Number(Boolean(b.worker)) || b.portOffset - a.portOffset)
+          .slice(0, workersToStop)
 
-        if (allInOnePort) {
-          // Stop most recent workers first.
-          workerIdsToStop.sort((a, b) => b - a)
-        } else {
-          // When port increment is enabled, disable the workers with the highest ports.
-          workerIdsToStop.sort((a, b) => {
-            const offsetA = this.#workerPortOffsets.get(`${applicationId}:${a}`) ?? a
-            const offsetB = this.#workerPortOffsets.get(`${applicationId}:${b}`) ?? b
-            return offsetB - offsetA
-          })
-        }
+        // Detached right away, so that concurrent operations see the requested workers.
+        // This also cancels the work in progress for them, i.e. refills and replacements.
+        const detached = Promise.all(removed.map(replica => this.#detachReplica(applicationId, replica)))
 
-        for (const workerIndex of workerIdsToStop.splice(0, workersToStop)) {
-          const worker = this.#workers.get(`${applicationId}:${workerIndex}`)
-          await sendViaITC(worker, 'removeFromMesh')
-          await this.#stopWorker(currentWorkers, applicationId, workerIndex, false, worker, [])
-          report.stopped.push(workerIndex)
+        for (const replica of removed) {
+          const worker = replica.worker
+          if (worker && typeof worker[kWorkerExitCode] !== 'number') {
+            await sendViaITC(worker, 'removeFromMesh')
+            await this.#stopWorker(currentWorkers, applicationId, worker[kWorkerId], false, worker, [])
+            report.stopped.push(worker[kWorkerId])
+          }
+
           stoppedWorkersCount++
         }
+
+        await detached
 
         report.success = true
       } catch (err) {
@@ -4532,6 +5002,10 @@ export class Runtime extends EventEmitter {
       for (const p of read) {
         allows.add(`--allow-fs-read=${isAbsolute(p) ? p : join(applicationConfig.path, p)}`)
       }
+    }
+
+    if (applicationConfig.sourcePath) {
+      allows.add(`--allow-fs-read=${join(applicationConfig.sourcePath, '*')}`)
     }
 
     if (write?.length) {
@@ -4579,72 +5053,34 @@ export class Runtime extends EventEmitter {
   #processHealthSignals ({ workerId, signals }) {
     const worker = this.#workers.get(workerId)
 
+    // Signals can arrive from a worker which is not registered (anymore)
+    if (!worker) {
+      return
+    }
+
     worker[kWorkerHealthSignals] ??= new HealthSignalsQueue()
     worker[kWorkerHealthSignals].add(signals)
   }
 
   async #loadExtensions () {
-    let extensions = this.#config.extensions
-
-    if (!extensions) {
+    if (!this.#config.extensions) {
       return
     }
 
-    if (!Array.isArray(extensions)) {
-      extensions = [extensions]
-    }
-
-    for (const extension of extensions) {
-      const { path, options, build } = typeof extension === 'string' ? { path: extension } : extension
-
-      // Runtime extensions historically were not loaded by `wattpm build`.
-      // Preserve that behavior unless an extension explicitly opts into the
-      // build lifecycle.
-      if (this.#context.build && !build) {
-        continue
-      }
-
-      let imported
-      try {
-        imported = await import(pathToFileURL(path))
-      } catch (e) {
-        throw new FailedToLoadExtensionError(path, e.message, { cause: e })
-      }
-
-      const setup = resolveExtensionSetup(imported)
-
-      if (typeof setup !== 'function') {
-        throw new InvalidExtensionError(path)
-      }
-
-      const logger = this.logger.child({ name: `extension:${basename(path)}` })
-      const health = this.#createExtensionHealth(path, logger)
-
-      // One registry per extension so metric conflicts and cleanup are isolated.
-      // Extension metrics are main-thread only: Runtime never invents a worker ID.
-      const registry = new metricsClient.Registry()
-      const metrics = { client: metricsClient, registry }
-
-      try {
-        const instance = await setup({
-          runtime: this,
-          itc: this.#createExtensionITC(),
-          sharedContext: this.#createExtensionSharedContext(),
-          logger,
-          options: options ?? {},
-          root: this.#root,
-          metrics,
-          health
-        })
-
-        this.#extensions.push({ path, instance, registry, health, started: false, stopped: false, closed: false })
-      } catch (e) {
-        registry.clear()
-        // Drop any health contributions from a failed extension setup.
-        health.cleanup()
-        throw new FailedToLoadExtensionError(path, e.message, { cause: e })
-      }
-    }
+    const extensions = resolveExtensions(this.#config, { root: this.#root, build: this.#context.build })
+    await loadExtensions(extensions, this.#extensions, {
+      logger: this.logger,
+      createContext: ({ path, options, logger, metrics }) => ({
+        runtime: this,
+        itc: this.#createExtensionITC(),
+        sharedContext: this.#createExtensionSharedContext(),
+        logger,
+        options,
+        root: this.#root,
+        metrics,
+        health: this.#createExtensionHealth(path, logger)
+      })
+    })
 
     // If any extension subscribed to health metrics during its setup, make sure
     // the health metrics collection is started even if no health check or
@@ -4654,96 +5090,21 @@ export class Runtime extends EventEmitter {
   }
 
   #isApplicationStarted (id) {
-    const applicationConfig = this.#applications.get(id)
-    if (!applicationConfig) {
+    if (!this.#applications.has(id)) {
       return false
     }
 
-    const workers = applicationConfig.workers.static
-    for (let i = 0; i < workers; i++) {
-      const worker = this.#workers.get(`${id}:${i}`)
-      const status = worker?.[kWorkerStatus]
+    // Workers replaced by restarts get new indexes, so check all the workers of the application.
+    // Anything past boot/init means already started.
+    for (const workerId of this.#workers.getKeys(id)) {
+      const status = this.#workers.get(workerId)[kWorkerStatus]
 
-      // Match startApplication(): anything past boot/init means already started.
-      if (status && status !== 'boot' && status !== 'init') {
+      if (status !== 'boot' && status !== 'init') {
         return true
       }
     }
 
     return false
-  }
-
-  async #startExtensions () {
-    for (const extension of this.#extensions) {
-      if (extension.started) {
-        continue
-      }
-
-      try {
-        await extension.instance?.start?.()
-        extension.started = true
-      } catch (e) {
-        throw new FailedToStartExtensionError(extension.path, e.message, { cause: e })
-      }
-    }
-  }
-
-  async #stopExtensions () {
-    // Stop in reverse order, so that extensions loaded later, which might depend
-    // on earlier ones, are stopped first. Only extensions that completed start
-    // (including those without a start hook) are stopped, and at most once.
-    for (const extension of [...this.#extensions].reverse()) {
-      if (!extension.started || extension.stopped) {
-        continue
-      }
-
-      // Mark before invoking so repeated stop is idempotent even if stop throws.
-      extension.stopped = true
-
-      try {
-        await extension.instance?.stop?.()
-      } catch (e) {
-        const err = new FailedToStopExtensionError(extension.path, e.message, { cause: e })
-        this.logger.error({ err: ensureLoggableError(err) }, `Failed to stop the extension "${extension.path}".`)
-      }
-    }
-  }
-
-  async #closeExtensions () {
-    // Close in reverse order, so that extensions loaded later, which might depend
-    // on earlier ones, are closed first. Close is invoked at most once per extension.
-    const extensions = this.#extensions.splice(0).reverse()
-
-    for (const extension of extensions) {
-      if (extension.closed) {
-        continue
-      }
-
-      extension.closed = true
-
-      try {
-        await extension.instance?.close?.()
-      } catch (e) {
-        this.logger.error(
-          { err: ensureLoggableError(e) },
-          `Failed to close the extension "${extension.path}".`
-        )
-      } finally {
-        // Always drop health contributions with the extension, even if close fails.
-        extension.health?.cleanup?.()
-      }
-
-      // Drop the extension registry after close so its metrics stop appearing in
-      // getMetrics()/exporters and collectors cannot keep running in the background.
-      try {
-        extension.registry?.clear()
-      } catch (e) {
-        this.logger.error(
-          { err: ensureLoggableError(e) },
-          `Failed to clear metrics registry for extension "${extension.path}".`
-        )
-      }
-    }
   }
 
   #createExtensionSharedContext () {
@@ -5008,27 +5369,55 @@ export class Runtime extends EventEmitter {
     this.#loggerContext.updatePrefixes(ids)
   }
 
-  #onMeshInterceptorError (error) {
-    const worker = error.port
-    const status = worker[kWorkerStatus]
+  #getPortOwner (port, applicationId, hostname, includeSameApplication = false) {
+    if (!Number.isInteger(port) || port <= 0) {
+      return null
+    }
 
-    // The worker is already being stopped (typically it is being replaced and its removal from the mesh
-    // timed out): terminating it here would make it look like a crash and trigger a restart.
-    if (status === 'stopping' || status === 'stopped' || status === 'exited') {
-      this.logger.debug(
-        { err: ensureLoggableError(error.cause) },
-        `The ${this.#workerExtendedLabel(worker[kApplicationId], worker[kWorkerId])} threw an error during mesh network setup while stopping. Ignoring it ...`
-      )
+    for (const worker of this.#workers.values()) {
+      if (!worker[kWorkerUrl] || (!includeSameApplication && worker[kApplicationId] === applicationId)) {
+        continue
+      }
 
+      try {
+        const url = new URL(worker[kWorkerUrl])
+        const workerPort = Number(url.port || (url.protocol === 'https:' ? 443 : 80))
+        const workerHost = url.hostname
+        if (workerPort === port && this.#listenersOverlap(hostname ?? workerHost, workerHost)) {
+          return worker[kApplicationId]
+        }
+      } catch {}
+    }
+
+    return null
+  }
+
+  #listenersOverlap (host, otherHost) {
+    host = host.toLowerCase()
+    const wildcards = new Set(['0.0.0.0', '::', '[::]'])
+    otherHost = otherHost.toLowerCase()
+    return host === otherHost || wildcards.has(host) || wildcards.has(otherHost)
+  }
+
+  #recordWorkerUrl (worker, applicationId, workerUrl) {
+    if (!workerUrl) {
+      worker[kWorkerUrl] = undefined
       return
     }
 
-    this.logger.error(
-      { err: ensureLoggableError(error.cause) },
-      `The ${this.#workerExtendedLabel(worker[kApplicationId], worker[kWorkerId])} threw an error during mesh network setup. Replacing it ...`
-    )
+    let hostname
+    let port
+    try {
+      const url = new URL(workerUrl)
+      hostname = url.hostname
+      port = Number(url.port || (url.protocol === 'https:' ? 443 : 80))
+    } catch {}
 
-    this.emit('application:worker:init:failed', { application: worker[kApplicationId], worker: worker[kWorkerId] })
-    worker.terminate()
+    const owner = this.#getPortOwner(port, applicationId, hostname)
+    if (owner) {
+      throw new AddressInUseError(port, owner, applicationId)
+    }
+
+    worker[kWorkerUrl] = workerUrl
   }
 }

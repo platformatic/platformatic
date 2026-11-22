@@ -2,11 +2,13 @@ import Issues from '../../getting-started/issues.md';
 
 # Configuration
 
-Platformatic Gateway can be configured with a [configuration file](#configuration-files) in the different file formats below. The Gateway also supports use of environment variables as setting values with [environment variable placeholders](../gateway/configuration.md#setting-and-using-env-placeholders).
+Platformatic Gateway is configured with a `watt.config.ts`. The file is a module that exports its
+configuration, so it reads [environment variables](../service/configuration.md#environment-variables)
+directly.
 
 ## Configuration Files
 
-Platformatic will automatically detect and load configuration files found in the current working directory with the file names listed [here](../../file-formats.md#configuration-files).
+Platformatic automatically detects and loads the configuration file in the current working directory. There are four names, listed [here](../../file-formats.md#configuration-files), and one file per directory.
 
 ## Supported File Formats
 
@@ -20,10 +22,10 @@ Configuration file settings are grouped as follows:
 - **`server`** **(required)**: Configures the [server settings](../service/configuration.md#server)
 - **`gateway`**: Specific settings for Platformatic Gateway, such as application management and API composition.
 - **`plugins`**: Manages additional functionality through [plugins](../service/configuration.md#plugins).
-- **`telemetry`**: Handles [telemetry data reporting](../service/configuration.md#telemetry).
+- **`tracing`**: Handles [tracing data reporting](../service/configuration.md#tracing).
 - **`watch`**: Observes file changes for [dynamic updates](../service/configuration.md#watch).
 
-Sensitive data within these settings should use [configuration placeholders](#configuration-placeholders) to ensure security.
+Sensitive data within these settings should be read from the [environment](../service/configuration.md#environment-variables) rather than written into the file.
 
 ### Gateway
 
@@ -37,7 +39,6 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
     Inside [Platformatic Runtime context](../runtime/overview.md#platformatic-runtime-context), the gateway also leaves out an application that the runtime's [`enabled`](../runtime/configuration.md) disables. So a gateway can name an application that only runs in development. An application that does not exist in the runtime is still reported as a missing dependency.
   - **`origin`** (`string`) - A service origin. Skip this option if the service is executing inside [Platformatic Runtime context](../runtime/overview.md#platformatic-runtime-context). In this case, application `id` will be used instead of origin.
   - **`openapi`** (`object`) - The configuration file used to compose [OpenAPI](#openapi) specification.
-  - **`graphql`** (`object`) - The configuration for the [GraphQL](#graphql) application.
   - **`proxy`** (`object` or `false`) - Service proxy configuration. If `false`, the application proxy is disabled. Supports the following options:
     - **`prefix`** (`string`) - Service proxy prefix. All application routes will be prefixed with this value.
     - **`rewritePrefix`** (`string`) - Rewrite the prefix to the specified string before sending to the upstream. The default is determined by the target capability.
@@ -55,7 +56,7 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
     - **`compression`** (`boolean`) - Set to `false` to leave the responses of this application alone when [`compression`](#compression) is enabled: the gateway does not compress them and forwards the `Accept-Encoding` header of the client unchanged. Use it for an application which serves its own pre-compressed files, such as a Vite application with `vite.preCompressed`.
     - **`upstream`** (`string`) - The origin URL to proxy requests to. Required for external services. Not needed for Platformatic Runtime applications where the application `id` is used; will be ignored when using `custom.getUpstream`.
     - **`ws`** (`object`) - WebSocket proxy configuration. Supports the following options:
-      - **`upstream`** (`string`) - The WebSocket upstream URL (e.g., `ws://localhost:3000`). Required for external services. Not needed for Platformatic Runtime applications exposing a TCP server (started with the `useHttp` or `websocket` flags): the gateway resolves their WebSocket upstream automatically, re-resolving it on every new connection so that new connections keep working across application restarts. Note that a connection arriving in the short window between a worker going away and the gateway observing its replacement can still be dialed against the previous port; the next connection succeeds.
+      - **`upstream`** (`string`, **required**) - The WebSocket upstream URL (e.g., `ws://localhost:3000`).
       - **`reconnect`** (`object`) - WebSocket reconnection settings:
         - **`pingInterval`** (`number`) - Interval in milliseconds between ping messages to keep the connection alive.
         - **`maxReconnectionRetries`** (`number`) - Maximum number of reconnection attempts.
@@ -119,65 +120,101 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
 
     **Example: Basic HTTP Proxy**
 
-    ```json
-    {
-      "id": "external-api",
-      "proxy": {
-        "prefix": "/api",
-        "upstream": "https://api.example.com"
+    ```ts config
+    import { createGatewayConfig } from '@platformatic/gateway'
+
+    export default createGatewayConfig({
+      gateway: {
+        applications: [
+          {
+            id: 'external-api',
+            proxy: {
+              prefix: '/api',
+              upstream: 'https://api.example.com'
+            }
+          }
+        ]
       }
-    }
+    })
     ```
 
     **Example: Method/Route-based Proxy Selection**
 
-    ```json
-    {
-      "id": "public-read-api",
-      "proxy": {
-        "prefix": "/",
-        "methods": ["GET"],
-        "routes": ["/public/*"]
+    ```ts config
+    import { createGatewayConfig } from '@platformatic/gateway'
+
+    export default createGatewayConfig({
+      gateway: {
+        applications: [
+          {
+            id: 'public-read-api',
+            proxy: {
+              prefix: '/',
+              methods: [
+                'GET'
+              ],
+              routes: [
+                '/public/*'
+              ]
+            }
+          }
+        ]
       }
-    }
+    })
     ```
 
     **Example: WebSocket Proxy with Reconnection**
 
-    ```json
-    {
-      "id": "ws-service",
-      "proxy": {
-        "prefix": "/ws",
-        "upstream": "http://localhost:3000",
-        "ws": {
-          "upstream": "ws://localhost:3000",
-          "reconnect": {
-            "pingInterval": 5000,
-            "maxReconnectionRetries": 10,
-            "reconnectInterval": 1000,
-            "reconnectDecay": 1.5,
-            "connectionTimeout": 5000,
-            "reconnectOnClose": true,
-            "logs": true
+    ```ts config
+    import { createGatewayConfig } from '@platformatic/gateway'
+
+    export default createGatewayConfig({
+      gateway: {
+        applications: [
+          {
+            id: 'ws-service',
+            proxy: {
+              prefix: '/ws',
+              upstream: 'http://localhost:3000',
+              ws: {
+                upstream: 'ws://localhost:3000',
+                reconnect: {
+                  pingInterval: 5000,
+                  maxReconnectionRetries: 10,
+                  reconnectInterval: 1000,
+                  reconnectDecay: 1.5,
+                  connectionTimeout: 5000,
+                  reconnectOnClose: true,
+                  logs: true
+                }
+              }
+            }
           }
-        }
+        ]
       }
-    }
+    })
     ```
 
     **Example: Custom Proxy Logic**
 
-    ```json
-    {
-      "id": "dynamic-router",
-      "proxy": {
-        "prefix": "/",
-        "custom": {
-          "path": "./custom-proxy.js"
-        }
+    ```ts config
+    import { createGatewayConfig } from '@platformatic/gateway'
+
+    export default createGatewayConfig({
+      gateway: {
+        applications: [
+          {
+            id: 'dynamic-router',
+            proxy: {
+              prefix: '/',
+              custom: {
+                path: './custom-proxy.js'
+              }
+            }
+          }
+        ]
       }
-    }
+    })
     ```
 
     Where `custom-proxy.js` exports:
@@ -213,21 +250,29 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
     do not need to be listed in the gateway configuration: any `http://<application-id>.plt.local`
     origin is routed through the runtime mesh network.
 
-    ```json
-    {
-      "id": "main",
-      "proxy": {
-        "prefix": "/",
-        "custom": {
-          "path": "./version-router.js",
-          "options": {
-            "header": "x-app-version",
-            "cookie": "app-version",
-            "fallback": "main"
+    ```ts config
+    import { createGatewayConfig } from '@platformatic/gateway'
+
+    export default createGatewayConfig({
+      gateway: {
+        applications: [
+          {
+            id: 'main',
+            proxy: {
+              prefix: '/',
+              custom: {
+                path: './version-router.js',
+                options: {
+                  header: 'x-app-version',
+                  cookie: 'app-version',
+                  fallback: 'main'
+                }
+              }
+            }
           }
-        }
+        ]
       }
-    }
+    })
     ```
 
     Where `version-router.js` exports a factory function receiving `custom.options`:
@@ -278,48 +323,28 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
 
     **Example: Hostname-based Routing**
 
-    ```json
-    {
-      "id": "multi-tenant",
-      "proxy": {
-        "hostname": "tenant1.example.com",
-        "upstream": "http://tenant1-service"
+    ```ts config
+    import { createGatewayConfig } from '@platformatic/gateway'
+
+    export default createGatewayConfig({
+      gateway: {
+        applications: [
+          {
+            id: 'multi-tenant',
+            proxy: {
+              hostname: 'tenant1.example.com',
+              upstream: 'http://tenant1-service'
+            }
+          }
+        ]
       }
-    }
+    })
     ```
 
 - **`openapi`** (`object`) - See the Platformatic Service [openapi](../service/configuration.md#service) option for more details.
-- **`graphql`** (`object`) - Has the Platformatic Service [graphql](../service//configuration.md#service) options, plus
-  - **`addEntitiesResolvers`** (`boolean`) - Automatically add related entities on GraphQL types, following the applications entities configuration. See [graphql-composer entities](https://github.com/platformatic/graphql-composer#gateway-entities) for details.
-  - **`defaultArgsAdapter`** (`function` or `string`) - The default `argsAdapter` function for the entities, for example for the `@platformatic/db` mapped entities queries.
-
-  ```js
-  graphql: {
-    defaultArgsAdapter: partialResults => ({ where: { id: { in: partialResults.map(r => r.id) } } })
-  }
-  ```
-
-  or with the [metaline](https://github.com/platformatic/metaline) syntax, especially in the case of using the json configuration.
-
-  ```json
-  "defaultArgsAdapter": "where.id.in.$>#id"
-  ```
-
-  - **`onSubgraphError`** (`function`) - Hook called when an error occurs getting schema from a subgraph. The arguments are:
-    - `error` (`error`) - The error message
-    - `subgraphName` (`string`) - The erroring subgraph
-
-    It's important to note GraphQL subscriptions are not supported in the gateway yet.
-
 - **`refreshTimeout`** (`number`) - The number of milliseconds to wait for check for changes in the applications. If not specified, the default value is `1000`; set to `0` to disable. This is only supported if the Gateway is running within a [Platformatic Runtime](../runtime/overview.md).
+- **`restartOnApplicationChange`** (`boolean`) - Whether to restart the Gateway when an application is added to or removed from the Runtime so it can recompose its routes. Defaults to `true`. This is only supported if the Gateway is running within a [Platformatic Runtime](../runtime/overview.md).
 
-- **`restartOnApplicationChange`** (`boolean`) - Whether to restart the Gateway when an application is added to or removed from the Runtime, so it can recompose its routes. Default is `true`, and that is what you want for a Gateway that proxies applications registered in the Runtime.
-
-  Set it to `false` only for a Gateway that does **not** route from the application registry — one that resolves its upstreams some other way, such as from shared state written by a Runtime extension. Restarting an application replaces its workers one at a time: with two or more workers and `SO_REUSEPORT` the listening socket survives, but with a single worker (the default, and the only option where `SO_REUSEPORT` is unavailable) the Runtime has no open port until the replacement worker has booted. For a Gateway that has nothing to recompose, that window is pure downtime.
-
-  Opting out means a newly added application is **not** proxied until the Gateway is restarted by something else. This is only supported if the Gateway is running within a [Platformatic Runtime](../runtime/overview.md).
-
-- **`addEmptySchema`** (`boolean`) - Deprecated, it no longer has any effect. Responses which declare no body - a `204`, a `304`, or any other status code whose response object has no `content` - always keep their status code in the composed OpenAPI specification, and are documented without a body.
 
 - **`handler`** (`string`) - Path to a JavaScript or TypeScript module that exports a custom proxy handler, either as `handler` or as the default export. The handler receives `(request, reply, dest, options)`, where `dest` is the rewritten proxy destination and `options` are the reply options passed to `reply.from()`. By default, proxied requests call `reply.from(dest, options)`; use this option to customize that behavior.
 
@@ -333,21 +358,23 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
   }
   ```
 
-  ```json title="Example JSON object"
-  {
-    "gateway": {
-      "handler": "./handler.js",
-      "applications": [
+  ```ts config
+  import { createGatewayConfig } from '@platformatic/gateway'
+
+  export default createGatewayConfig({
+    gateway: {
+      handler: './handler.js',
+      applications: [
         {
-          "id": "api",
-          "proxy": {
-            "prefix": "/api",
-            "upstream": "http://localhost:3000"
+          id: 'api',
+          proxy: {
+            prefix: '/api',
+            upstream: 'http://localhost:3000'
           }
         }
       ]
     }
-  }
+  })
   ```
 
 - **`deduplication`** (`object`) - Deduplicates concurrent proxied requests with the same computed key. The first request is sent upstream, while matching concurrent requests wait for the first response and replay it. This can be configured globally under `gateway.deduplication` or per application under `gateway.applications[].proxy.deduplication`. Application-level settings override global settings. If both `handler` and `deduplication` are configured, deduplication runs first and the winning request is delegated to the custom handler. See [Request Deduplication](./deduplication.md) for usage examples.
@@ -365,18 +392,34 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
 
     Examples:
 
-    ```json
-    {
-      "adapter": "memory"
-    }
+    ```ts config
+    import { createGatewayConfig } from '@platformatic/gateway'
+
+    export default createGatewayConfig({
+      gateway: {
+        deduplication: {
+          storage: {
+            adapter: 'memory'
+          }
+        }
+      }
+    })
     ```
 
-    ```json
-    {
-      "adapter": "valkey",
-      "url": "redis://127.0.0.1:6379",
-      "prefix": "my-app"
-    }
+    ```ts config
+    import { createGatewayConfig } from '@platformatic/gateway'
+
+    export default createGatewayConfig({
+      gateway: {
+        deduplication: {
+          storage: {
+            adapter: 'valkey',
+            url: 'redis://127.0.0.1:6379',
+            prefix: 'my-app'
+          }
+        }
+      }
+    })
     ```
 
   - **`methods`** (`array of string`, default: `['GET', 'HEAD']`) - Methods eligible for deduplication when `routes` is not specified.
@@ -391,22 +434,27 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
 
   Default key computation uses the configured application `origin`, request method, rewritten proxy URL including query string, and the configured request headers.
 
-  ```json
-  {
-    "gateway": {
-      "deduplication": {
-        "enabled": true,
-        "storage": {
-          "adapter": "valkey",
-          "url": "redis://127.0.0.1:6379",
-          "prefix": "my-app"
+  ```ts config
+  import { createGatewayConfig } from '@platformatic/gateway'
+
+  export default createGatewayConfig({
+    gateway: {
+      deduplication: {
+        enabled: true,
+        storage: {
+          adapter: 'valkey',
+          url: 'redis://127.0.0.1:6379',
+          prefix: 'my-app'
         },
-        "routes": [
-          { "method": "GET", "path": "/blog/*" }
+        routes: [
+          {
+            method: 'GET',
+            path: '/blog/*'
+          }
         ]
       }
     }
-  }
+  })
   ```
 
   A custom key module receives the request and the default key context. The function must be synchronous:
@@ -488,12 +536,18 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
 
 - **`passthroughContentTypes`** (`array`) - An array of content types that should be passed through without parsing to enable proxying. This is useful for handling multipart forms, binary data, or other content types that need to be forwarded to backend services without modification. Default is `['multipart/form-data', 'application/octet-stream']`.
 
-  ```json title="Example JSON object"
-  {
-    "gateway": {
-      "passthroughContentTypes": ["multipart/form-data", "application/octet-stream", "application/custom-binary"]
+  ```ts config
+  import { createGatewayConfig } from '@platformatic/gateway'
+
+  export default createGatewayConfig({
+    gateway: {
+      passthroughContentTypes: [
+        'multipart/form-data',
+        'application/octet-stream',
+        'application/custom-binary'
+      ]
     }
-  }
+  })
   ```
 
 ### OpenAPI
@@ -584,84 +638,77 @@ The OpenAPI configuration file is a JSON file that is used to customize the Open
 
   Composition of two remote applications:
 
-  ```json title="Example JSON object"
-  {
-    "gateway": {
-      "applications": [
+  ```ts config
+  import { createGatewayConfig } from '@platformatic/gateway'
+
+  export default createGatewayConfig({
+    gateway: {
+      applications: [
         {
-          "id": "auth-service",
-          "origin": "https://auth-service.com",
-          "openapi": {
-            "url": "/documentation/json",
-            "prefix": "auth"
+          id: 'auth-service',
+          origin: 'https://auth-service.com',
+          openapi: {
+            url: '/documentation/json',
+            prefix: 'auth'
           }
         },
         {
-          "id": "payment-service",
-          "origin": "https://payment-service.com",
-          "openapi": {
-            "file": "./schemas/payment-service.json"
+          id: 'payment-service',
+          origin: 'https://payment-service.com',
+          openapi: {
+            file: './schemas/payment-service.json'
           }
         }
       ],
-      "refreshTimeout": 1000
+      refreshTimeout: 1000
     }
-  }
+  })
   ```
 
   Composition of two local applications inside Platformatic Runtime:
 
-  ```json title="Example JSON object"
-  {
-    "gateway": {
-      "applications": [
+  ```ts config
+  import { createGatewayConfig } from '@platformatic/gateway'
+
+  export default createGatewayConfig({
+    gateway: {
+      applications: [
         {
-          "id": "auth-service",
-          "openapi": {
-            "url": "/documentation/json",
-            "prefix": "auth"
+          id: 'auth-service',
+          openapi: {
+            url: '/documentation/json',
+            prefix: 'auth'
           }
         },
         {
-          "id": "payment-service",
-          "openapi": {
-            "file": "./schemas/payment-service.json"
+          id: 'payment-service',
+          openapi: {
+            file: './schemas/payment-service.json'
           }
         }
       ],
-      "refreshTimeout": 1000
+      refreshTimeout: 1000
     }
-  }
+  })
   ```
 
 ### GraphQL
 
-- **`host`** (`string`) - application host; if not specified, the `application.origin` is used.
-- **`name`** (`string`) - name to identify the application. If not specified, the `application.origin` is used.
-- **`graphqlEndpoint`** (`string`) - The graphql endpoint path, the default value is the common `'/graphql'`.
-- **`composeEndpoint`** (`string`) - The endpoint to retrieve the introspection query from, default is `'/.well-known/graphql-composition'`. In case the endpoint is not available, a second call with introspection query will be sent to the `graphqlEndpoint`. Not used when `file` is set.
-- **`file`** (`string`) - A path to a file containing the GraphQL schema of the application, as SDL. Relative paths are resolved from the location of the configuration file. When set, the schema is read from the file instead of being fetched from the application, so the Gateway can start while the application is not reachable; queries are still sent to the application `host` and `graphqlEndpoint`. The file is read once when the Gateway starts, and it is not fetched again when the Gateway polls the applications for changes (see `refreshTimeout`). The Gateway does not start if the file can not be read or does not contain a valid GraphQL schema.
-- **`entities`** (`object`) - Configuration object for working with entities in this subgraph, the values are objects with the following schema:
-  - **`resolver`** (`object`) - The resolver to retrieve a list of objects - should return a list - and should accept as an arguments a list of primary keys or foreign keys.
-    - **`name`** (`string`, **required**) - The name of the resolver.
-    - **`argsAdapter (partialResults)`** (`function` or `string`) - The function invoked with a subset of the result of the initial query, where `partialResults` is an array of the parent node. It should return an object to be used as argument for `resolver` query. Can be a function or a [metaline](https://github.com/platformatic/metaline) string.
-      **Default:** if missing, the `defaultArgsAdapter` function will be used; if that is missing too, a [generic one](https://github.com/platformatic/graphql-composer/blob/main/lib/utils.js) will be used.
-    - **`partialResults`** (`function` or `string`) - The function to adapt the subset of the result to be passed to `argsAdapter` - usually is needed only on resolvers of `fkeys` and `many`. Can be a function or a [metaline](https://github.com/platformatic/metaline) string.
-  - **`pkey`** (`string`, **required**) - The primary key field to identify the entity.
-  - **`fkeys`** (`array of objects`) an array to describe the foreign keys of the entities, for example `fkeys: [{ type: 'Author', field: 'authorId' }]`.
-    - **`type`** (`string`, **required**) - The entity type the foreign key is referred to.
-    - **`field`** (`string`) - The foreign key field.
-    - **`as`** (`string`) - When using `addEntitiesResolvers`, it defines the name of the foreign entity as a field of the current one, as a single type.
-    - **`pkey`** (`string`) - The primary key of the foreign entity.
-    - **`subgraph`** (`string`) - The subgraph name of the foreign entity, where the resolver is located; if missing is intended the self.
-    - **`resolver`** (object) - The resolver definition to query the foreign entity, same structure as `entity.resolver`.
-  - **`many`** (`array of objects`) - Describe a 1-to-many relation - the reverse of the foreign key.
-    - **`type`** (`string`, **required**) - The entity type where the entity is a foreign key.
-    - **`fkey`** (`string`, **required**) - The foreign key field in the referred entity.
-    - **`as`** (`string`, **required**) - When using `addEntitiesResolvers`, it defines the name of the relation as a field of the current one, as a list.
-    - **`pkey`** (`string`) - The primary key of the referred entity.
-    - **`subgraph`** (`string`) - The subgraph name of the referred entity, where the resolver is located; if missing is intended the self.
-    - **`resolver`** (`object`, **required**) - The resolver definition to query the referred entity, same structure as `entity.resolver`.
+Gateway does not compose GraphQL schemas. To expose a GraphQL service through Gateway, configure it as a regular proxy application:
+
+```json
+{
+  "id": "graphql-service",
+  "proxy": {
+    "prefix": "/graphql",
+    "upstream": "http://graphql-service:3000"
+  }
+}
+```
+
+If you need schema composition, implement it in a user-owned application or plugin. The application is responsible for selecting the GraphQL server and composition libraries, loading the subgraph schemas, and registering the resulting `/graphql` endpoint. Gateway can then proxy requests to that endpoint using the standard `proxy` configuration. See the [Reproduce GraphQL Composition](../../guides/reproduce-graphql-composition.md) guide for a complete example.
+
+Configurations using the removed Gateway composition options, including `graphql`, `composeEndpoint`, `entities`, `defaultArgsAdapter`, and `addEntitiesResolvers`, are rejected during validation.
 
 Composition of a GraphQL application from its schema file, along with a GraphQL application whose schema is fetched from the application:
 
@@ -689,7 +736,7 @@ Composition of a GraphQL application from its schema file, along with a GraphQL 
 
 ## Configuration References
 
-### `telemetry`
+### `tracing`
 
 Telemetry involves the collection and analysis of data generated by the operations of applications. See our [telemetry documentation](../service/configuration.md#telemetry) for details on configuring telemetry for Platformatic Service.
 
@@ -699,7 +746,7 @@ The `watch` functionality helps in monitoring file changes and dynamically updat
 
 ## Setting and Using ENV placeholders
 
-Environment variable placeholders are used to securely inject runtime configurations. Learn how to [set](../service/configuration.md#setting-environment-variables) and [use](../service/configuration.md#environment-variable-placeholders) environment variable placeholders [documentation](../service/configuration.md).
+A configuration file reads its environment directly. Learn how to [set](../service/configuration.md#setting-environment-variables) and [read](../service/configuration.md#environment-variables) environment variables.
 
 ### PLT_ROOT
 

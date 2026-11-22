@@ -1,5 +1,6 @@
 import { deepStrictEqual, ok, rejects, strictEqual } from 'node:assert'
-import { rmSync, writeFileSync } from 'node:fs'
+import { once } from 'node:events'
+import { rmSync } from 'node:fs'
 import { writeFile } from 'node:fs/promises'
 import { createServer } from 'node:net'
 import { tmpdir } from 'node:os'
@@ -18,19 +19,32 @@ function getMainWorkers (workers) {
   return Object.entries(workers).filter(([id]) => id.startsWith('main:'))
 }
 
+// The URL of the (only) worker of the application, which keeps its port across replacements
+function getMainUrl (runtime) {
+  return Object.values(runtime.getUrls('main'))[0]
+}
+
 function count (events, name) {
   return events.filter(({ event }) => event === name).length
 }
 
-// The entrypoint of the fixture does not reuse its TCP port, so its worker is stopped before its
+// The application of the fixture does not reuse its TCP port, so its worker is stopped before its
 // replacement is started. The replacement fails to start for as long as the marker file exists.
-async function setup (t, restartOnError, configure) {
+// The port (and the number of workers) of the application are given to the fixture via the environment.
+async function setup (t, restartOnError, { workers = 1, portAssignment = 'shared' } = {}) {
   const marker = join(tmpdir(), `plt-fail-start-${process.pid}-${Date.now()}`)
-  process.env.PLT_TESTS_FAIL_START_MARKER = marker
+  const host = '127.0.0.1'
+  const basePort = await findAvailablePortRange({ host, size: workers })
+  const environment = {
+    PLT_TESTS_FAIL_START_MARKER: marker,
+    PLT_TESTS_REPLACE_PORT: String(basePort),
+    PLT_TESTS_REPLACE_PORT_ASSIGNMENT: portAssignment,
+    PLT_TESTS_REPLACE_WORKERS: String(workers)
+  }
+  Object.assign(process.env, environment)
 
   const context = {
     async transform (config, ...args) {
-      configure?.(config)
       config = await transform(config, ...args)
 
       if (typeof restartOnError !== 'undefined') {
@@ -42,11 +56,16 @@ async function setup (t, restartOnError, configure) {
   }
 
   const runtime = await createRuntime(fixture, null, context)
-  const url = await runtime.start()
+  await runtime.start()
+  const url = getMainUrl(runtime)
 
   t.after(async () => {
     rmSync(marker, { force: true })
-    delete process.env.PLT_TESTS_FAIL_START_MARKER
+
+    for (const key of Object.keys(environment)) {
+      delete process.env[key]
+    }
+
     await runtime.close()
   })
 
@@ -70,7 +89,7 @@ async function setup (t, restartOnError, configure) {
     })
   }
 
-  // The warnings of the runtime, as they are logged: the replacement announces each next attempt
+  // The warnings of the runtime, as they are logged: a start that fails announces the next attempt
   // with one, right before it waits.
   const warnings = []
   const warn = runtime.logger.warn.bind(runtime.logger)
@@ -80,14 +99,20 @@ async function setup (t, restartOnError, configure) {
     return warn(...args)
   }
 
-  return { runtime, url, marker, before, events, warnings }
+  return { runtime, url, host, basePort, marker, before, events, warnings }
 }
 
-test('a replacement that stops the old worker first starts another worker when the new one fails to start', async t => {
+/*
+  When the old worker was already stopped, the replacement that fails to start leaves its replica
+  without a worker. The restart reports that failure to its caller and the runtime refills the
+  replica in the background, like it does for a worker that crashed: each failed start is followed by
+  another attempt, up to the same number of attempts as a boot.
+*/
+test('a replacement that stops the old worker first refills the replica when the new one fails to start', async t => {
   const { runtime, url, marker, before, events, warnings } = await setup(t, 20)
   strictEqual(before.length, 1)
 
-  // The first two starts of the replacement fail, the third one succeeds
+  // The first two starts fail, the third one succeeds
   await writeFile(marker, '')
   runtime.on('application:worker:starting', () => {
     if (count(events, 'starting') === 3) {
@@ -95,7 +120,9 @@ test('a replacement that stops the old worker first starts another worker when t
     }
   })
 
-  await runtime.restartApplication('main')
+  const started = once(runtime, 'application:worker:started')
+  await rejects(runtime.restartApplication('main'), { message: failureMessage })
+  await started
 
   const after = getMainWorkers(await runtime.getWorkers())
   deepStrictEqual(
@@ -108,15 +135,14 @@ test('a replacement that stops the old worker first starts another worker when t
   strictEqual(count(events, 'init'), 3)
   strictEqual(count(events, 'starting'), 3)
   strictEqual(count(events, 'started'), 1)
-  // A replacement that recovers reports no failure
-  strictEqual(count(events, 'start:error'), 0)
+  // Every start that fails is reported, the last one is not a failure of the whole operation
+  strictEqual(count(events, 'start:error'), 2)
   strictEqual(count(events, 'start:failed'), 0)
-  strictEqual(count(events, 'application:restarted'), 1)
   // Each attempt uses a new worker
   strictEqual(new Set(events.filter(({ event }) => event === 'starting').map(({ worker }) => worker)).size, 3)
 
-  // The entrypoint is back on the port it had before the replacement
-  strictEqual(runtime.getUrl(), url)
+  // The application is back on the port it had before the replacement
+  strictEqual(getMainUrl(runtime), url)
   const response = await request(url)
   strictEqual(response.statusCode, 200)
   deepStrictEqual(await response.body.json(), { from: 'main' })
@@ -126,44 +152,36 @@ test('a replacement that stops the old worker first starts another worker when t
   strictEqual(injected.statusCode, 200)
 
   deepStrictEqual(
-    warnings.filter(m => m?.includes('to start a replacement')).map(m => m.slice(0, 82)),
-    [
-      'Attempt 1 of 5 to start a replacement for worker 0 of the application "main" again',
-      'Attempt 2 of 5 to start a replacement for worker 0 of the application "main" again'
-    ]
+    warnings.filter(m => m?.includes('to start the worker')).map(m => m.slice(0, 68)),
+    ['Attempt 1 of 5 to start the worker 2 of the application "main" again']
   )
   ok(!warnings.some(m => m?.includes('unexpectedly exited')), 'no worker should be reported as crashed')
 })
 
 test('a replacement that stops the old worker first keeps the port of the worker it replaces', async t => {
-  const host = '127.0.0.1'
-  const basePort = await findAvailablePortRange({ host, size: 2 })
-  const { runtime, marker, before, events } = await setup(t, 20, config => {
-    config.workers = 2
-    config.server = { hostname: host, port: basePort, portAssignment: 'perWorkerIncrement' }
+  const { runtime, host, basePort, marker, before, events } = await setup(t, 20, {
+    workers: 2,
+    portAssignment: 'perWorkerIncrement'
   })
   strictEqual(before.length, 2)
 
-  // The first start of the replacement of each worker fails
-  let failures = 0
+  // The first start of the replacement fails
+  await writeFile(marker, '')
   runtime.on('application:worker:starting', () => {
-    rmSync(marker, { force: true })
-
-    if (count(events, 'started') === failures && failures < 2) {
-      failures++
-      writeFileSync(marker, '')
+    if (count(events, 'starting') === 2) {
+      rmSync(marker, { force: true })
     }
   })
 
-  await runtime.restartApplication('main')
+  const started = once(runtime, 'application:worker:started')
+  await rejects(runtime.restartApplication('main'), { message: failureMessage })
+  await started
 
-  strictEqual(count(events, 'init'), 4)
-  strictEqual(count(events, 'started'), 2)
-  strictEqual(count(events, 'start:error'), 0)
   const after = getMainWorkers(await runtime.getWorkers())
   deepStrictEqual(after.map(([, worker]) => worker.status), ['started', 'started'])
+  strictEqual(count(events, 'start:error'), 1)
 
-  // Each worker listens on the port of the worker it replaced
+  // The worker that was replaced has the port it had, and the other one is untouched
   for (const port of [basePort, basePort + 1]) {
     const response = await request(`http://${host}:${port}`)
     strictEqual(response.statusCode, 200)
@@ -175,15 +193,17 @@ test('a replacement that stops the old worker first gives up after as many attem
   const { runtime, marker, events } = await setup(t, 20)
   await writeFile(marker, '')
 
+  const failed = once(runtime, 'application:worker:start:failed')
   await rejects(runtime.restartApplication('main'), { message: failureMessage })
+  await failed
 
-  // One start plus five attempts, reported as one failure: the one of the last worker
-  strictEqual(count(events, 'init'), 6)
-  strictEqual(count(events, 'starting'), 6)
-  strictEqual(count(events, 'start:error'), 1)
-  strictEqual(events.at(-1).event, 'start:error')
+  // The start of the replacement plus one start and five attempts of the refill, reported as one failure
+  strictEqual(count(events, 'init'), 7)
+  strictEqual(count(events, 'starting'), 7)
+  strictEqual(count(events, 'start:error'), 7)
+  strictEqual(count(events, 'start:failed'), 1)
+  strictEqual(events.at(-1).event, 'start:failed')
   strictEqual(events.at(-1).worker, events.findLast(({ event }) => event === 'starting').worker)
-  strictEqual(count(events, 'start:failed'), 0)
   strictEqual(count(events, 'started'), 0)
   strictEqual(count(events, 'application:restarted'), 0)
   deepStrictEqual(getMainWorkers(await runtime.getWorkers()), [])
@@ -206,7 +226,7 @@ for (const restartOnError of [false, 0]) {
 test('a replacement that stops the old worker first does not retry a worker that could not bind its port', async t => {
   const { runtime, url, events } = await setup(t, 20)
 
-  // Take the port of the entrypoint as soon as its old worker has released it
+  // Take the port of the application as soon as its old worker has released it
   const server = createServer()
   t.after(() => new Promise(resolve => server.close(resolve)))
   const listening = new Promise((resolve, reject) => {
@@ -225,9 +245,10 @@ test('a replacement that stops the old worker first does not retry a worker that
 
   ok(outcome.startsWith('rejected: '), outcome)
   ok(outcome.includes('EADDRINUSE') || outcome.includes('address already in use'), outcome)
-  strictEqual(count(events, 'init'), 1)
   strictEqual(count(events, 'started'), 0)
-  strictEqual(count(events, 'start:error'), 0)
+  // Neither the replacement nor the refill that follows it retries after that error
+  strictEqual(count(events, 'start:failed'), 0)
+  ok(count(events, 'starting') <= 2, `unexpected number of starts: ${count(events, 'starting')}`)
 })
 
 test('a replacement that stops the old worker first does not retry when a listener throws before the worker is asked to start', async t => {
@@ -241,59 +262,31 @@ test('a replacement that stops the old worker first does not retry when a listen
 
   await rejects(runtime.restartApplication('main'), { message: 'The listener failed on purpose' })
 
-  strictEqual(count(events, 'init'), 1)
-  strictEqual(count(events, 'start:error'), 0)
+  strictEqual(count(events, 'start:failed'), 0)
   strictEqual(count(events, 'started'), 0)
-  deepStrictEqual(getMainWorkers(await runtime.getWorkers()), [])
-})
-
-test('a replacement that stops the old worker first reports the failed start when a later attempt ends on another error', async t => {
-  const { runtime, marker, events } = await setup(t, 20)
-  await writeFile(marker, '')
-
-  // The first start fails. The second worker never starts: a listener throws before it is asked to.
-  runtime.on('application:worker:starting', () => {
-    if (count(events, 'starting') === 2) {
-      throw new Error('The listener failed on purpose')
-    }
-  })
-
-  await rejects(runtime.restartApplication('main'), { message: 'The listener failed on purpose' })
-
-  strictEqual(count(events, 'init'), 2)
-  strictEqual(count(events, 'started'), 0)
-  deepStrictEqual(
-    events.filter(({ event }) => event === 'start:error'),
-    [{ event: 'start:error', worker: events.find(({ event }) => event === 'starting').worker }]
-  )
-  deepStrictEqual(getMainWorkers(await runtime.getWorkers()), [])
 })
 
 test('a replacement that stops the old worker first starts no other worker once the runtime is closed', async t => {
   const { runtime, marker, events } = await setup(t, 1000)
   await writeFile(marker, '')
 
-  // Close the runtime as soon as the replacement has announced its next attempt, which is when
-  // its wait begins, then let a start succeed
+  // Close the runtime as soon as the refill has announced its next attempt, which is when its wait
+  // begins, then let a start succeed
   const announced = new Promise(resolve => {
     runtime.on('test:warning', message => {
-      if (message?.startsWith('Attempt 1 of 5 to start a replacement')) {
+      if (message?.startsWith('Attempt 1 of 5 to start the worker')) {
         resolve()
       }
     })
   })
-  const restart = runtime.restartApplication('main')
 
-  // A restart that ends before the announcement fails the test here
-  await Promise.race([announced, restart])
+  await rejects(runtime.restartApplication('main'), { message: failureMessage })
+  await announced
   const closed = runtime.close()
   rmSync(marker, { force: true })
-
-  await rejects(restart, { message: failureMessage })
   await closed
 
-  strictEqual(count(events, 'init'), 1)
   strictEqual(count(events, 'started'), 0)
-  strictEqual(count(events, 'start:error'), 1)
   strictEqual(count(events, 'application:restarted'), 0)
+  deepStrictEqual(getMainWorkers(await runtime.getWorkers()), [])
 })

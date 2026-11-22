@@ -1,267 +1,133 @@
-# Scheduled Jobs (Cron) in Platformatic Watt
+# Scheduled tasks in Watt 4
 
-Watt includes a built-in scheduler for running automated tasks at specified intervals using cron expressions.
+Watt's scheduler is **in-memory**. State does not persist across restarts and missed
+ticks are not a durable queue. Design idempotent handlers: retries and coordinator
+ownership changes provide at-least-once execution, not exactly once.
 
----
+## Application-defined Node tasks
 
-## Basic Configuration
+Export schedules and named handlers from the Node entrypoint's top level:
 
-Add a `scheduler` array at the runtime root, or under `runtime` in a standalone
-capability's `watt.json`. Jobs run in each runtime replica; use deliberate ownership
-or idempotent handlers to prevent duplicate effects across replicas.
-
-```json
-{
-  "scheduler": [
-    {
-      "name": "my-scheduled-job",
-      "cron": "*/5 * * * *",
-      "callbackUrl": "http://localhost:3042/api/task",
-      "method": "GET"
-    }
-  ]
+```js
+export const scheduledTasks = {
+  '0 0 3 * * *': ['cleanup'],
+  '0 */15 * * * *': ['syncInventory']
 }
-```
 
----
-
-## Job Configuration Options
-
-| Option | Type | Required | Default | Description |
-|--------|------|----------|---------|-------------|
-| `name` | String | Yes | - | Unique job identifier |
-| `cron` | String | Yes | - | Cron expression for scheduling |
-| `callbackUrl` | String | Yes | - | URL to invoke when job runs |
-| `enabled` | Boolean | No | `true` | Set `false` to disable job |
-| `method` | String | No | `GET` | HTTP method (GET, POST, PUT, DELETE) |
-| `headers` | Object | No | - | Custom HTTP headers |
-| `body` | String/Object | No | - | Request payload for POST/PUT |
-| `maxRetries` | Number | No | `3` | Retry attempts on failure |
-
----
-
-## Cron Expression Format
-
-Standard cron format with optional seconds field:
-
-```
-┌────────────── second (0-59) [optional]
-│ ┌──────────── minute (0-59)
-│ │ ┌────────── hour (0-23)
-│ │ │ ┌──────── day of month (1-31)
-│ │ │ │ ┌────── month (1-12)
-│ │ │ │ │ ┌──── day of week (0-7, 0 and 7 = Sunday)
-│ │ │ │ │ │
-* * * * * *
-```
-
-### Common Examples
-
-| Expression | Description |
-|------------|-------------|
-| `*/1 * * * * *` | Every second |
-| `0 */5 * * * *` | Every 5 minutes |
-| `0 0 * * * *` | Every hour |
-| `0 */30 * * * *` | Every 30 minutes |
-| `0 0 12 * * *` | Daily at noon |
-| `0 0 0 * * *` | Daily at midnight |
-| `0 0 0 * * 1` | Every Monday at midnight |
-| `0 0 9-17 * * 1-5` | Hourly 9am-5pm, weekdays |
-| `0 0 0 1 * *` | First day of every month |
-
-Use [crontab.guru](https://crontab.guru/) for help with expressions.
-
----
-
-## Examples
-
-### Simple Health Check
-
-```json
-{
-  "scheduler": [
-    {
-      "name": "health-check",
-      "cron": "*/5 * * * *",
-      "callbackUrl": "http://api.plt.local/health",
-      "method": "GET"
-    }
-  ]
-}
-```
-
-### Send Notifications
-
-```json
-{
-  "scheduler": [
-    {
-      "name": "send-daily-report",
-      "cron": "0 0 9 * * *",
-      "callbackUrl": "http://notification.plt.local/send-report",
-      "method": "POST",
-      "headers": {
-        "Content-Type": "application/json"
-      },
-      "body": {
-        "type": "daily-report",
-        "recipients": ["team@example.com"]
-      }
-    }
-  ]
-}
-```
-
-### Database Cleanup
-
-```json
-{
-  "scheduler": [
-    {
-      "name": "cleanup-old-sessions",
-      "cron": "0 0 3 * * *",
-      "callbackUrl": "http://db-api.plt.local/cleanup/sessions",
-      "method": "DELETE",
-      "headers": {
-        "Authorization": "Bearer {INTERNAL_API_KEY}"
-      },
-      "maxRetries": 5
-    }
-  ]
-}
-```
-
-### Multiple Jobs
-
-```json
-{
-  "scheduler": [
-    {
-      "name": "sync-inventory",
-      "cron": "0 */15 * * * *",
-      "callbackUrl": "http://inventory.plt.local/sync",
-      "method": "POST"
-    },
-    {
-      "name": "generate-sitemap",
-      "cron": "0 0 2 * * *",
-      "callbackUrl": "http://seo.plt.local/generate-sitemap",
-      "method": "POST"
-    },
-    {
-      "name": "expire-tokens",
-      "cron": "0 */10 * * * *",
-      "callbackUrl": "http://auth.plt.local/expire-tokens",
-      "method": "POST"
-    }
-  ]
-}
-```
-
-### Disabled Job (for maintenance)
-
-```json
-{
-  "scheduler": [
-    {
-      "name": "heavy-processing",
-      "cron": "0 0 4 * * *",
-      "callbackUrl": "http://worker.plt.local/process",
-      "method": "POST",
-      "enabled": false
-    }
-  ]
-}
-```
-
----
-
-## Inter-Service Communication
-
-Use Watt's internal mesh network to call other services:
-
-```json
-{
-  "scheduler": [
-    {
-      "name": "trigger-api",
-      "cron": "0 */5 * * * *",
-      "callbackUrl": "http://api.plt.local/cron/task",
-      "method": "POST"
-    }
-  ]
-}
-```
-
-Internal hostnames follow the pattern: `http://{service-id}.plt.local`
-
----
-
-## Handling Scheduled Requests
-
-Create an endpoint in your service to handle the scheduled call:
-
-### Express
-
-```javascript
-app.post('/cron/daily-task', async (req, res) => {
-  try {
-    await performDailyTask()
-    res.json({ success: true })
-  } catch (error) {
-    console.error('Daily task failed:', error)
-    res.status(500).json({ error: error.message })
+export const tasks = {
+  async cleanup ({ scheduledTime }) {
+    // Replace this callback with the application's idempotent cleanup operation.
+    await performCleanup(scheduledTime)
+  },
+  async syncInventory ({ scheduledTime, app }) {
+    await app.syncInventory(scheduledTime)
   }
+}
+```
+
+These are fragments to merge into the existing entrypoint; supply the real operations
+and supported `app` returned by its factory. Task groups run concurrently. A failing
+handler rejects so the scheduler can apply its retry policy; do not swallow failures.
+
+## Migrating callback jobs
+
+Older guidance configured a root `scheduler` array with `callbackUrl`, `headers`, and
+`body`. The examined Watt 4 runtime schema does not expose that array. Do not emit it
+as a valid configuration simply because an older example or a generic overview says so.
+Inspect the installed release's schema when preserving an existing scheduler integration.
+
+For an HTTP task, move the call into a named application handler:
+
+```js
+import { request } from 'undici'
+
+export const scheduledTasks = { '0 0 9 * * *': ['dailyReport'] }
+
+export const tasks = {
+  async dailyReport () {
+    const response = await request('http://notification.plt.local/send-report', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ type: 'daily-report' })
+    })
+    await response.body.dump()
+
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      const error = new Error('The daily report endpoint rejected the scheduled request.')
+      error.code = 'APP_SCHEDULED_REQUEST_FAILED'
+      throw error
+    }
+  }
+}
+```
+
+Use the app's existing coded-error convention rather than copying the example code
+into a package with another prefix. Install/use a compatible `undici` only when authorized.
+Preserve internal auth from environment, request body/method, timeout, and retry semantics.
+Keep sensitive job routes protected even when normally reached internally.
+
+## Nuxt and Nitro tasks
+
+Merge `modules: ['@platformatic/nuxt/scheduler']` into Nuxt configuration to hand
+supported Nitro task groups to Watt. The module disables Nitro's local cron runner;
+Watt invokes jobs through internal communication, not added HTTP control routes.
+
+Standalone Nitro configuration can use:
+
+```js
+import { defineNitroConfig } from 'nitropack/config'
+
+export default defineNitroConfig({
+  experimental: { tasks: true },
+  modules: ['@platformatic/nitro/scheduler'],
+  scheduledTasks: { '0 0 1 1 *': ['smoke'] }
 })
 ```
 
-### Fastify
+Define actual task files in Nitro's `tasks/`. The module writes a production scheduler
+manifest; ship complete output. Verify installed Nitro module/task support before modifying it.
 
-```javascript
-fastify.post('/cron/daily-task', async (request, reply) => {
-  await performDailyTask()
-  return { success: true }
-})
+## Cron and retries
+
+Cron supports five fields plus optional leading seconds. The examined scheduler uses UTC.
+Examples:
+
+| Expression | Schedule |
+| --- | --- |
+| `*/1 * * * * *` | Every second |
+| `0 */5 * * * *` | Every five minutes |
+| `0 0 * * * *` | Hourly |
+| `0 0 12 * * *` | Daily noon |
+| `0 0 0 * * 1` | Monday midnight |
+| `0 0 9-17 * * 1-5` | Weekday business hours |
+| `0 0 0 1 * *` | First of month |
+
+Inspect installed retry behavior. In the examined implementation `maxRetries` defaults
+to 3 and bounds **total attempts**, not three extra retries. Do not invent a root option
+to configure it when the task integration does not expose one. Test failures and timing.
+
+## Coordination and management
+
+```sh
+wattpm scheduler [runtime]
+wattpm scheduler:pause [runtime] <name>
+wattpm scheduler:resume [runtime] <name>
+wattpm scheduler:run [runtime] <name>
 ```
 
----
+Use returned job names, not a guessed task-group identifier. Equivalent protected
+management operations are GET `/api/v1/scheduler` and POST
+`/api/v1/scheduler/:name/{pause,resume,run}`. Pause stops future local triggers, not an
+execution already running. An external coordinator should pause before taking ownership
+and resume when handing it back. In replicated deployments, coordinate all runtimes or
+use application-level deduplication; local pauses alone are not a global lock.
 
-## Error Handling
+## Best practices
 
-- Jobs retry up to `maxRetries` times on failure (default: 3)
-- Non-2xx responses are treated as failures
-- Network errors trigger retries
-- Logs show job execution status
+- Use descriptive names, bounded execution, idempotency keys, and durable storage when needed.
+- Start with infrequent schedules; log outcomes without secrets and monitor latency/failures.
+- Preserve authentication and stable application error codes; avoid leaking internal errors.
+- Permission is required before pausing/resuming/running jobs or triggering real side effects.
 
----
-
-## Important Notes
-
-1. **In-memory only**: Scheduler state does not persist between restarts. Missed jobs during downtime are not recovered.
-
-2. **Single instance**: In clustered deployments, ensure only one instance runs scheduled jobs to avoid duplicates.
-
-3. **Idempotency**: Design job handlers to be idempotent (safe to run multiple times).
-
-4. **Timeouts**: For long-running work, acknowledge only after durable enqueueing.
-   Fire-and-forget work can be lost when the application stops.
-
-5. **Monitoring**: Log job completions and failures for observability.
-
----
-
-## Best Practices
-
-1. **Use descriptive names**: Make job names clear and searchable
-2. **Start with longer intervals**: Test with less frequent runs first
-3. **Add authentication**: Use headers for internal API keys
-4. **Handle failures gracefully**: Return proper error codes
-5. **Log everything**: Track when jobs run and their results
-6. **Use internal URLs**: Prefer `*.plt.local` for inter-service calls
-
----
-
-## Resources
-
-- [Platformatic Scheduler Guide](https://docs.platformatic.dev/docs/guides/scheduler)
-- [Crontab Guru](https://crontab.guru/) - Cron expression helper
+See [scheduler guide](https://docs.platformatic.dev/docs/guides/scheduler) and
+[Node scheduled tasks](https://docs.platformatic.dev/docs/reference/node/overview#scheduled-tasks).

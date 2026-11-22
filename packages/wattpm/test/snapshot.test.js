@@ -7,14 +7,14 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 import split2 from 'split2'
 import { prepareRuntime } from '../../basic/test/helper.js'
-import { cliPath, executeCommand, wattpm } from './helper.js'
+import { cliPath, executeCommand, parseRuntimeLog, wattpm } from './helper.js'
 
 function wattpmInDir (cwd, ...args) {
   return executeCommand(process.argv[0], cliPath, ...args, { cwd })
 }
 
 test('heap-snapshot - should take a heap snapshot of a specific application', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
   const tempDir = await mkdtemp(join(tmpdir(), 'heap-snapshot-test-'))
 
   t.after(async () => {
@@ -26,7 +26,11 @@ test('heap-snapshot - should take a heap snapshot of a specific application', as
   const startProcess = wattpm('start', rootDir)
 
   for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
-    const parsed = JSON.parse(log.toString())
+    const parsed = parseRuntimeLog(log)
+
+    if (!parsed) {
+      continue
+    }
 
     if (parsed.msg.startsWith('Platformatic is now listening')) {
       break
@@ -55,7 +59,7 @@ test('heap-snapshot - should take a heap snapshot of a specific application', as
 })
 
 test('heap-snapshot - should take heap snapshots of all applications when no application specified', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
   const tempDir = await mkdtemp(join(tmpdir(), 'heap-snapshot-test-'))
 
   t.after(async () => {
@@ -67,7 +71,11 @@ test('heap-snapshot - should take heap snapshots of all applications when no app
   const startProcess = wattpm('start', rootDir)
 
   for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
-    const parsed = JSON.parse(log.toString())
+    const parsed = parseRuntimeLog(log)
+
+    if (!parsed) {
+      continue
+    }
 
     if (parsed.msg.startsWith('Platformatic is now listening')) {
       break
@@ -89,7 +97,7 @@ test('heap-snapshot - should take heap snapshots of all applications when no app
 })
 
 test('heap-snapshot - should save to custom directory with --dir option', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
   const tempDir = await mkdtemp(join(tmpdir(), 'heap-snapshot-test-'))
 
   t.after(async () => {
@@ -101,7 +109,11 @@ test('heap-snapshot - should save to custom directory with --dir option', async 
   const startProcess = wattpm('start', rootDir)
 
   for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
-    const parsed = JSON.parse(log.toString())
+    const parsed = parseRuntimeLog(log)
+
+    if (!parsed) {
+      continue
+    }
 
     if (parsed.msg.startsWith('Platformatic is now listening')) {
       break
@@ -124,7 +136,7 @@ test('heap-snapshot - should save to custom directory with --dir option', async 
 })
 
 test('heap-snapshot - should fail with non-existent application', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
 
   t.after(async () => {
     startProcess.kill('SIGINT')
@@ -134,7 +146,11 @@ test('heap-snapshot - should fail with non-existent application', async t => {
   const startProcess = wattpm('start', rootDir)
 
   for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
-    const parsed = JSON.parse(log.toString())
+    const parsed = parseRuntimeLog(log)
+
+    if (!parsed) {
+      continue
+    }
 
     if (parsed.msg.startsWith('Platformatic is now listening')) {
       break
@@ -148,7 +164,7 @@ test('heap-snapshot - should fail with non-existent application', async t => {
 })
 
 test('heap-snapshot - should fail with non-existent worker', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
 
   t.after(async () => {
     startProcess.kill('SIGINT')
@@ -158,7 +174,11 @@ test('heap-snapshot - should fail with non-existent worker', async t => {
   const startProcess = wattpm('start', rootDir)
 
   for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
-    const parsed = JSON.parse(log.toString())
+    const parsed = parseRuntimeLog(log)
+
+    if (!parsed) {
+      continue
+    }
 
     if (parsed.msg.startsWith('Platformatic is now listening')) {
       break
@@ -176,7 +196,18 @@ test('heap-snapshot - should fail with non-existent worker', async t => {
 })
 
 test('heap-snapshot - should fail with non-existent runtime', async t => {
-  const snapshotProcess = await wattpm('heap-snapshot', '999999').catch(e => e)
+  /*
+    In an isolated working directory. Every runtime a sibling test starts reports the directory it
+    was spawned in -- the package directory, shared by all of them, because the test helper does not
+    change it -- and getMatchingRuntime falls back to "any runtime whose cwd is the current one" when
+    the id matches nothing. Running here from the shared directory let a sibling runtime that had not
+    finished shutting down be picked up in place of the "999999" that matches none, so the command
+    snapshotted a dying runtime and failed with its error instead of the clean "not found".
+  */
+  const isolated = await mkdtemp(join(tmpdir(), 'plt-snapshot-none-'))
+  t.after(() => safeRemove(isolated))
+
+  const snapshotProcess = await wattpmInDir(isolated, 'heap-snapshot', '999999').catch(e => e)
 
   strictEqual(snapshotProcess.exitCode, 1, 'Should exit with code 1')
   ok(

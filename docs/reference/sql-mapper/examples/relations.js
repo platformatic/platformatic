@@ -18,16 +18,14 @@ async function main() {
   
   const newCategory = await categoryEntity.insert({
     fields: ['id', 'name'],
-    inputs: [{ name: 'fiction' }]
+    input: { name: 'fiction' }
   })
   {
     const res = await pageEntity.insert({
       fields: ['id', 'name'],
-      inputs: [
-        {
-          title: 'A fiction', bodyContent: 'This is our first fiction', category_id: newCategory[0].id
-        }
-      ]
+      input: {
+        title: 'A fiction', bodyContent: 'This is our first fiction', category_id: newCategory.id
+      }
     })
     console.log(res)
   }

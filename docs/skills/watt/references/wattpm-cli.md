@@ -1,41 +1,55 @@
-# Watt 3 CLI
+# Watt 4 CLI reference
 
-Use the project's local installation consistently. These examples assume that
-`wattpm` resolves to that installation; use its explicit binary path when necessary.
-Do not fall back to a global binary or an implicit `npx` download.
+Use the installed version's `wattpm help` / `wattpm help <command>` for exact flags.
+Prefer the existing local binary/package scripts; `npx` can download and execute packages
+and is not a read-only installation check. Preserve package manager and major versions.
+All installs, startup, mutations, profiling, remote fetching, and deployments need authorization.
 
-## Bundled instructions
+## Scaffolding and integration
 
-Available from 3.74.0:
+Watt 4 removes `create-wattpm`, `create-platformatic`, `wattpm create`/`init`/`add`,
+and import generators/commands. Use [scaffolding](scaffolding.md) and
+[integration](integration.md) to write configuration and files directly. Runtime
+`applications:add`/`remove` are not project generators.
 
-```sh
-wattpm skill
-wattpm skill references/frameworks/nextjs.md
-wattpm help skill
-```
-
-The command prints release-matched Markdown verbatim and works offline without a
-project configuration. Paths are relative to the bundle root. Resolve Markdown links
-relative to the document containing them, not the shell working directory.
-
-Invalid paths, non-Markdown targets, and escaping symlinks fail with
-`PLT_INVALID_SKILL_FILE`. Missing documents fail with `PLT_SKILL_FILE_NOT_FOUND`.
-The CLI exits unsuccessfully for these errors or extra positional arguments.
-
-## Help and lifecycle
+## Development, build, and production
 
 ```sh
-wattpm help
-wattpm help start
-wattpm --version
 wattpm dev
 wattpm build
 wattpm start
+wattpm dev ./my-project --config watt.config.mjs
+wattpm start --env .env.prod
 ```
 
-Check help for the installed release's config, environment, and inspector options.
-Build before production startup. Preserve original framework scripts when introducing
-Watt scripts so a custom build does not recursively invoke `wattpm build`.
+These commands use a project root and support explicit config/env selection where documented.
+Recognized config names: `.ts`, `.mts`, `.cts`, `.js`, `.mjs`, `.cjs` under `watt.config`.
+Keep one per directory. A command in an app's directory can boot that app standalone,
+not its parent workspace. Use an explicit root config when intending the full project.
+Recognized applications may use inferred zero-config startup.
+
+Dynamic config evaluation can differ by `command` (`dev`, `build`, `start`, `exec`),
+`mode`, and production context. Importing configuration executes code; do not evaluate
+untrusted modules just to inspect them. Build before production startup. Check installed
+help for `--mode`, `--inspect`, and env-file merging behavior.
+
+## Dependency and remote utilities
+
+These operations belong to **`wattpm-utils`**, not core Watt commands:
+
+| Command | Purpose and safety |
+| --- | --- |
+| `wattpm-utils install` | Install project/application dependencies with the existing manager; inspect production/manager flags. |
+| `wattpm-utils update` | Update capability/runtime dependencies only in authorized ranges; do not bypass constraints with `--force` casually. |
+| `wattpm-utils resolve --for start` | Fetch declared Git/npm apps and normally install; use `--skip-dependencies` if install is not authorized. |
+| `wattpm-utils migrate` | Convert Watt 3 configuration; deletes validated legacy files and needs explicit migration authorization. |
+
+`resolve --for dev`, `build`, or `all` chooses evaluation contexts. Remote projects must
+already have compatible Watt 4 config/dependencies. Avoid password CLI flags, credentials
+in URLs, and config/`.env` rewrites merely to record resolved paths. Read lifecycle scripts.
+See [migration](migration-v4.md) for clean/recoverable state, manifest/resume, and refusal checks.
+
+## Runtime and application management
 
 ```sh
 wattpm ps
@@ -45,58 +59,92 @@ wattpm restart my-app
 wattpm reload my-app
 ```
 
-Use runtime and application IDs returned by discovery. Restart/reload have different
-scope; inspect help and the configuration change before choosing either operation.
+Use runtime PID/name and actual application IDs. `restart` refreshes applications;
+`reload` can pick up main config changes. Inspect release help for the exact lifecycle.
+Do not stop a process or reload production without permission.
 
-## Existing scaffolding and dependency workflows
+`applications:add`/`applications:remove` change a running runtime. Inspect accepted
+paths/IDs and `--save` behavior before persisting configuration; dynamic modules must not
+be JSON-round-tripped or overwritten. Distinguish a live change from adding source/workspaces.
 
-Watt 3 retains `create`, `init`, and `add`. These are distinct from runtime
-`applications:add` / `applications:remove`, which manage applications in a running instance.
+## Logs, environment, metrics, and REPL
 
 ```sh
-wattpm help create
-wattpm create
-wattpm init
-wattpm add
+wattpm logs my-app
+wattpm logs my-app api
+wattpm env my-app api --table
+wattpm metrics my-app
+wattpm repl my-app api
 ```
 
-Use generators only when requested and preserve existing files. Avoid `--latest` when
-the goal is to stay on major 3. See [scaffolding](scaffolding.md) for direct file creation.
+Inspect help for metrics/REPL options before use. Environment output and REPL/config
+objects can contain secrets. Redact before reporting; REPL evaluation is not read-only.
+Do not recommend removed `wattpm config` or dump exported configuration as a status check.
 
-Import, resolve, install, update, and patch-config workflows remain available through
-the v3 runtime/application command integration. They can change files, checkouts, and
-dependencies. Inspect their help in the target project before execution; do not use
-forced updates to bypass version constraints during routine v3 maintenance.
-
-## Diagnostics
+## Endpoint injection
 
 ```sh
-wattpm logs my-app api
 wattpm inject my-app api --path /health
 wattpm inject my-app api --method POST --path /users \
   --header 'Content-Type: application/json' --data '{"name":"Alice"}'
-wattpm metrics my-app
+wattpm inject my-app api --method POST --path /upload \
+  --data-file payload.json --output response.json
+wattpm inject my-app api --path /health --full-output
+```
+
+Common flags: `--method` (`-m`), `--path` (`-p`), repeatable `--header` (`-H`), `--data`
+(`-d`), `--data-file` (`-D`), `--output` (`-o`), `--full-output` (`-f`). Select an app
+explicitly when a runtime has multiple applications; there is no default runtime entrypoint.
+Requests can have real side effects and output can contain secrets; obtain permission.
+
+## Scheduler
+
+```sh
+wattpm scheduler my-app
+wattpm scheduler:pause my-app <name>
+wattpm scheduler:resume my-app <name>
+wattpm scheduler:run my-app <name>
+```
+
+Use returned job names. Pause does not cancel an in-progress execution. See
+[scheduler](scheduler.md) for application-defined tasks, cron, retries, and coordination.
+
+## Profiling
+
+```sh
 wattpm pprof start my-app api
 wattpm pprof stop my-app api
 wattpm heap-snapshot my-app api
 ```
 
-Only use routes known to exist. `env` and `config` expose runtime information that may
-contain secrets; inspect it locally and redact values in reports. `repl` evaluates code
-in the running application, so it needs the same care as executing project code.
+Request permission, select the correct IDs/workload, keep the window short, and stop
+collection. Inspect returned paths. Heap snapshots are expensive and may contain secrets.
+Read [performance](performance.md) before Flame rendering or memory diagnostics.
 
-## Scheduling and administration
+## Configuration management
+
+There is no Watt 4 CLI `patch-config` command. Edit configuration source minimally,
+preserving expressions/functions/comments. Programmatic integration tooling can use
+the documented `runtime.setApplicationConfigPatch()` for live application overrides;
+that is not permission to rewrite persistent configuration or a general scaffolding tool.
+
+## Admin and skill documentation
 
 ```sh
-wattpm scheduler my-app
-wattpm scheduler:pause my-app job-name
-wattpm scheduler:resume my-app job-name
-wattpm scheduler:run my-app job-name
 wattpm admin
+wattpm skill
+wattpm skill references/scaffolding.md
+wattpm --version
+wattpm help inject
 ```
 
-Confirm scheduler argument syntax with help and remember that manually running a job
-can modify external state. The admin command can invoke an external tool; it is not
-needed to read bundled skills.
+Admin UI may download/start external tooling; require permission and compatible versions.
+Keep admin/control endpoints private. `wattpm skill [FILE]` reads the release-matched
+skill and all its Markdown references from the installed package, offline. Use the same
+project-local installation for every read. Resolve relative links against the current
+document and pass their normalized bundle-relative paths to the CLI.
 
-See [operations](operations.md), [scheduler](scheduler.md), and [performance](performance.md).
+## Documentation
+
+- [Watt CLI](https://docs.platformatic.dev/docs/reference/wattpm/cli-commands)
+- [Configuration patch API](https://docs.platformatic.dev/docs/reference/runtime/programmatic#runtimesetapplicationconfigpatchid-ops)

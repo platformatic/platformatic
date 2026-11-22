@@ -1,6 +1,6 @@
 import { cp, mkdir, rm } from 'node:fs/promises'
 
-// Bundle release-matched documentation for offline use, removing stale references.
+// Bundle the documentation source at build time; published CLI use is entirely offline.
 const target = new URL('../skills/', import.meta.url)
 await mkdir(target, { recursive: true })
 await rm(new URL('watt/', target), { recursive: true, force: true })

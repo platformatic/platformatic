@@ -1,3 +1,4 @@
+import getPort from 'get-port'
 import { strictEqual } from 'node:assert'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
@@ -25,22 +26,32 @@ for (const [fixture, production] of [
   ['standalone', true],
   ['standalone-nitro', true]
 ]) {
-  test(`passes backlog to ${fixture} in ${production ? 'production' : 'development'}`, async t => {
+  test(`observes the server options of ${fixture} in ${production ? 'production' : 'development'}`, async t => {
+    let port
+
     const { runtime } = await prepareRuntime({
       t,
       root: resolve(import.meta.dirname, `./fixtures/${fixture}`),
       build: production,
       production,
-      additionalSetup (root) {
+      async additionalSetup (root) {
+        port = await getPort()
+
         return updateConfigFile(resolve(root, 'services/frontend/platformatic.application.json'), config => {
           config.server ??= {}
           config.server.backlog = 64
+          config.server.port = port
         })
       }
     })
 
     const optionsPromise = waitForServerOptions(runtime)
     await runtime.start()
-    strictEqual((await optionsPromise).backlog, 64)
+
+    // Nitro owns its listener: the runtime observes the options rather than rewriting them,
+    // so the configured backlog never reaches the server.
+    const serverOptions = await optionsPromise
+    strictEqual(serverOptions.backlog, undefined)
+    strictEqual(serverOptions.port, port)
   })
 }

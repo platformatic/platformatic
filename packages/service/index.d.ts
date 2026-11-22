@@ -1,6 +1,5 @@
-import { BaseCapability, BaseContext, BaseOptions } from '@platformatic/basic'
+import { ApplicationDefinition, BaseCapability, BaseContext, BaseOptions, CapabilityFactoryOptions, ConfigContext, DeferredApplicationDefinition } from '@platformatic/basic'
 import { Configuration, ConfigurationOptions } from '@platformatic/foundation'
-import { BaseGenerator } from '@platformatic/generators'
 import { JSONSchemaType } from 'ajv'
 import { FastifyInstance } from 'fastify'
 import type { PlatformaticServiceConfig } from './config.d.ts'
@@ -41,16 +40,9 @@ export declare function create (
   context?: ConfigurationOptions
 ): Promise<ServiceCapability>
 
-export declare const skipTelemetryHooks: boolean
+export declare const skipTracingHooks: boolean
 
 export declare function platformaticService (app: FastifyInstance, capability: ServiceCapability): Promise<void>
-
-export declare class Generator extends BaseGenerator {}
-export declare function applyTestHelperCustomizations (
-  helper: string,
-  mod: string,
-  customizations: Record<string, string>
-): string
 
 export declare const packageJson: Record<string, unknown>
 
@@ -80,3 +72,10 @@ export declare class ServiceCapability<Config = PlatformaticServiceConfig> exten
   constructor (root: string, config: Config, context?: object)
   getApplication (): FastifyInstance
 }
+
+export type ServiceConfigOptions = CapabilityFactoryOptions<PlatformaticServiceConfig, 'service', never>
+
+export declare function createServiceConfig (options?: ServiceConfigOptions): ApplicationDefinition
+export declare function createServiceConfig (
+  callback: (context: ConfigContext) => ServiceConfigOptions | Promise<ServiceConfigOptions>
+): DeferredApplicationDefinition

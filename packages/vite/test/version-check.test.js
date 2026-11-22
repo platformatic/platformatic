@@ -5,7 +5,7 @@ import { test } from 'node:test'
 import { fileURLToPath } from 'node:url'
 import { major } from 'semver'
 import { swapVersion } from '../../basic/test/helper-version.js'
-import { getLogsFromFile, prepareRuntime, setFixturesDir, verifyHTMLViaHTTP } from '../../basic/test/helper.js'
+import { getLogsFromFile, prepareRuntime, setFixturesDir, startRuntime, verifyHTMLViaHTTP } from '../../basic/test/helper.js'
 
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
@@ -40,7 +40,7 @@ test('Vite 8 is supported in development', async t => {
   deepStrictEqual(major(vitePackage.version), 8)
 
   const { runtime } = await prepareRuntime(t, 'standalone', false)
-  const url = await runtime.start()
+  const url = await startRuntime(t, runtime)
 
   await verifyHTMLViaHTTP(url, '/', htmlContents)
 })
@@ -51,7 +51,7 @@ for (const version of ['5.0.0', '6.0.0', '7.0.0', '8.0.0', '8.99.99']) {
       await swapVersion(t, root, 'vite', '../..', version)
     })
 
-    const url = await runtime.start()
+    const url = await startRuntime(t, runtime)
     await verifyHTMLViaHTTP(url, '/', htmlContents)
 
     const logs = await getLogsFromFile(root)

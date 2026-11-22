@@ -5,7 +5,7 @@
 
 It's a pretty common solution to use Prometheus to collect and store monitoring data, and Grafana to visualize it.
 
-Platformatic can be configured to expose Prometheus metrics:
+Platformatic can be configured to expose Prometheus metrics. Metrics are disabled by default:
 
 ```json
 ...
@@ -104,6 +104,14 @@ scrape_configs:
 
 For local testing with a self-signed certificate, use `curl -k https://localhost:9090/metrics`.
 
+## CPU and Event Loop Sampling
+
+The `nodejs_eventloop_utilization`, `thread_cpu_percent_usage`, and `process_cpu_percent_usage` gauges use
+sampling windows that rotate every 60 seconds, independently of metric reads. After the first minute,
+each value covers between one and two minutes of recent activity. During the first minute, values cover
+activity since metric registration. Scraping metrics does not reset these windows, so multiple readers
+do not interfere with each other.
+
 ## Metrics Labels
 
 By default, Platformatic uses `applicationId` as the label name in metrics to identify different services. You can customize this label name using the `applicationLabel` option. This is useful when migrating from older versions (which used `serviceId`) or when integrating with existing monitoring setups that expect different label names:
@@ -147,7 +155,7 @@ Outgoing HTTP client request duration metrics are disabled by default to avoid c
 This exposes `http_client_request_duration_seconds` with labels for the HTTP method, status code, dispatcher URL, and error type.
 
 :::caution
-Use [environment variable placeholders](../reference/service/configuration.md#environment-variable-placeholders) in your Platformatic DB configuration file to avoid exposing credentials.
+Read credentials from the [environment](../reference/service/configuration.md#environment-variables) in your Platformatic DB configuration file rather than writing them into it.
 :::
 
 ## Aggregating Worker Metrics
@@ -176,20 +184,7 @@ The merge is applied to the metrics exposed by the Prometheus server and by the 
 
 Counters and histograms must be cumulative to be merged correctly: custom metrics that reset their values when collected are not supported.
 
-By default, the built-in `http_request_all_duration_seconds`, `http_request_all_summary_seconds` and `http_client_request_duration_seconds` metrics are reset after each collection, so that each collection only reports the requests completed since the previous one. When workers are aggregated, the two histograms are summed as they are, without keeping the values of the replaced workers.
-
-Set `resetHttpMetrics` to `false` to make them cumulative, as expected by Prometheus. The two histograms are then carried forward like any other histogram:
-
-```json
-{
-  "metrics": {
-    "aggregateWorkers": true,
-    "resetHttpMetrics": false
-  }
-}
-```
-
-The `resetHttpMetrics` option can also be used without `aggregateWorkers`. When disabled, the latency percentiles reported by the deprecated `/metrics/live` management API endpoint cover the whole lifetime of each worker.
+The built-in `http_request_all_duration_seconds`, `http_request_all_summary_seconds` and `http_client_request_duration_seconds` metrics are cumulative, as expected by Prometheus, so the two histograms are carried forward like any other histogram when workers are aggregated.
 
 ## Custom Metrics
 

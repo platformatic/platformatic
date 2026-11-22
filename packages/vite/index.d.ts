@@ -1,5 +1,5 @@
 import type { Plugin } from 'vite'
-import { BaseCapability, BaseContext, BaseOptions } from '@platformatic/basic'
+import { ApplicationDefinition, BaseCapability, BaseContext, BaseOptions, CapabilityFactoryOptions, ConfigContext, DeferredApplicationDefinition } from '@platformatic/basic'
 import { Configuration, ConfigurationOptions } from '@platformatic/foundation'
 import { JSONSchemaType } from 'ajv'
 import type { PlatformaticViteConfig } from './config.d.ts'
@@ -35,7 +35,7 @@ export declare class ViteCapability extends BaseCapability<PlatformaticViteConfi
   constructor (root: string, config: PlatformaticViteConfig, context?: object)
 
   _startDevelopment (): Promise<string | void>
-  _startProduction (listen: boolean): Promise<string | void>
+  _startProduction (): Promise<string | void>
 }
 
 export declare class ViteSSRCapability extends ViteCapability {
@@ -52,3 +52,10 @@ export declare function addDeploymentId (url: string, deploymentId: string): str
 export declare function platformaticSkewPlugin (deploymentId?: string): Plugin | undefined
 export declare const skewPlugin: typeof platformaticSkewPlugin
 export declare const deploymentIdEnv: 'PLT_DEPLOYMENT_ID'
+
+export type ViteConfigOptions = CapabilityFactoryOptions<PlatformaticViteConfig, 'vite', never>
+
+export declare function createViteConfig (options?: ViteConfigOptions): ApplicationDefinition
+export declare function createViteConfig (
+  callback: (context: ConfigContext) => ViteConfigOptions | Promise<ViteConfigOptions>
+): DeferredApplicationDefinition

@@ -45,18 +45,18 @@ function createErrorsMD (errorsByModule) {
 
 async function generateErrorsMDFile (errorsByModule) {
   const errorsMd = createErrorsMD(errorsByModule)
-  const mdPath = resolve(__dirname, '../docs/packages/errors.md')
+  const mdPath = resolve(import.meta.dirname, '../docs/reference/errors.md')
   await writeFile(mdPath, errorsMd)
   console.log(`Errors documentation file generated at ${mdPath}`)
 }
 
 async function getErrorsByModule () {
-  const allPackages = await readdir(resolve(__dirname, '../packages'))
+  const allPackages = await readdir(resolve(import.meta.dirname, '../packages'))
   allPackages.sort()
 
   const errorsByModule = {}
   for (const path of allPackages) {
-    const root = resolve(__dirname, '../packages', path)
+    const root = resolve(import.meta.dirname, '../packages', path)
 
     let moduleInfo
     try {
@@ -82,4 +82,9 @@ async function generate () {
   await generateErrorsMDFile(errorsByModule)
 }
 
-generate()
+/*
+  Exiting explicitly: the packages this imports to read their errors leave handles open -- timers,
+  sockets -- so the process never ends on its own. A generator's work is the file, and it is
+  finished when the file is written.
+*/
+generate().then(() => process.exit(0))

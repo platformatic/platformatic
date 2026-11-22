@@ -1,13 +1,23 @@
 # Cloud Platform Deployment for Platformatic Watt
 
-Use a long-running Node.js/container service with Node.js 22.19.0+ and major 3 Watt
-dependencies locked in the project. These provider examples need adaptation to the
-selected account, region, current provider API, and actual health endpoint. Install
-tools, create resources, set secrets, and deploy only when authorized.
+## Watt 4 hosting contract
 
-Ensure `npm start` invokes the local Watt CLI. Configure the Watt 3 root `server` (or
-a standalone capability's `runtime.server`) to consume the provider's port and bind
-to `0.0.0.0`. Use [Docker](docker.md) for reproducible builds and retain all app artifacts.
+Preserve existing provider files and check current provider schemas/runtime support.
+Watt 4 requires **Node.js 24.20.0+**, compatible production capability packages, complete
+build/workspace output, and `wattpm build` before `wattpm start`. Prefer a verified
+container image when the provider's managed Node version cannot satisfy the requirement.
+
+The templates use `HOST`, `PORT`, and `LOG_LEVEL`, which must be explicitly read by the
+owning capability/root configuration. Preserve existing variable names when integrating,
+but Watt no longer injects/rewrites listener ports. Match the provider's actual public
+port and bind `0.0.0.0` on that application; keep metrics/control private. Every `/health`
+below assumes an implemented route with the correct Gateway prefix, not a built-in endpoint.
+
+Installation, login, secret changes, provisioning, scaling, image publishing, and deployment
+need separate authorization. Never execute downloaded installer scripts automatically.
+Do not put real secrets in CLI examples/history. All provider snippets below require
+review against current provider APIs, plans, IAM, and health/resource requirements;
+they are not verified deployment results. See [Docker](docker.md) for Watt-preserving images.
 
 ## Fly.io
 
@@ -32,8 +42,8 @@ primary_region = "iad"
 
 [env]
   NODE_ENV = "production"
-  PLT_SERVER_HOSTNAME = "0.0.0.0"
-  PLT_SERVER_LOGGER_LEVEL = "info"
+  HOST = "0.0.0.0"
+  LOG_LEVEL = "info"
   PORT = "8080"
 
 [http_service]
@@ -159,9 +169,9 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-      - key: PLT_SERVER_HOSTNAME
+      - key: HOST
         value: 0.0.0.0
-      - key: PLT_SERVER_LOGGER_LEVEL
+      - key: LOG_LEVEL
         value: info
       - key: DATABASE_URL
         fromDatabase:
@@ -192,21 +202,22 @@ databases:
 
 ## Vercel
 
-Vercel's native Next.js deployment does not run a long-lived Watt runtime. Use it only
-when intentionally deploying the frontend independently. For Watt orchestration,
-workers, mesh networking, and scheduler jobs, choose a compatible container/Node service.
+**Not a Watt runtime target in this guide**: Standard Vercel Next.js/serverless hosting
+runs the framework's deployment adapter, not a persistent Watt runtime with worker/mesh
+orchestration. Use a supported long-running container platform for Watt. The example below
+is framework-only hosting and must not be advertised as deploying Watt itself.
 
-### Independent Next.js deployment
+### Framework-only Next.js alternative
 
 Create `vercel.json`:
 ```json
 {
-  "buildCommand": "npm run build",
+  "buildCommand": "next build",
   "outputDirectory": ".next",
   "framework": "nextjs",
   "regions": ["iad1"],
   "env": {
-    "PLT_SERVER_LOGGER_LEVEL": "info"
+    "LOG_LEVEL": "info"
   }
 }
 ```
@@ -253,9 +264,9 @@ services:
     envs:
       - key: NODE_ENV
         value: production
-      - key: PLT_SERVER_HOSTNAME
+      - key: HOST
         value: "0.0.0.0"
-      - key: PLT_SERVER_LOGGER_LEVEL
+      - key: LOG_LEVEL
         value: info
       - key: DATABASE_URL
         scope: RUN_TIME
@@ -301,8 +312,8 @@ option_settings:
     NodeCommand: "npm start"
   aws:elasticbeanstalk:application:environment:
     NODE_ENV: production
-    PLT_SERVER_HOSTNAME: "0.0.0.0"
-    PLT_SERVER_LOGGER_LEVEL: info
+    HOST: "0.0.0.0"
+    LOG_LEVEL: info
 ```
 
 Create `Procfile`:
@@ -351,7 +362,7 @@ gcloud run deploy watt-app \
   --cpu 1 \
   --min-instances 1 \
   --max-instances 10 \
-  --set-env-vars "NODE_ENV=production,PLT_SERVER_HOSTNAME=0.0.0.0,PLT_SERVER_LOGGER_LEVEL=info"
+  --set-env-vars "NODE_ENV=production,HOST=0.0.0.0,LOG_LEVEL=info,PORT=3000"
 
 # Set secrets
 gcloud run services update watt-app \
@@ -383,24 +394,25 @@ az containerapp create \
   --ingress external \
   --min-replicas 1 \
   --max-replicas 10 \
-  --env-vars "NODE_ENV=production" "PLT_SERVER_HOSTNAME=0.0.0.0"
+  --env-vars "NODE_ENV=production" "HOST=0.0.0.0" "PORT=3000"
 ```
 
 ---
 
 ## Common Environment Variables
 
-Typical variables, when referenced by the application's configuration:
+Document only the variables actually read by the selected application/configuration.
+These are conventional examples, not automatic Watt-injected settings:
 ```
 NODE_ENV=production
-PLT_SERVER_HOSTNAME=0.0.0.0
-PLT_SERVER_LOGGER_LEVEL=info
+HOST=0.0.0.0
+LOG_LEVEL=info
 PORT=3000 (or platform-specific)
 ```
 
 ## Health Check Endpoint
 
-Ensure your app has `/health`:
+For an Express app where this route is intentionally implemented, `/health` can be:
 ```javascript
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok' });

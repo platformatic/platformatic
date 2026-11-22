@@ -4,22 +4,16 @@ Watt runs applications in isolated worker threads. Each worker needs its own
 Datadog tracer, initialized **before** instrumented modules load. Configuring
 only Watt's main process is not sufficient.
 
-This setup was verified with Node.js **26.9.0**, Watt **3.69.0**, and `dd-trace`
-**6.16.0**. You need a Datadog account and an Agent with APM enabled.
+The original setup was verified with Node.js **26.9.0**, Watt **3.69.0**, and
+`dd-trace` **6.16.0**. The configuration examples below use Watt 4's code-first
+format; the Datadog integration has not yet been verified on Watt 4. You need a
+Datadog account and an Agent with APM enabled.
 
 ## Create a Watt project
 
-For a new project, use the interactive initializer:
-
-```sh
-mkdir watt-datadog
-cd watt-datadog
-npx wattpm@3.69.0 init --package-manager npm
-```
-
-Create three Platformatic Service applications named `frontend`, `orders`, and
-`inventory`. For an existing project, use your existing applications instead.
-Install the tracer at the project root:
+Start with a Watt 4 project containing three Platformatic Service applications
+named `frontend`, `orders`, and `inventory`. For an existing project, use your
+existing applications instead. Install the tracer at the project root:
 
 ```sh
 npm install --save-exact dd-trace@6.16.0
@@ -122,11 +116,13 @@ if (!isMainThread && workerData?.applicationConfig?.id) {
 Replicas share a service name, such as `watt-orders`; worker identity is recorded
 in span tags. The `.mjs` extension works regardless of the project's module type.
 
-Merge the following into the generated `watt.json`, preserving its other settings.
+Merge the following into `watt.config.js`, preserving its other settings.
 Adjust paths to match your project:
 
-```json
-{
+```javascript title="watt.config.js"
+import { defineConfig } from 'wattpm'
+
+export default defineConfig({
   "entrypoint": "frontend",
   "applications": [
     {
@@ -148,7 +144,7 @@ Adjust paths to match your project:
       "execArgv": ["--import", "dd-trace/register.js", "--import", "./datadog.mjs"]
     }
   ]
-}
+})
 ```
 
 The first import registers Datadog's ESM hooks; the second initializes the tracer.
@@ -178,8 +174,8 @@ This configuration runs five application workers, plus any internal threads.
 
 Generate concurrent traffic against your application's routes. To verify
 cross-application tracing, exercise a route that calls another application through
-the mesh, such as `http://orders.plt.local`. The initializer scaffolds applications;
-it does not create those business calls. No `useHttp` override or manual tracing
+the mesh, such as `http://orders.plt.local`. Add those business calls to your
+applications. No `useHttp` override or manual tracing
 header propagation is needed for the verified Platformatic Service setup.
 
 In **APM → Trace Explorer**, use **Live Search** while generating traffic, or

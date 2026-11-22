@@ -18,7 +18,7 @@ import {
   platformaticGateway,
   schema,
   schemaComponents,
-  skipTelemetryHooks
+  skipTracingHooks
 } from '../../index.js'
 import { kGatewayProxyResponseHandler, type ProxyResponse, type ProxyResponseHandler, type WrappingHandler } from '../../index.js'
 
@@ -71,15 +71,11 @@ test('Gateway types', () => {
 
   expect(serverInstance).type.toBe<ServerInstance>()
 
-  expect(skipTelemetryHooks).type.toBe<boolean>()
+  expect(skipTracingHooks).type.toBe<boolean>()
   expect(packageJson).type.toBe<Record<string, unknown>>()
   expect(schema).type.toBe<JSONSchemaType<PlatformaticGatewayConfig>>()
   expect(schemaComponents).type.toBe<{
     openApiApplication: JSONSchemaType<object>
-    entityResolver: JSONSchemaType<object>
-    entities: JSONSchemaType<object>
-    graphqlApplication: JSONSchemaType<object>
-    graphqlComposerOptions: JSONSchemaType<object>
     gateway: JSONSchemaType<object>
     types: JSONSchemaType<object>
   }>()

@@ -314,7 +314,7 @@ test('should ask the applications of the runtime for uncompressed responses', as
     ]
   )
 
-  const origin = await runtime.start()
+  const { 'composer:0': origin } = await runtime.start()
 
   {
     const { headers, body } = await get(origin, '/main/page')

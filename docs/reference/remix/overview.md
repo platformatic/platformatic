@@ -23,30 +23,34 @@ npm install @platformatic/remix
 
 ## Example configuration file
 
-Create a `watt.json` in the root folder of your application with the following contents:
+Create a `watt.config.ts` in the root folder of your application with the following contents:
 
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/remix/2.0.0.json",
-  "application": {
-    "basePath": "/frontend"
+```ts config
+import { createRemixConfig } from '@platformatic/remix'
+
+export default createRemixConfig({
+  application: {
+    basePath: '/frontend'
+  },
+  server: {
+    port: Number(process.env.PORT ?? 3042)
   }
-}
+})
 ```
 
 ## Architecture
 
-When running in development mode, the Vite development server instrumented with [@remix-run/dev](https://www.npmjs.com/package/@remix-run/dev) is run a in worker thread in the same process of the Platformatic runtime. The server port is chosen randomly and it will override any user setting.
+When running in development mode, the Vite development server instrumented with [@remix-run/dev](https://www.npmjs.com/package/@remix-run/dev) runs in a worker thread in the same process as the Platformatic runtime.
 
-When running in production mode, a custom Fastify server will serve the built application. The application is run a in worker thread in the same process of the Platformatic runtime and it will not start a TCP server unless it's the runtime entrypoint.
+When running in production mode, a custom Fastify server serves the built application in a worker thread. The Remix capability owns this listener and uses its capability-level `server` configuration.
 
-In both modes if the application uses the `commands` property then it's responsible to start a HTTP server. The Platformatic runtime will modify the server port replacing it with a random port and then it will integrate the external application in the runtime.
+In both modes, an application that uses the `commands` property is responsible for starting its HTTP server.
 
 ## Skew protection
 
 Remix uses a user-provided Vite configuration. To tag assets, add the shared plugin:
 
-```ts
+```ts source
 import { platformaticSkewPlugin } from '@platformatic/vite/skew-plugin'
 
 export default defineConfig({
@@ -58,7 +62,7 @@ The plugin is enabled when `PLT_DEPLOYMENT_ID` is set during the build.
 
 ## HTTPS
 
-When a Remix application is the Watt entrypoint, configure HTTPS in the runtime `server.https` object:
+Configure HTTPS in this Remix capability's `server.https` object. The `server` object belongs in the capability configuration file, not in the Runtime or Watt root configuration.
 
 ```json
 {
@@ -70,10 +74,6 @@ When a Remix application is the Watt entrypoint, configure HTTPS in the runtime 
   }
 }
 ```
-
-In development mode, Platformatic forwards the HTTPS options to the Vite development server used by Remix. In production mode, Platformatic uses the same HTTPS options for the Fastify server that serves the built Remix application.
-
-If the application uses `application.commands`, the command is responsible for creating its own HTTPS server.
 
 ### Using custom commands
 
@@ -90,9 +90,9 @@ Due to [`CVE-2025-24010`](https://github.com/vitejs/vite/security/advisories/GHS
 
 This will allow other applications inside the platformatic mesh network to contact your Vite server.
 
-## Using when the entrypoint is a Platformatic Gateway
+## Using behind a Platformatic Gateway
 
-To properly work when using with in application where the entrypoint is a Platformatic Gateway, you need to adjust your `vite.config.ts` file to
+When exposing the application through a Platformatic Gateway, adjust your `vite.config.ts` file to
 properly set the Vite's `base` property and the `remix.basename` property as follows:
 
 ```js

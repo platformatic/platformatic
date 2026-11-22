@@ -1,16 +1,16 @@
+import { flushCompileCache } from 'node:module'
 import { platform } from 'node:os'
-import { lt, satisfies } from 'semver'
+import { lt } from 'semver'
+import { UnsupportedNodeVersionError } from './errors.js'
 
 const currentPlatform = platform()
 
 export function checkNodeVersionForApplications () {
   const currentVersion = process.version
-  const minimumVersion = '22.19.0'
+  const minimumVersion = '24.20.0'
 
   if (lt(currentVersion, minimumVersion)) {
-    throw new Error(
-      `Your current Node.js version is ${currentVersion}, while the minimum supported version is v${minimumVersion}. Please upgrade Node.js and try again.`
-    )
+    throw new UnsupportedNodeVersionError(currentVersion, minimumVersion)
   }
 }
 
@@ -74,10 +74,7 @@ export function getGlobalDispatcherFromKnownUndiciSymbols () {
 
 export const features = {
   node: {
-    reusePort: satisfies(process.version, '^22.12.0 || ^23.1.0 || >=24.0.0') && !['win32', 'darwin'].includes(currentPlatform),
-    worker: {
-      getHeapStatistics: satisfies(process.version, '^22.16.0 || >=24.0.0')
-    },
+    reusePort: !['win32', 'darwin'].includes(currentPlatform),
     permission: {
       // The Permission Model gates network access (dns.lookup, listen, connect,
       // fetch) behind --allow-net starting from Node.js 25. On older versions the
@@ -96,25 +93,21 @@ export const features = {
   Flushing explicitly once the boot is complete, when most modules have been loaded, makes the cache
   durable. Repeated flushes are cheap as Node.js skips the entries which have already been persisted.
 */
-export function scheduleCompileCacheFlush (logger) {
+export function scheduleCompileCacheFlush (logger, onFlushed) {
   // Defer the flush so that it never delays the caller.
-  setImmediate(async () => {
+  setImmediate(() => {
+    let flushed = false
     try {
-      const { flushCompileCache } = await import('node:module')
-
-      // flushCompileCache is available on Node.js 22.10.0+ and it is a no-op when the compile cache
-      // has not been enabled.
-      if (typeof flushCompileCache !== 'function') {
-        return
-      }
-
       const start = process.hrtime.bigint()
       flushCompileCache()
+      flushed = true
       const duration = Number(process.hrtime.bigint() - start) / 1e6
 
       logger?.debug({ duration }, 'Module compile cache flushed')
     } catch (err) {
       logger?.warn({ err }, 'Error flushing module compile cache')
+    } finally {
+      onFlushed?.(flushed)
     }
   })
 }

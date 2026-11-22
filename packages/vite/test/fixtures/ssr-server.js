@@ -1,4 +1,4 @@
-import { getLogger } from '@platformatic/globals'
+import { getLogger, registerCloseCallback } from '@platformatic/globals'
 import { cleanBasePath, ensureTrailingSlash } from '@platformatic/basic'
 import express from 'express'
 import { readFile } from 'node:fs/promises'
@@ -93,6 +93,11 @@ export async function build () {
 // This is to use with custom commands
 if (import.meta.main) {
   const server = await build()
+  registerCloseCallback(async () => {
+    // Close Vite first so upgraded HMR connections cannot hold the HTTP server open.
+    await server.vite.close()
+    await server[Symbol.asyncDispose]()
+  })
   server.listen({ port: 0 })
   setTimeout(() => {
     process._rawDebug('listening on port', server.address().port)

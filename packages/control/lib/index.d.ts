@@ -23,16 +23,26 @@ export interface RuntimeApplicationBase {
   status: string
 }
 
+export type ServingState = 'listening' | 'mesh-only' | 'background' | 'inactive'
+
 export interface RuntimeApplication {
   id: string
   type: string
   status: string
+  /** How the application serves, as opposed to whether it runs. Absent when it is not started. */
+  servingState?: ServingState
   version: string
   localUrl: string
-  entrypoint: boolean
-  url?: string
+  url: string | null
+  urls: string[]
   workers?: number
-  dependencies: Runtime
+  dependencies: string[]
+  path?: string
+  sourceMaps?: boolean
+  /** v3 only: the path to the application's configuration file. v4 reports configPath. */
+  config?: string
+  /** v4 only: the configuration file the loader decided on, absent for an inline definition. */
+  configPath?: string
 }
 
 export interface Runtime {
@@ -43,15 +53,18 @@ export interface Runtime {
   execPath: string
   nodeVersion: string
   projectDir: string
+  /** The configuration file the loader decided on. Null when the runtime was built from an object. */
+  configPath: string | null
+  /** The autoload declaration, with its path resolved. Null when the project does not autoload. */
+  autoload: { path: string, exclude?: string[], mappings?: Record<string, unknown> } | null
   packageName: string | null
   packageVersion: string | null
-  url: string | null
   platformaticVersion: string
+  urls: Record<string, string>
   startTime?: number
 }
 
 export interface RuntimeApplications {
-  entrypoint: string
   production: boolean
   applications: (RuntimeApplication | RuntimeApplicationBase)[]
 }
@@ -89,6 +102,59 @@ export interface Metric {
   aggregator: string
 }
 
+export interface WorkersScalerMetric {
+  threshold: number | null
+  lastProcessedTs: number
+  level: number | null
+  trendPerSecond: number
+}
+
+export interface WorkersScalerWorkerMetric {
+  lastSampleTs: number
+  lastValue: number
+  firstSampleTs: number
+  intervalMs: number
+  values: number[]
+}
+
+export interface WorkersScalerPendingStart {
+  scaleAt: number
+  decisionAt: number
+  expectedCount: number
+}
+
+export interface WorkersScalerApplication {
+  id: string
+  targetCount: number
+  liveCount: number
+  minimum: number
+  maximum: number
+  initTimeoutMs: number
+  horizonMs: number
+  pending: WorkersScalerPendingStart[]
+  metrics: Record<string, WorkersScalerMetric>
+  workers: {
+    id: string
+    startTime: number
+    metrics: Record<string, WorkersScalerWorkerMetric>
+  }[]
+}
+
+export interface WorkersScaler {
+  version: number
+  now: number
+  processIntervalMs: number
+  maxTotalWorkers: number
+  memoryLimit: number
+  applications: WorkersScalerApplication[]
+}
+
+export interface RuntimeMemory {
+  scope: 'host' | 'cgroup-v1' | 'cgroup-v2'
+  used: number
+  total: number
+}
+
 export interface LogIndexes {
   pid: number
   indexes: number[]
@@ -97,14 +163,12 @@ export interface LogIndexes {
 export interface RuntimeSchedulerJob {
   name: string
   cron: string
-  source: 'config' | 'application'
+  source: 'application'
   paused: boolean
   maxRetries: number
   lastExecutedAt: string | null
   lastStatus: 'success' | 'failed' | null
   nextRunAt: string | null
-  callbackUrl?: string
-  method?: string
   applicationId?: string
   scheduleId?: string
   tasks?: string[]
@@ -116,6 +180,81 @@ export interface RuntimeSchedulerRunResult {
   executedAt: string
 }
 
+export interface RuntimeMetricsAuth {
+  username: string
+  password: string
+}
+
+export interface RuntimeMetricsCertificatePath {
+  path?: string
+}
+
+export type RuntimeMetricsCertificate = string | RuntimeMetricsCertificatePath
+
+export interface RuntimeMetricsHttps {
+  allowHTTP1?: boolean
+  key: RuntimeMetricsCertificate | RuntimeMetricsCertificate[]
+  cert: RuntimeMetricsCertificate | RuntimeMetricsCertificate[]
+  requestCert?: boolean
+  rejectUnauthorized?: boolean
+}
+
+export interface RuntimeMetricsProbeResponse {
+  statusCode?: number
+  body?: string
+}
+
+export interface RuntimeMetricsProbe {
+  endpoint?: string
+  success?: RuntimeMetricsProbeResponse
+  fail?: RuntimeMetricsProbeResponse
+}
+
+export interface RuntimeMetricsExporter {
+  enabled?: boolean | string
+  endpoint: string
+  interval?: number | string
+  headers?: Record<string, string>
+}
+
+export interface RuntimeMetricsOtlpExporter extends RuntimeMetricsExporter {
+  serviceName?: string
+  serviceVersion?: string
+}
+
+export interface RuntimeMetricsHttpLabel {
+  name: string
+  header: string
+  default?: string
+}
+
+export interface RuntimeMetricsConfig {
+  enabled?: boolean | string
+  port?: number | string
+  hostname?: string
+  endpoint?: string
+  https?: RuntimeMetricsHttps
+  auth?: RuntimeMetricsAuth
+  labels?: Record<string, string>
+  applicationLabel?: string
+  httpClientMetrics?: boolean | string
+  readiness?: boolean | RuntimeMetricsProbe
+  liveness?: boolean | RuntimeMetricsProbe
+  healthChecksTimeouts?: number | string
+  plugins?: string[]
+  timeout?: number | string
+  otlpExporter?: RuntimeMetricsOtlpExporter
+  opentelemetry?: RuntimeMetricsExporter
+  httpCustomLabels?: RuntimeMetricsHttpLabel[]
+}
+
+export type RuntimeMetricsConfigUpdate = Omit<RuntimeMetricsConfig, 'enabled'> & { enabled?: boolean }
+
+export interface RuntimeMetricsConfigUpdateResult {
+  success: boolean
+  config: RuntimeMetricsConfig
+}
+
 export class RuntimeApiClient {
   getMatchingRuntime (options?: { pid?: string; name?: string }): Promise<Runtime>
   getRuntimes (): Promise<Runtime[]>
@@ -125,11 +264,6 @@ export class RuntimeApiClient {
   pauseRuntimeSchedulerJob (pid: number, name: string): Promise<RuntimeSchedulerJob>
   resumeRuntimeSchedulerJob (pid: number, name: string): Promise<RuntimeSchedulerJob>
   runRuntimeSchedulerJob (pid: number, name: string): Promise<RuntimeSchedulerRunResult>
-  getRuntimeConfig (
-    pid: number
-  ): Promise<
-    Record<string, unknown> & { path?: string; configFile?: string; configPath?: string; server?: { path?: string } }
-  >
   getRuntimeApplicationConfig (pid: number, applicationId?: string): Promise<Record<string, unknown>>
   getRuntimeEnv (pid: number): Promise<Record<string, string>>
   getRuntimeOpenapi (pid: number, applicationId: string): Promise<Record<string, unknown>>
@@ -141,7 +275,12 @@ export class RuntimeApiClient {
     pid: number,
     options?: T
   ): Promise<T extends { format: 'text' } ? string : Metric[]>
-  getRuntimeLiveMetricsStream (pid: number): WebSocketStream
+  getRuntimeMemory (pid: number): Promise<RuntimeMemory>
+  updateRuntimeMetricsConfig (
+    pid: number,
+    metricsConfig: RuntimeMetricsConfigUpdate
+  ): Promise<RuntimeMetricsConfigUpdateResult>
+  getRuntimeWorkersScaler (pid: number): Promise<WorkersScaler | null>
   getRuntimeLiveLogsStream (pid: number, startLogIndex?: number): WebSocketStream
   getRuntimeLogsStream (pid: number, logsId: string, options?: { runtimePID?: number }): Promise<ReadableBody>
   getRuntimeAllLogsStream (pid: number, options?: { runtimePID?: number }): Promise<ReadableBody>

@@ -9,7 +9,6 @@ let platformaticPackageVersion
 
 export const defaultPackageManager = 'npm'
 
-// Keep this in sync with packages/create-wattpm/lib/index.js.
 // @platformatic/node is purposely missing as it's the fallback option.
 export const applicationTypes = [
   { name: '@platformatic/nest', label: 'NestJS', dependencies: ['@nestjs/core'] },
@@ -26,7 +25,7 @@ export const applicationTypes = [
   {
     name: '@platformatic/gateway',
     label: 'Platformatic Gateway',
-    dependencies: ['@platformatic/gateway', '@platformatic/composer']
+    dependencies: ['@platformatic/gateway']
   },
   { name: '@platformatic/service', label: 'Platformatic Service', dependencies: ['@platformatic/service'] },
   { name: '@platformatic/db', label: 'Platformatic DB', dependencies: ['@platformatic/db'] },

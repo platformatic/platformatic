@@ -1,123 +1,56 @@
-# Vite Integration with Platformatic Watt
+# Plain Vite with Watt 4
 
-## Package
-```
-@platformatic/vite
-```
+Use `@platformatic/vite` only after checking React Router, TanStack, Nuxt, Nitro,
+Remix, and Astro configuration **and dependencies**. It supports plain SPA/custom SSR
+projects; install compatible Watt 4 packages only with authorization.
 
-This capability runs a [Vite](https://vitejs.dev/) application as a Platformatic Runtime application with no modifications. Use it for plain Vite apps (SPA or custom SSR).
-
-## Detection Files
-- `vite.config.js`
-- `vite.config.ts`
-- `vite.config.mjs`
-
-Vite is the fallback for Vite-based projects. Several frameworks build on Vite and have their own capability, so check for these first and only use `@platformatic/vite` when none of them match:
-
-- `react-router.config.*` or `@react-router/dev` -> `@platformatic/react-router`
-- `@tanstack/react-start` -> `@platformatic/tanstack`
-- `nuxt.config.*` -> `@platformatic/nuxt`
-- `remix.config.*` -> `@platformatic/remix`
-- `astro.config.*` -> `@platformatic/astro`
-
-## watt.json Configuration
-
-Platformatic manages the development, build, and production lifecycle for you, so you do not need an `application.commands` block. A standalone Vite app used as the Watt entrypoint:
-
-```json
-{
-  "module": "@platformatic/vite",
-  "runtime": {
-    "logger": {
-      "level": "{PLT_SERVER_LOGGER_LEVEL}"
-    },
-    "server": {
-      "hostname": "{PLT_SERVER_HOSTNAME}",
-      "port": "{PORT}"
-    }
-  }
-}
-```
-
-When the app runs behind a Platformatic Gateway under a path prefix, add `application.basePath`:
-
-```json
-{
-  "module": "@platformatic/vite",
-  "application": {
-    "basePath": "/frontend"
-  }
-}
-```
-
-## Installation
-
-```bash
-npm install wattpm@^3.74.0 @platformatic/vite@^3.74.0
-```
-
-## Key Considerations
-
-### How Platformatic runs Vite
-- Development: the Vite dev server runs in a worker thread inside the runtime process. Platformatic chooses a random port and overrides any user setting.
-- Production: a Fastify server serves the built application from the same worker thread. It does not open a TCP server unless the app is the runtime entrypoint.
-
-### No commands needed
-Platformatic detects Vite and handles `dev`, `build`, and `production`. Only add `application.commands` if you need a custom command pipeline, in which case your command must start its own HTTP server.
-
-### Mesh networking
-Due to [CVE-2025-24010](https://github.com/vitejs/vite/security/advisories/GHSA-vg6x-rcgg-rjx6), the Vite dev server rejects unknown hosts. To let other Watt applications reach it, allow `.plt.local`:
+ESM `watt.config.js`:
 
 ```js
-// vite.config.js
-export default {
+import { createViteConfig } from '@platformatic/vite'
+
+export default createViteConfig({
   server: {
-    allowedHosts: ['.plt.local']
+    hostname: process.env.HOST || '127.0.0.1',
+    port: Number(process.env.PORT || 3000)
   }
+})
+```
+
+The default lifecycle uses Vite for development/build and serves the production build.
+Do not add generic commands unless needed; a custom command must start and close its
+own server. For prefixes, align `application.basePath`, Vite base, and Gateway rewriting.
+Configure public listener/HTTPS on the capability, not the runtime root; inspect the
+installed schema for TLS shapes and mode-specific listener behavior.
+
+## Mesh host checks
+
+Vite rejects unknown hosts to prevent DNS-rebinding attacks. Preserve other configuration
+when allowing Watt's internal hosts:
+
+```js
+export default {
+  server: { allowedHosts: ['.plt.local'] }
 }
 ```
 
-### Custom SSR
-For a custom Vite SSR setup, replace `server.js` with a module exporting an async `build()` function that returns the HTTP server. See the [Platformatic Vite overview](https://docs.platformatic.dev/docs/reference/vite/overview) for the full pattern.
+Do not disable host checking with `allowedHosts: true`. See the
+[Vite advisory](https://github.com/vitejs/vite/security/advisories/GHSA-vg6x-rcgg-rjx6)
+for the security reason for explicit host allowances.
 
-## Environment Variables
+## Custom SSR and environment
 
-```
-PORT=3000
-PLT_SERVER_HOSTNAME=0.0.0.0
-PLT_SERVER_LOGGER_LEVEL=info
-VITE_API_URL=https://api.example.com
-```
+Inspect the installed capability's supported `build()` factory contract before adapting
+a custom SSR server. Preserve Vite SSR output and framework tooling. See the
+[Vite overview](https://docs.platformatic.dev/docs/reference/vite/overview) for the pattern.
 
-Vite exposes only variables prefixed with `VITE_` to client code through `import.meta.env`.
+Vite exposes only `VITE_*` variables to client code through `import.meta.env`; keep
+secrets server-side. `PORT`/`HOST` in these examples are read by config explicitly,
+not runtime-provided port overrides. Native TS stripping handles configuration, not TSX
+bundling or type checking. Ship complete build output and build before `wattpm start`.
 
-## HTTPS
+## Common issues
 
-When a Vite app is the Watt entrypoint, configure HTTPS in the runtime `server.https`
-object. This fragment belongs at the runtime root; wrap it in `runtime` for a standalone capability:
-
-```json
-{
-  "server": {
-    "https": {
-      "key": { "path": "./certs/server.key" },
-      "cert": { "path": "./certs/server.crt" }
-    }
-  }
-}
-```
-
-In development Platformatic forwards the HTTPS options to the Vite dev server. In production it uses them for the Fastify server that serves the built app.
-
-## TypeScript
-
-Vite compiles framework/client TypeScript and JSX. Native Node.js type stripping can
-load supported server-side TypeScript but does not replace the Vite build or type checking.
-
-## Common Issues
-
-### A framework was misdetected as Vite
-React Router, TanStack Start, Remix, Astro, and Nuxt all use Vite. Check for their config files or dependencies and use the matching `@platformatic/*` capability instead.
-
-### Dev server returns "host not allowed"
-Add `'.plt.local'` to `server.allowedHosts` in `vite.config.*`.
+- Wrong capability: specific framework dependencies win over shared Vite config.
+- “Host not allowed”: add `.plt.local` to the existing server allowed hosts.
+- Missing assets/SSR: compare build output, base path, deployment assets, and Gateway routes.

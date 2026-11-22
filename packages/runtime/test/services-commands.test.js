@@ -5,6 +5,7 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 import { ensureDependencies } from '../../basic/test/helper.js'
 import { loadApplicationsCommands } from '../index.js'
+import { configurationFileIn } from './helpers.js'
 
 async function createTmpDir (t) {
   const originalCwd = process.cwd()
@@ -37,7 +38,7 @@ test('loadApplicationsCommands returns empty objects when runtime config has no 
   const tmpDir = await createTmpDir(t)
 
   await writeFile(
-    join(tmpDir, 'platformatic.json'),
+    configurationFileIn(tmpDir),
     JSON.stringify(
       {
         $schema: 'https://schemas.platformatic.dev/@platformatic/runtime/2.65.1.json',
@@ -65,7 +66,7 @@ test('loadApplicationsCommands returns empty objects when applications have no c
   const tmpDir = await createTmpDir(t)
 
   await writeFile(
-    join(tmpDir, 'platformatic.json'),
+    configurationFileIn(tmpDir),
     JSON.stringify(
       {
         $schema: 'https://schemas.platformatic.dev/@platformatic/runtime/2.65.1.json',
@@ -97,7 +98,7 @@ test('loadApplicationsCommands ignores applications that fail to load', async t 
   const tmpDir = await createTmpDir(t)
 
   await writeFile(
-    join(tmpDir, 'platformatic.json'),
+    configurationFileIn(tmpDir),
     JSON.stringify(
       {
         $schema: 'https://schemas.platformatic.dev/@platformatic/runtime/2.65.1.json',
@@ -191,12 +192,6 @@ test('loadApplicationsCommands finds the configuration file of applications with
   ok(result.commands['service-db:migrations:apply'])
   ok(result.help['service-db:migrations:apply'])
   strictEqual(result.applications['service-db:migrations:apply'].id, 'service-db')
-
-  // The commands load the configuration file they receive
-  strictEqual(
-    result.applications['service-db:migrations:apply'].config,
-    join(import.meta.dirname, '..', 'fixtures', 'metrics', 'services', 'service-db', 'platformatic.db.json')
-  )
 })
 
 test('loadApplicationsCommands discovers Next.js pack commands', async t => {

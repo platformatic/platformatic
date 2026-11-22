@@ -33,56 +33,46 @@ These options are available for all `wattpm` commands:
 - `-V, --version` - Display the current wattpm version
 - `-h, --help` - Show help information
 
+## Configuration discovery
+
+`wattpm dev`, `wattpm build` and `wattpm start` auto-detect their configuration by searching from
+the current directory upward, stopping at the nearest ancestor that has a `package.json`. Running
+one of them inside a directory that owns its own `watt.config.*` boots **that application
+standalone**, not the whole project — even when a project-level `watt.config.*` exists further up
+the tree; the command warns and names what is not applied. A directory with no configuration file
+of its own still boots by zero-config detection where the capability is recognized.
+
+Pass `--config <path>` to name the configuration explicitly instead: a root configuration boots the
+full project, and an application's own configuration boots that application, regardless of the
+current directory. This is the fix for a deploy script or Dockerfile whose working directory is an
+application directory rather than the project root.
+
 ## Core Watt Commands (`wattpm`)
 
 These are the primary commands for working with Watt applications:
 
 ### `wattpm skill [FILE]`
 
-Available from **Watt 3.74.0**. Prints the bundled Watt 3 agent skill or one of its
-Markdown references to stdout, without a logo or log prefix. The contents match the
-installed release and are available offline, even outside a Watt project.
+Prints the bundled Watt agent skill to stdout, without generating or modifying files.
+It works offline and includes the instructions matching the installed Watt release.
 
-```bash
+```sh
 wattpm skill
-wattpm skill references/frameworks.md
-wattpm skill references/frameworks/nextjs.md
-wattpm help skill
+wattpm skill references/scaffolding.md
 ```
 
-`FILE` defaults to `SKILL.md` and is relative to the bundled skill directory. Resolve
-links relative to the document containing them, then pass the normalized bundle-relative
-path to the same local CLI. Absolute paths, non-Markdown files, directories, and symlinks
-escaping the bundle are rejected with `PLT_INVALID_SKILL_FILE`. Missing documents report
-`PLT_SKILL_FILE_NOT_FOUND`; both errors produce a nonzero exit status.
+`FILE` defaults to `SKILL.md` and must name a bundled Markdown file relative to the
+Watt skill directory. Absolute paths, paths outside the bundle, directories, and
+symlinks whose real target is outside the bundle or is not Markdown are rejected.
+Errors use `PLT_INVALID_SKILL_FILE` or `PLT_SKILL_FILE_NOT_FOUND` and a nonzero exit code.
+See [agent setup](../../guides/use-watt-with-ai-agents.md) for installation instructions.
 
-Use the project's local installation when following the
-[AI agent workflow](../../guides/use-watt-with-ai-agents.md). Existing v3 scaffolding
-and import commands remain supported.
-
-### `wattpm create` or `wattpm init`
-
-Creates a new Watt application with interactive setup using `wattpm-utils`.
-
-```bash
-wattpm create my-app
-wattpm init  # creates in current directory
-```
-
-**Options:**
-
-- `-l, --latest` - Use the latest version of watt-utils
-- `-c, --config <name>` - Configuration file name (default: `watt.json`)
-- `-s, --skip-dependencies` - Don't install dependencies after creating files
-- `-P, --package-manager <manager>` - Use specific package manager (`npm`, `yarn`, `pnpm`)
-- `-M, --module <name>` - Additional application generator modules (can be used multiple times)
-
-**Example:**
-
-```bash
-wattpm create my-api
-wattpm init --skip-dependencies --package-manager pnpm
-```
+Use the target project's local binary for every read. The discovery workflow requires
+Watt 3.74.0+ and a release providing `skill`; older installations must stop rather than
+download a fallback. Relative Markdown links resolve against the document containing
+them: normalize to a bundle-relative path and use the same CLI. For new projects or
+v3-to-v4 migrations, select the intended destination version explicitly before loading
+its instructions.
 
 ### `wattpm dev`
 
@@ -102,7 +92,7 @@ wattpm dev [directory]
 
 ```bash
 wattpm dev
-wattpm dev ./my-app --config custom-watt.json
+wattpm dev ./my-app --config custom.watt.config.ts
 ```
 
 ### `wattpm start`
@@ -331,59 +321,11 @@ wattpm applications:remove [id] application1 [application2] [...]
 wattpm applications:remove my-app api-app database-app --save
 ```
 
-### `wattpm import`
+### Integrating applications
 
-Imports an external application into your Watt application.
-
-```bash
-wattpm import [directory] [url]
-```
-
-**Arguments:**
-
-- `directory` - Application directory (default: current directory)
-- `url` - URL or GitHub repository to import. Supports multiple formats:
-  - GitHub shorthand: `user/repo`
-  - Git URL: `https://github.com/user/repo.git`
-  - Git URL with branch fragment: `https://github.com/user/repo.git#branch-name`
-
-**Options:**
-
-- `-c, --config <path>` - Configuration file path
-- `-i, --id <name>` - Service ID (default: repository basename)
-- `-p, --path <path>` - Local path for the application (default: application ID)
-- `-H, --http` - Use HTTP instead of SSH for GitHub URLs
-- `-b, --branch <name>` - Branch to clone (overrides URL fragment, default: `main`)
-- `-s, --skip-dependencies` - Don't install application dependencies
-- `-P, --package-manager <manager>` - Package manager to use
-
-**Branch Specification:**
-
-You can specify a branch in two ways during import:
-
-1. **URL Fragment**: Append `#branch-name` to the git URL
-2. **Flag**: Use the `-b/--branch` flag (takes precedence over URL fragment)
-
-**Note:** When manually editing the configuration file to add applications with URLs, you must use the URL fragment syntax (`url#branch`) to specify a branch, as the `-b` flag is only available during the `import` command.
-
-**Examples:**
-
-```bash
-# Import using GitHub shorthand
-wattpm import platformatic/hello-world
-
-# Import with explicit ID
-wattpm import https://github.com/user/my-application.git --id my-application
-
-# Import specific branch using URL fragment
-wattpm import https://github.com/user/repo.git#develop
-
-# Import specific branch using flag
-wattpm import --http --branch develop user/repo
-
-# Flag overrides URL fragment (will clone 'main' branch)
-wattpm import https://github.com/user/repo.git#develop -b main
-```
+Use the [Watt integration skill](../../skills/watt/references/integration.md) to
+add local or remote application entries directly to `watt.config.*`. Watt 4 no
+longer provides an import or project scaffolding command.
 
 ### `wattpm-utils resolve`
 
@@ -400,20 +342,32 @@ wattpm-utils resolve [directory]
 - `-p, --password <token>` - Password/token for private repositories
 - `-s, --skip-dependencies` - Don't install application dependencies
 - `-P, --package-manager <manager>` - Package manager to use
+- `--for <command>` - Resolve the topology the named command would boot (`dev`, `build`, or
+  `start`; default `start`). Use this when which applications exist depends on `command` or
+  `mode` inside the configuration file, so that `resolve` fetches what that command actually
+  needs.
+- `--for all` - Resolve the union of the topology every boot command would produce, each
+  evaluated with its own defaults. An application id that would resolve to two different clones
+  under different commands is refused, naming the id and both sources.
+
+A remote application (a `url` entry) must itself already be on the current configuration format:
+`resolve` clones the repository and, like every directory the loader consults, refuses a checkout
+that still carries a legacy configuration file. Migrate the repositories an application depends on
+before migrating the project that references them.
 
 **Branch Specification in Configuration:**
 
-When manually editing your configuration file to add applications with git URLs, specify branches using the URL fragment syntax (`url#branch`):
+Specify a branch using `gitBranch` or the URL fragment syntax (`url#branch`). An
+explicit `gitBranch` takes precedence over a fragment:
 
-```json
-{
-  "applications": [
-    {
-      "id": "my-app",
-      "url": "https://github.com/user/repo.git#develop"
-    }
+```ts config
+import { createWattConfig } from 'wattpm'
+
+export default createWattConfig({
+  applications: [
+    { id: 'my-app', url: 'https://github.com/user/repo.git#develop' }
   ]
-}
+})
 ```
 
 Example:
@@ -426,28 +380,26 @@ wattpm-utils resolve --username myuser --password $GITHUB_TOKEN
 
 You can specify npm packages, including version, by using the `npm:` protocol in the URL:
 
-```json
-{
-  "applications": [
-    {
-      "id": "my-app",
-      "url": "npm:myapp"
-    }
+```ts config
+import { createWattConfig } from 'wattpm'
+
+export default createWattConfig({
+  applications: [
+    { id: 'my-app', url: 'npm:myapp' }
   ]
-}
+})
 ```
 
 The example above will install the latest version. But you can provide a version (including semver ranges):
 
-```json
-{
-  "applications": [
-    {
-      "id": "my-app",
-      "url": "npm:myapp@0.2.0"
-    }
+```ts config
+import { createWattConfig } from 'wattpm'
+
+export default createWattConfig({
+  applications: [
+    { id: 'my-app', url: 'npm:myapp@0.2.0' }
   ]
-}
+})
 ```
 
 ## Scheduler Commands
@@ -526,7 +478,7 @@ wattpm inject [id] [application]
 **Arguments:**
 
 - `id` - Process ID or application name (optional if only one app is running)
-- `application` - Application name (optional, uses the entrypoint if omitted and one exists)
+- `application` - Application name (optional when the runtime has a single application)
 
 **Options:**
 
@@ -541,8 +493,8 @@ wattpm inject [id] [application]
 **Examples:**
 
 ```bash
-wattpm inject --path /api/health
-wattpm inject --method POST --header "Content-Type: application/json" --data '{"name": "test"}'
+wattpm inject my-app api-application --path /api/health
+wattpm inject my-app api-application --method POST --header "Content-Type: application/json" --data '{"name": "test"}'
 wattpm inject my-app api-application --path /users --output response.json
 ```
 
@@ -638,26 +590,6 @@ wattpm env --table
 wattpm env my-app database-application
 ```
 
-### `wattpm config`
-
-Displays configuration for a running application or application.
-
-```bash
-wattpm config [id] [application]
-```
-
-**Arguments:**
-
-- `id` - Process ID or application name (optional if only one app is running)
-- `application` - Application name (optional, shows app config if omitted)
-
-**Example:**
-
-```bash
-wattpm config
-wattpm config my-app api-application
-```
-
 ## Performance Profiling Commands
 
 ### `wattpm pprof start`
@@ -751,44 +683,9 @@ Output files are saved with the naming pattern `heap-{application}-{timestamp}.h
 
 ## Advanced Commands
 
-### `wattpm patch-config`
-
-Applies configuration patches using JavaScript files.
-
-```bash
-wattpm patch-config [directory] <patch-file>
-```
-
-**Arguments:**
-
-- `directory` - Application directory (default: current directory)
-- `patch-file` - JavaScript file that exports a patch function
-
-**Options:**
-
-- `-c, --config <path>` - Configuration file path
-
-**Patch file format:**
-
-```javascript
-// patch.js
-export default function (runtime, applications) {
-  return {
-    runtime: [
-      /* JSON Patch operations for runtime config */
-    ],
-    applications: [
-      /* JSON Patch operations for application configs */
-    ]
-  }
-}
-```
-
-**Example:**
-
-```bash
-wattpm patch-config ./patches/production.js
-```
+There is no CLI command for patching an application's configuration. Integration tooling that needs
+to override an application's configuration on a running runtime does it programmatically, with
+[`runtime.setApplicationConfigPatch()`](../runtime/programmatic.md#runtimesetapplicationconfigpatchid-ops).
 
 ### `wattpm admin`
 
@@ -842,10 +739,10 @@ wattpm version
 
 Watt automatically detects configuration files in this order:
 
-1. `watt.json` / `watt.json5`
-2. `platformatic.json` / `platformatic.json5`
-3. `platformatic.yml` / `platformatic.yaml`
-4. `platformatic.tml` / `platformatic.toml`
+1. `watt.config.ts`
+2. `watt.config.mts`
+3. `watt.config.js`
+4. `watt.config.mjs`
 
 For more details, see [Configuration File Formats](../../file-formats.md).
 
@@ -854,8 +751,8 @@ For more details, see [Configuration File Formats](../../file-formats.md).
 ### Creating a New Application
 
 ```bash
-# Create a new Watt app
-wattpm create my-app
+# Read the setup instructions and create the app with your agent
+wattpm skill references/scaffolding.md
 cd my-app
 
 # Start in development mode
@@ -868,8 +765,8 @@ wattpm inject --path /api/health
 ### Adding an External Service
 
 ```bash
-# Import an application from GitHub
-wattpm import platformatic/example-application
+# Read the integration instructions and declare the remote application
+wattpm skill references/integration.md
 
 # Resolve all external applications
 wattpm-utils resolve

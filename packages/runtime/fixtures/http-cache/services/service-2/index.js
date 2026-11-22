@@ -27,7 +27,7 @@ async function build () {
   })
 
   app.get('/service-3-http/cached-req-counter', async (req, reply) => {
-    const res = await request('http://127.0.0.1:7866/service-3/cached-req-counter', {
+    const res = await request('http://127.0.0.1:7866/cached-req-counter', {
       query: req.query,
       headers: req.headers
     })

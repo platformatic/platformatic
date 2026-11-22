@@ -6,12 +6,16 @@ export const kWorkerId = Symbol.for('plt.runtime.worker.id')
 export const kITC = Symbol.for('plt.runtime.itc')
 export const kHealthCheckTimer = Symbol.for('plt.runtime.worker.healthCheckTimer')
 export const kWorkerStatus = Symbol('plt.runtime.worker.status')
+export const kWorkerExitCode = Symbol('plt.runtime.worker.exitCode')
 export const kWorkerHealthSignals = Symbol.for('plt.runtime.worker.healthSignals')
+export const kWorkerStartAborted = Symbol('plt.runtime.worker.startAborted')
 export const kWorkerStartTime = Symbol.for('plt.runtime.worker.startTime')
+export const kWorkerUrl = Symbol.for('plt.runtime.worker.url')
+export const kWorkerPortOffset = Symbol.for('plt.runtime.worker.portOffset')
+export const kWorkerServerOptions = Symbol.for('plt.runtime.worker.serverOptions')
 export const kLastHealthCheckELU = Symbol.for('plt.runtime.worker.lastHealthCheckELU')
-export const kLastWorkerScalerELU = Symbol.for('plt.runtime.worker.lastWorkerScalerELU')
-export const kInterceptorReadyPromise = Symbol.for('plt.runtime.worker.interceptorReadyPromise')
 export const kIsSubprocessHost = Symbol.for('plt.runtime.worker.isSubprocessHost')
+export const kSubprocessPid = Symbol('subprocessPid')
 
 // This string marker should be safe to use since it belongs to Unicode private area
 export const kStderrMarker = '\ue002'

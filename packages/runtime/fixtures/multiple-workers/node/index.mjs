@@ -18,6 +18,17 @@ export function create () {
     return { from: 'node' }
   })
 
+  app.get('/:application/hello', async (request, reply) => {
+    const response = await fetch(`http://${request.params.application}.plt.local/hello`)
+
+    for (const header of ['x-plt-port', 'x-plt-socket', 'x-plt-worker-id']) {
+      reply.header(header, response.headers.get(header))
+    }
+
+    reply.code(response.status)
+    return response.json()
+  })
+
   // Keep the event loop busy so that the worker exceeds maxELU and gets replaced
   app.post('/busy', async () => {
     const timer = setInterval(() => {

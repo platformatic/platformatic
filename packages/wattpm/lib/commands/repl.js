@@ -30,10 +30,10 @@ export async function replCommand (logger, args) {
         // List available applications when there are multiple
         console.log('\nAvailable applications:')
         const rows = applications.map(app => {
-          const { id, type, entrypoint } = app
-          return [id, type, entrypoint ? 'Yes' : 'No']
+          const { id, type } = app
+          return [id, type]
         })
-        console.log(table([[bold('Name'), bold('Type'), bold('Entrypoint')], ...rows], tableConfig))
+        console.log(table([[bold('Name'), bold('Type')], ...rows], tableConfig))
         console.log('Usage: wattpm repl <application-name>\n')
         await client.close()
         return

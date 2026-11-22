@@ -2,7 +2,7 @@ import { deepStrictEqual, strictEqual } from 'node:assert'
 import { once } from 'node:events'
 import { join } from 'node:path'
 import { test } from 'node:test'
-import { prepareApplication } from '../index.js'
+import { prepareAddedApplications } from '../index.js'
 import { createRuntime } from './helpers.js'
 
 const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
@@ -24,12 +24,9 @@ test('should not fail when adding an application and an existing worker has no m
   // Add the second application. Since application-1 has no messages handlers anymore,
   // mesh setup will timeout but it is non-fatal (Promise.allSettled in undici-thread-interceptor).
   await runtime.addApplications(
-    [
-      await prepareApplication(runtime.getRuntimeConfig(true), {
-        id: 'application-2',
-        path: './application-2'
-      })
-    ],
+    await prepareAddedApplications(runtime.getRuntimeConfig(true), [
+      { id: 'application-2', path: './application-2' }
+    ]),
     true
   )
 

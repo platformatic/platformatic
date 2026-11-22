@@ -12,12 +12,12 @@ async function main() {
     connectionString: pgConnectionString,
     log: logger,
   })
-  const res = await mapper.entities.page.insert({ 
-    fields: ['id', 'title' ],
-      inputs: [
-        { title: 'Foobar' },
-        { title: 'FizzBuzz' }
-      ],
+  const res = await mapper.entities.page.insertMany({
+    fields: ['id', 'title'],
+    inputs: [
+      { title: 'Foobar' },
+      { title: 'FizzBuzz' }
+    ]
   })
   logger.info(res)
   await mapper.db.dispose()

@@ -10,491 +10,259 @@ export type PlatformaticRuntimeConfig = {
 } & {
   $schema?: string;
   preload?: string | string[];
-  extensions?:
-    | string
-    | {
-        path: string;
-        options?: {
-          [k: string]: unknown;
-        };
-        build?: boolean;
-      }
-    | (
-        | string
-        | {
-            path: string;
-            options?: {
-              [k: string]: unknown;
-            };
-            build?: boolean;
-          }
-      )[];
-  entrypoint?: string;
+  extensions?: string | ExtensionEntry | (string | ExtensionEntry1)[];
   basePath?: string;
   autoload?: {
     path: string;
     exclude?: string[];
     mappings?: {
-      [k: string]: {
-        id: string;
-        enabled?:
-          | boolean
-          | string
-          | {
-              [k: string]: boolean;
-            };
-        config?: string;
-        useHttp?: boolean;
-        websocket?: boolean;
-        reuseTcpPorts?: boolean;
-        workers?:
-          | number
-          | string
-          | {
-              static?: number;
-              minimum?: number;
-              maximum?: number;
-              scaleUpELU?: number;
-              scaleDownELU?: number;
-              [k: string]: unknown;
-            };
-        health?: {
-          enabled?: boolean | string;
-          interval?: number | string;
-          gracePeriod?: number | string;
-          maxUnhealthyChecks?: number | string;
-          maxELU?: number | string;
-          maxELULogLevel?: (
-            | ("fatal" | "error" | "warn" | "info" | "debug" | "trace" | "silent")
-            | {
-                [k: string]: unknown;
-              }
-          ) &
-            string;
-          maxEventLoopDelay?: number | string;
-          maxEventLoopDelayP99?: number | string;
-          maxHeapUsed?: number | string;
-          maxHeapUsedLogLevel?: (
-            | ("fatal" | "error" | "warn" | "info" | "debug" | "trace" | "silent")
-            | {
-                [k: string]: unknown;
-              }
-          ) &
-            string;
-          maxHeapTotal?: number | string;
-          maxYoungGeneration?: number | string;
-          codeRangeSize?: number | string;
-          bufferPoolSize?: number | string;
-          defaultHighWaterMark?: number | string;
-        };
-        /**
-         * Overrides the runtime-level restartOnError for this application. Set to false or 0 to never restart the application when it crashes, a positive number to wait that amount of milliseconds between restarts, or true to use the default delay.
-         */
-        restartOnError?: boolean | number;
-        dependencies?: string[];
-        arguments?: string[];
-        env?: {
-          [k: string]: string;
-        };
-        envfile?: string;
-        sourceMaps?: boolean;
-        nodeModulesSourceMaps?: string[];
-        packageManager?: "npm" | "pnpm" | "yarn";
-        preload?: string | string[];
-        nodeOptions?: string;
-        execArgv?: string[];
-        permissions?: {
-          fs?: {
-            read?: string[];
-            write?: string[];
-          };
-        };
-        telemetry?: {
-          /**
-           * An array of instrumentations loaded if telemetry is enabled
-           */
-          instrumentations?: (
-            | string
-            | {
-                package: string;
-                exportName?: string;
-                options?: {
-                  [k: string]: unknown;
-                };
-                [k: string]: unknown;
-              }
-          )[];
-          [k: string]: unknown;
-        };
-        compileCache?:
-          | boolean
-          | {
-              /**
-               * Enable Node.js module compile cache for faster startup
-               */
-              enabled?: boolean;
-              /**
-               * Directory to store compile cache. Defaults to .plt/compile-cache in app root
-               */
-              directory?: string;
-            };
-        management?:
-          | boolean
-          | {
-              enabled?: boolean;
-              operations?: string[];
-            };
-      };
+      [k: string]: ApplicationEntryOverrides;
     };
   };
-  applications?: ({
-    [k: string]: unknown;
-  } & {
-    id?: string;
-    enabled?:
-      | boolean
-      | string
-      | {
-          [k: string]: boolean;
-        };
-    path?: string;
-    config?: string;
-    url?: string;
-    gitBranch?: string;
-    useHttp?: boolean;
-    websocket?: boolean;
-    reuseTcpPorts?: boolean;
-    workers?:
-      | number
-      | string
-      | {
-          static?: number;
-          minimum?: number;
-          maximum?: number;
-          scaleUpELU?: number;
-          scaleDownELU?: number;
-          [k: string]: unknown;
-        };
-    health?: {
-      enabled?: boolean | string;
-      interval?: number | string;
-      gracePeriod?: number | string;
-      maxUnhealthyChecks?: number | string;
-      maxELU?: number | string;
-      maxELULogLevel?: (
-        | ("fatal" | "error" | "warn" | "info" | "debug" | "trace" | "silent")
-        | {
-            [k: string]: unknown;
-          }
-      ) &
-        string;
-      maxEventLoopDelay?: number | string;
-      maxEventLoopDelayP99?: number | string;
-      maxHeapUsed?: number | string;
-      maxHeapUsedLogLevel?: (
-        | ("fatal" | "error" | "warn" | "info" | "debug" | "trace" | "silent")
-        | {
-            [k: string]: unknown;
-          }
-      ) &
-        string;
-      maxHeapTotal?: number | string;
-      maxYoungGeneration?: number | string;
-      codeRangeSize?: number | string;
-      bufferPoolSize?: number | string;
-      defaultHighWaterMark?: number | string;
-    };
-    /**
-     * Overrides the runtime-level restartOnError for this application. Set to false or 0 to never restart the application when it crashes, a positive number to wait that amount of milliseconds between restarts, or true to use the default delay.
-     */
-    restartOnError?: boolean | number;
-    dependencies?: string[];
-    arguments?: string[];
-    env?: {
-      [k: string]: string;
-    };
-    envfile?: string;
-    sourceMaps?: boolean;
-    nodeModulesSourceMaps?: string[];
-    packageManager?: "npm" | "pnpm" | "yarn";
-    preload?: string | string[];
-    nodeOptions?: string;
-    execArgv?: string[];
-    permissions?: {
-      fs?: {
-        read?: string[];
-        write?: string[];
+  applications?: ApplicationEntry[];
+  services?: ApplicationEntry1[];
+  web?: ApplicationEntry2[];
+  workers?: number | string | WorkersOptions;
+  workersRestartDelay?: number | string;
+  logger?: RuntimeLoggerOptions;
+  reuseTcpPorts?: boolean;
+  startTimeout?: number;
+  restartOnError?: boolean | number;
+  exitOnUnhandledErrors?: boolean | number;
+  gracefulShutdown?: GracefulShutdownOptions;
+  health?: HealthOptions;
+  healthProbes?: boolean | string | HealthProbesOptions;
+  undici?: UndiciOptions;
+  httpCache?: boolean | HttpCacheOptions;
+  watch?: boolean | string;
+  managementApi?: boolean | string | ManagementApiOptions;
+  management?:
+    | boolean
+    | {
+        enabled?: boolean;
+        operations?: string[];
       };
-    };
-    telemetry?: {
+  metrics?: boolean | MetricsOptions;
+  tracing?: TelemetryOptions;
+  inspectorOptions?: {
+    host?: string;
+    port?: number;
+    breakFirstLine?: boolean;
+    watchDisabled?: boolean;
+    [k: string]: unknown;
+  };
+  applicationTimeout?: number | string;
+  startupConcurrency?: number | string;
+  messagingTimeout?: number | string;
+  resolvedApplicationsBasePath?: string;
+  env?: {
+    [k: string]: string;
+  };
+  envfile?: string;
+  /**
+   * When set to true, the configuration loading fails if a {PLT_*} placeholder references an environment variable which is not set. When set to "warn", a warning listing the missing variables is logged but the placeholders are still replaced with an empty string. Defaults to false.
+   */
+  strictEnv?: boolean | string;
+  sourceMaps?: boolean;
+  nodeModulesSourceMaps?: string[];
+  policies?: {
+    deny: {
       /**
-       * An array of instrumentations loaded if telemetry is enabled
+       * This interface was referenced by `undefined`'s JSON-Schema definition
+       * via the `patternProperty` "^.*$".
        */
-      instrumentations?: (
-        | string
-        | {
-            package: string;
-            exportName?: string;
-            options?: {
-              [k: string]: unknown;
-            };
-            [k: string]: unknown;
-          }
-      )[];
-      [k: string]: unknown;
+      [k: string]: string | [string, ...string[]];
     };
-    compileCache?:
-      | boolean
-      | {
-          /**
-           * Enable Node.js module compile cache for faster startup
-           */
-          enabled?: boolean;
-          /**
-           * Directory to store compile cache. Defaults to .plt/compile-cache in app root
-           */
-          directory?: string;
-        };
-    management?:
-      | boolean
-      | {
-          enabled?: boolean;
-          operations?: string[];
-        };
-    [k: string]: unknown;
-  })[];
-  services?: ({
-    [k: string]: unknown;
-  } & {
-    id?: string;
-    enabled?:
-      | boolean
-      | string
-      | {
-          [k: string]: boolean;
-        };
-    path?: string;
-    config?: string;
-    url?: string;
-    gitBranch?: string;
-    useHttp?: boolean;
-    websocket?: boolean;
-    reuseTcpPorts?: boolean;
-    workers?:
-      | number
-      | string
-      | {
-          static?: number;
-          minimum?: number;
-          maximum?: number;
-          scaleUpELU?: number;
-          scaleDownELU?: number;
-          [k: string]: unknown;
-        };
-    health?: {
-      enabled?: boolean | string;
-      interval?: number | string;
-      gracePeriod?: number | string;
-      maxUnhealthyChecks?: number | string;
-      maxELU?: number | string;
-      maxELULogLevel?: (
-        | ("fatal" | "error" | "warn" | "info" | "debug" | "trace" | "silent")
-        | {
-            [k: string]: unknown;
-          }
-      ) &
-        string;
-      maxEventLoopDelay?: number | string;
-      maxEventLoopDelayP99?: number | string;
-      maxHeapUsed?: number | string;
-      maxHeapUsedLogLevel?: (
-        | ("fatal" | "error" | "warn" | "info" | "debug" | "trace" | "silent")
-        | {
-            [k: string]: unknown;
-          }
-      ) &
-        string;
-      maxHeapTotal?: number | string;
-      maxYoungGeneration?: number | string;
-      codeRangeSize?: number | string;
-      bufferPoolSize?: number | string;
-      defaultHighWaterMark?: number | string;
-    };
+  };
+  compileCache?: boolean | CompileCacheOptions3;
+  /**
+   * Override minor, patch and prerelease version mismatches. Major mismatches always fail.
+   */
+  versionMismatch?: "warn" | "error";
+  scheduler?: {
     /**
-     * Overrides the runtime-level restartOnError for this application. Set to false or 0 to never restart the application when it crashes, a positive number to wait that amount of milliseconds between restarts, or true to use the default delay.
+     * Start local cron triggers for newly registered jobs. When false, jobs are created paused.
      */
-    restartOnError?: boolean | number;
-    dependencies?: string[];
-    arguments?: string[];
-    env?: {
-      [k: string]: string;
-    };
-    envfile?: string;
-    sourceMaps?: boolean;
-    nodeModulesSourceMaps?: string[];
-    packageManager?: "npm" | "pnpm" | "yarn";
-    preload?: string | string[];
-    nodeOptions?: string;
-    execArgv?: string[];
-    permissions?: {
-      fs?: {
-        read?: string[];
-        write?: string[];
+    autostart?: boolean;
+  };
+  module?: string;
+};
+export type ApplicationEntry = {
+  [k: string]: unknown;
+} & {
+  id?: string;
+  enabled?:
+    | boolean
+    | string
+    | {
+        [k: string]: boolean;
       };
-    };
-    telemetry?: {
-      /**
-       * An array of instrumentations loaded if telemetry is enabled
-       */
-      instrumentations?: (
-        | string
-        | {
-            package: string;
-            exportName?: string;
-            options?: {
-              [k: string]: unknown;
-            };
-            [k: string]: unknown;
-          }
-      )[];
-      [k: string]: unknown;
-    };
-    compileCache?:
-      | boolean
-      | {
-          /**
-           * Enable Node.js module compile cache for faster startup
-           */
-          enabled?: boolean;
-          /**
-           * Directory to store compile cache. Defaults to .plt/compile-cache in app root
-           */
-          directory?: string;
-        };
-    management?:
-      | boolean
-      | {
-          enabled?: boolean;
-          operations?: string[];
-        };
-    [k: string]: unknown;
-  })[];
-  web?: ({
-    [k: string]: unknown;
-  } & {
-    id?: string;
-    enabled?:
-      | boolean
-      | string
-      | {
-          [k: string]: boolean;
-        };
-    path?: string;
-    config?: string;
-    url?: string;
-    gitBranch?: string;
-    useHttp?: boolean;
-    websocket?: boolean;
-    reuseTcpPorts?: boolean;
-    workers?:
-      | number
-      | string
-      | {
-          static?: number;
-          minimum?: number;
-          maximum?: number;
-          scaleUpELU?: number;
-          scaleDownELU?: number;
-          [k: string]: unknown;
-        };
-    health?: {
-      enabled?: boolean | string;
-      interval?: number | string;
-      gracePeriod?: number | string;
-      maxUnhealthyChecks?: number | string;
-      maxELU?: number | string;
-      maxELULogLevel?: (
-        | ("fatal" | "error" | "warn" | "info" | "debug" | "trace" | "silent")
-        | {
-            [k: string]: unknown;
-          }
-      ) &
-        string;
-      maxEventLoopDelay?: number | string;
-      maxEventLoopDelayP99?: number | string;
-      maxHeapUsed?: number | string;
-      maxHeapUsedLogLevel?: (
-        | ("fatal" | "error" | "warn" | "info" | "debug" | "trace" | "silent")
-        | {
-            [k: string]: unknown;
-          }
-      ) &
-        string;
-      maxHeapTotal?: number | string;
-      maxYoungGeneration?: number | string;
-      codeRangeSize?: number | string;
-      bufferPoolSize?: number | string;
-      defaultHighWaterMark?: number | string;
-    };
-    /**
-     * Overrides the runtime-level restartOnError for this application. Set to false or 0 to never restart the application when it crashes, a positive number to wait that amount of milliseconds between restarts, or true to use the default delay.
-     */
-    restartOnError?: boolean | number;
-    dependencies?: string[];
-    arguments?: string[];
-    env?: {
-      [k: string]: string;
-    };
-    envfile?: string;
-    sourceMaps?: boolean;
-    nodeModulesSourceMaps?: string[];
-    packageManager?: "npm" | "pnpm" | "yarn";
-    preload?: string | string[];
-    nodeOptions?: string;
-    execArgv?: string[];
-    permissions?: {
-      fs?: {
-        read?: string[];
-        write?: string[];
+  path?: string;
+  config?:
+    | string
+    | {
+        [k: string]: unknown;
       };
-    };
-    telemetry?: {
-      /**
-       * An array of instrumentations loaded if telemetry is enabled
-       */
-      instrumentations?: (
-        | string
-        | {
-            package: string;
-            exportName?: string;
-            options?: {
-              [k: string]: unknown;
-            };
-            [k: string]: unknown;
-          }
-      )[];
-      [k: string]: unknown;
-    };
-    compileCache?:
-      | boolean
-      | {
-          /**
-           * Enable Node.js module compile cache for faster startup
-           */
-          enabled?: boolean;
-          /**
-           * Directory to store compile cache. Defaults to .plt/compile-cache in app root
-           */
-          directory?: string;
-        };
-    management?:
-      | boolean
-      | {
-          enabled?: boolean;
-          operations?: string[];
-        };
+  url?: string;
+  module?: string;
+  gitBranch?: string;
+  reuseTcpPorts?: boolean;
+  workers?: number | string | ApplicationWorkersOptions;
+  health?: ApplicationHealthOptions;
+  /**
+   * Overrides the runtime-level restartOnError for this application. Set to false or 0 to never restart the application when it crashes, a positive number to wait that amount of milliseconds between restarts, or true to use the default delay.
+   */
+  restartOnError?: boolean | number;
+  dependencies?: string[];
+  arguments?: string[];
+  env?: {
+    [k: string]: string;
+  };
+  envfile?: string;
+  sourceMaps?: boolean;
+  nodeModulesSourceMaps?: string[];
+  packageManager?: "npm" | "pnpm" | "yarn";
+  preload?: string | string[];
+  nodeOptions?: string;
+  execArgv?: string[];
+  permissions?: PermissionsOptions;
+  tracing?: ApplicationTelemetryOverrides;
+  compileCache?: boolean | CompileCacheOptions;
+  management?:
+    | boolean
+    | {
+        enabled?: boolean;
+        operations?: string[];
+      };
+  [k: string]: unknown;
+};
+export type ApplicationEntry1 = {
+  [k: string]: unknown;
+} & {
+  id?: string;
+  enabled?:
+    | boolean
+    | string
+    | {
+        [k: string]: boolean;
+      };
+  path?: string;
+  config?:
+    | string
+    | {
+        [k: string]: unknown;
+      };
+  url?: string;
+  module?: string;
+  gitBranch?: string;
+  reuseTcpPorts?: boolean;
+  workers?: number | string | ApplicationWorkersOptions1;
+  health?: ApplicationHealthOptions1;
+  /**
+   * Overrides the runtime-level restartOnError for this application. Set to false or 0 to never restart the application when it crashes, a positive number to wait that amount of milliseconds between restarts, or true to use the default delay.
+   */
+  restartOnError?: boolean | number;
+  dependencies?: string[];
+  arguments?: string[];
+  env?: {
+    [k: string]: string;
+  };
+  envfile?: string;
+  sourceMaps?: boolean;
+  nodeModulesSourceMaps?: string[];
+  packageManager?: "npm" | "pnpm" | "yarn";
+  preload?: string | string[];
+  nodeOptions?: string;
+  execArgv?: string[];
+  permissions?: PermissionsOptions1;
+  tracing?: ApplicationTelemetryOverrides1;
+  compileCache?: boolean | CompileCacheOptions1;
+  management?:
+    | boolean
+    | {
+        enabled?: boolean;
+        operations?: string[];
+      };
+  [k: string]: unknown;
+};
+export type ApplicationEntry2 = {
+  [k: string]: unknown;
+} & {
+  id?: string;
+  enabled?:
+    | boolean
+    | string
+    | {
+        [k: string]: boolean;
+      };
+  path?: string;
+  config?:
+    | string
+    | {
+        [k: string]: unknown;
+      };
+  url?: string;
+  module?: string;
+  gitBranch?: string;
+  reuseTcpPorts?: boolean;
+  workers?: number | string | ApplicationWorkersOptions2;
+  health?: ApplicationHealthOptions2;
+  /**
+   * Overrides the runtime-level restartOnError for this application. Set to false or 0 to never restart the application when it crashes, a positive number to wait that amount of milliseconds between restarts, or true to use the default delay.
+   */
+  restartOnError?: boolean | number;
+  dependencies?: string[];
+  arguments?: string[];
+  env?: {
+    [k: string]: string;
+  };
+  envfile?: string;
+  sourceMaps?: boolean;
+  nodeModulesSourceMaps?: string[];
+  packageManager?: "npm" | "pnpm" | "yarn";
+  preload?: string | string[];
+  nodeOptions?: string;
+  execArgv?: string[];
+  permissions?: PermissionsOptions2;
+  tracing?: ApplicationTelemetryOverrides2;
+  compileCache?: boolean | CompileCacheOptions2;
+  management?:
+    | boolean
+    | {
+        enabled?: boolean;
+        operations?: string[];
+      };
+  [k: string]: unknown;
+};
+
+export interface ExtensionEntry {
+  path: string;
+  options?: {
     [k: string]: unknown;
-  })[];
+  };
+  build?: boolean;
+}
+export interface ExtensionEntry1 {
+  path: string;
+  options?: {
+    [k: string]: unknown;
+  };
+  build?: boolean;
+}
+export interface ApplicationEntryOverrides {
+  id: string;
+  enabled?:
+    | boolean
+    | string
+    | {
+        [k: string]: boolean;
+      };
+  config?:
+    | string
+    | {
+        [k: string]: unknown;
+      };
+  reuseTcpPorts?: boolean;
   workers?:
     | number
     | string
@@ -503,184 +271,9 @@ export type PlatformaticRuntimeConfig = {
         dynamic?: boolean;
         minimum?: number;
         maximum?: number;
-        total?: number;
-        maxMemory?: number;
-        cooldown?: number;
-        gracePeriod?: number;
-        scaleUpELU?: number;
-        scaleDownELU?: number;
-        [k: string]: unknown;
+        eluThreshold?: number;
+        heapThresholdMb?: number;
       };
-  workersRestartDelay?: number | string;
-  logger?: {
-    /**
-     * The log level. It must be one of the standard pino levels (fatal, error, warn, info, debug, trace, silent) or, when customLevels is set, one of the custom levels.
-     */
-    level?: string;
-    transport?:
-      | {
-          target?: string;
-          options?: {
-            [k: string]: unknown;
-          };
-        }
-      | {
-          targets?: {
-            target?: string;
-            options?: {
-              [k: string]: unknown;
-            };
-            level?: string;
-          }[];
-          options?: {
-            [k: string]: unknown;
-          };
-        };
-    pipeline?: {
-      target?: string;
-      options?: {
-        [k: string]: unknown;
-      };
-    };
-    formatters?: {
-      path: string;
-    };
-    timestamp?: "epochTime" | "unixTime" | "nullTime" | "isoTime";
-    redact?: {
-      paths: string[];
-      censor?: string;
-      /**
-       * Remove the redacted keys entirely instead of replacing their values with the censor. Defaults to false.
-       */
-      remove?: boolean;
-    };
-    base?: {
-      [k: string]: unknown;
-    } | null;
-    messageKey?: string;
-    /**
-     * The key used for the timestamp in emitted logs. Defaults to time.
-     */
-    timestampKey?: string;
-    /**
-     * The key used for the level in emitted logs. Defaults to level.
-     */
-    levelKey?: string;
-    customLevels?: {
-      [k: string]: unknown;
-    };
-    /**
-     * The numeric value of the level defined in level, when it is not one of the standard pino levels.
-     */
-    levelVal?: number;
-    /**
-     * Only use the levels defined in customLevels and omit the standard pino ones.
-     */
-    useOnlyCustomLevels?: boolean;
-    /**
-     * How log levels are compared to the logger level. Use DESC when lower values are more severe. Defaults to ASC.
-     */
-    levelComparison?: "ASC" | "DESC";
-    /**
-     * A string prefixed to every message, including the ones of child loggers.
-     */
-    msgPrefix?: string;
-    /**
-     * The key under which any logged object is placed.
-     */
-    nestedKey?: string;
-    /**
-     * The key used for the serialized error in the log object. Defaults to err.
-     */
-    errorKey?: string;
-    /**
-     * The stringification limit at a specific nesting depth when logging circular objects. Defaults to 5.
-     */
-    depthLimit?: number;
-    /**
-     * The stringification limit of properties or elements when logging a circular object or array. Defaults to 100.
-     */
-    edgeLimit?: number;
-    /**
-     * Terminate each log line with \r\n instead of \n. Defaults to false.
-     */
-    crlf?: boolean;
-    /**
-     * Set to false to disable logging entirely. Defaults to true.
-     */
-    enabled?: boolean;
-    openTelemetryExporter?: {
-      protocol: "grpc" | "http";
-      url: string;
-    };
-    captureStdio?: boolean;
-    pino?: {
-      level?: string;
-      time?: string;
-      message?: string;
-    };
-    [k: string]: unknown;
-  };
-  server?: {
-    hostname?: string;
-    port?: number | string;
-    /**
-     * Configures how entrypoint server worker ports are assigned. When set to shared, all workers listen on the same port. When set to perWorkerIncrement, each worker will use its own port, starting from port (worker 0).
-     */
-    portAssignment?: "shared" | "perWorkerIncrement";
-    /**
-     * The maximum length of the queue of pending connections
-     */
-    backlog?: number;
-    /**
-     * The number of milliseconds of inactivity a server needs to wait for additional incoming data, after it has finished writing the last response, before a socket will be destroyed. When running behind a load balancer, set it higher than the load balancer idle timeout.
-     */
-    keepAliveTimeout?: number;
-    /**
-     * The number of milliseconds to wait to receive the complete HTTP headers from the client. It should be greater than keepAliveTimeout.
-     */
-    headersTimeout?: number;
-    http2?: boolean;
-    https?: {
-      allowHTTP1?: boolean;
-      key:
-        | string
-        | {
-            path?: string;
-          }
-        | (
-            | string
-            | {
-                path?: string;
-              }
-          )[];
-      cert:
-        | string
-        | {
-            path?: string;
-          }
-        | (
-            | string
-            | {
-                path?: string;
-              }
-          )[];
-      requestCert?: boolean;
-      rejectUnauthorized?: boolean;
-    };
-  };
-  reuseTcpPorts?: boolean;
-  startTimeout?: number;
-  restartOnError?: boolean | number;
-  exitOnUnhandledErrors?: boolean | number;
-  gracefulShutdown?: {
-    runtime: number | string;
-    application: number | string;
-    /**
-     * Add Connection: close header to HTTP responses during graceful shutdown
-     */
-    closeConnections?: boolean;
-  };
   health?: {
     enabled?: boolean | string;
     interval?: number | string;
@@ -710,484 +303,44 @@ export type PlatformaticRuntimeConfig = {
     bufferPoolSize?: number | string;
     defaultHighWaterMark?: number | string;
   };
-  healthProbes?:
-    | boolean
-    | string
-    | {
-        enabled?: boolean | string;
-        hostname?: string;
-        port?: number | string;
-        readiness?:
-          | boolean
-          | {
-              endpoint?: string;
-              success?: {
-                statusCode?: number;
-                body?: string;
-              };
-              fail?: {
-                statusCode?: number;
-                body?: string;
-              };
-            };
-        liveness?:
-          | boolean
-          | {
-              endpoint?: string;
-              success?: {
-                statusCode?: number;
-                body?: string;
-              };
-              fail?: {
-                statusCode?: number;
-                body?: string;
-              };
-            };
-      };
-  undici?: {
-    agentOptions?: {
-      [k: string]: unknown;
-    };
-    interceptors?:
-      | {
-          module: string;
-          options: {
-            [k: string]: unknown;
-          };
-          [k: string]: unknown;
-        }[]
-      | {
-          Client?: {
-            module: string;
-            options: {
-              [k: string]: unknown;
-            };
-            [k: string]: unknown;
-          }[];
-          Pool?: {
-            module: string;
-            options: {
-              [k: string]: unknown;
-            };
-            [k: string]: unknown;
-          }[];
-          Agent?: {
-            module: string;
-            options: {
-              [k: string]: unknown;
-            };
-            [k: string]: unknown;
-          }[];
-          [k: string]: unknown;
-        };
-    [k: string]: unknown;
+  /**
+   * Overrides the runtime-level restartOnError for this application. Set to false or 0 to never restart the application when it crashes, a positive number to wait that amount of milliseconds between restarts, or true to use the default delay.
+   */
+  restartOnError?: boolean | number;
+  dependencies?: string[];
+  arguments?: string[];
+  env?: {
+    [k: string]: string;
   };
-  httpCache?:
-    | boolean
-    | {
-        store?: string;
-        /**
-         * @minItems 1
-         */
-        methods?: [string, ...string[]];
-        cacheTagsHeader?: string;
-        maxSize?: number;
-        maxEntrySize?: number;
-        maxCount?: number;
-        /**
-         * Whitelist of origins to cache. Supports exact strings and regex patterns (e.g., "/https:\\/\\/.*\\.example\\.com/").
-         */
-        origins?: string[];
-        /**
-         * Default cache duration in seconds for responses without explicit expiration headers.
-         */
-        cacheByDefault?: number;
-        /**
-         * Cache type. "shared" caches may be shared between users, "private" caches are user-specific.
-         */
-        type?: "shared" | "private";
-        [k: string]: unknown;
-      };
-  watch?: boolean | string;
-  managementApi?:
-    | boolean
-    | string
-    | {
-        logs?: {
-          maxSize?: number;
-        };
-        /**
-         * Custom path for the control socket. If not specified, uses the default platform-specific location.
-         */
-        socket?: string;
-      };
-  management?:
-    | boolean
-    | {
-        enabled?: boolean;
-        operations?: string[];
-      };
-  metrics?:
-    | boolean
-    | {
-        port?: number | string;
-        enabled?: boolean | string;
-        hostname?: string;
-        endpoint?: string;
-        https?: {
-          allowHTTP1?: boolean;
-          key:
-            | string
-            | {
-                path?: string;
-              }
-            | (
-                | string
-                | {
-                    path?: string;
-                  }
-              )[];
-          cert:
-            | string
-            | {
-                path?: string;
-              }
-            | (
-                | string
-                | {
-                    path?: string;
-                  }
-              )[];
-          requestCert?: boolean;
-          rejectUnauthorized?: boolean;
-        };
-        auth?: {
-          username: string;
-          password: string;
-        };
-        labels?: {
-          [k: string]: string;
-        };
-        /**
-         * The label name to use for the application identifier in metrics (e.g., applicationId, serviceId)
-         */
-        applicationLabel?: string;
-        /**
-         * Enable outgoing HTTP client request duration metrics
-         */
-        httpClientMetrics?: boolean | string;
-        /**
-         * Merge the metrics of all the workers of each application into a single set of series without the workerId label. Summaries are still reported per worker. Defaults to false.
-         */
-        aggregateWorkers?: boolean | string;
-        /**
-         * Reset the http_request_all_duration_seconds, http_request_all_summary_seconds and http_client_request_duration_seconds metrics after each collection. Set to false to make them cumulative. Defaults to true.
-         */
-        resetHttpMetrics?: boolean | string;
-        readiness?:
-          | boolean
-          | {
-              endpoint?: string;
-              success?: {
-                statusCode?: number;
-                body?: string;
-              };
-              fail?: {
-                statusCode?: number;
-                body?: string;
-              };
-            };
-        liveness?:
-          | boolean
-          | {
-              endpoint?: string;
-              success?: {
-                statusCode?: number;
-                body?: string;
-              };
-              fail?: {
-                statusCode?: number;
-                body?: string;
-              };
-            };
-        /**
-         * @deprecated
-         * Deprecated. Health probe timeout configuration is no longer used.
-         */
-        healthChecksTimeouts?: number | string;
-        plugins?: string[];
-        timeout?: number | string;
-        /**
-         * Configuration for exporting metrics to an OTLP endpoint
-         */
-        otlpExporter?: {
-          /**
-           * Enable or disable OTLP metrics export
-           */
-          enabled?: boolean | string;
-          /**
-           * OTLP endpoint URL (e.g., http://collector:4318/v1/metrics)
-           */
-          endpoint: string;
-          /**
-           * Interval in milliseconds between metric pushes
-           */
-          interval?: number | string;
-          /**
-           * Additional HTTP headers for authentication
-           */
-          headers?: {
-            [k: string]: string;
-          };
-          /**
-           * Service name for OTLP resource attributes
-           */
-          serviceName?: string;
-          /**
-           * Service version for OTLP resource attributes
-           */
-          serviceVersion?: string;
-        };
-        /**
-         * Configuration for forwarding user OpenTelemetry metrics to an OTLP endpoint
-         */
-        opentelemetry?: {
-          /**
-           * Enable or disable OpenTelemetry metrics forwarding
-           */
-          enabled?: boolean | string;
-          /**
-           * OTLP metrics endpoint URL (e.g., http://collector:4318/v1/metrics)
-           */
-          endpoint: string;
-          /**
-           * Interval in milliseconds between metric forwards
-           */
-          interval?: number | string;
-          /**
-           * Additional HTTP headers for authentication
-           */
-          headers?: {
-            [k: string]: string;
-          };
-        };
-        /**
-         * Custom labels to add to HTTP metrics (http_request_all_duration_seconds). Each label extracts its value from an HTTP request header.
-         */
-        httpCustomLabels?: {
-          /**
-           * The label name to use in metrics
-           */
-          name: string;
-          /**
-           * The HTTP request header to extract the value from
-           */
-          header: string;
-          /**
-           * Default value when header is missing (defaults to "unknown")
-           */
-          default?: string;
-        }[];
-      };
-  telemetry?: {
-    enabled?: boolean | string;
+  envfile?: string;
+  sourceMaps?: boolean;
+  nodeModulesSourceMaps?: string[];
+  packageManager?: "npm" | "pnpm" | "yarn";
+  preload?: string | string[];
+  nodeOptions?: string;
+  execArgv?: string[];
+  permissions?: {
+    fs?: {
+      read?: string[];
+      write?: string[];
+    };
+  };
+  tracing?: {
     /**
-     * The name of the application. Defaults to the folder name if not specified.
+     * An array of instrumentations loaded if tracing is enabled
      */
-    applicationName: string;
-    /**
-     * The version of the application (optional)
-     */
-    version?: string;
-    /**
-     * An array of paths to skip when creating spans. Useful for health checks and other endpoints that do not need to be traced.
-     */
-    skip?: {
-      /**
-       * The path to skip. Can be a string or a regex.
-       */
-      path?: string;
-      /**
-       * HTTP method to skip
-       */
-      method?: "GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "HEAD" | "OPTIONS";
-      [k: string]: unknown;
-    }[];
-    exporter?:
-      | {
-          type?: "console" | "otlp" | "zipkin" | "memory" | "file";
-          /**
-           * Options for the exporter. These are passed directly to the exporter.
-           */
-          options?: {
-            /**
-             * The URL to send the traces to. Not used for console or memory exporters.
-             */
-            url?: string;
-            /**
-             * Headers to send to the exporter. Not used for console or memory exporters.
-             */
-            headers?: {
-              [k: string]: unknown;
-            };
-            /**
-             * The path to write the traces to. Only for file exporter.
-             */
-            path?: string;
-            /**
-             * The OTLP transport protocol to use. Only for the otlp exporter. Defaults to http.
-             */
-            protocol?: "http" | "grpc";
-            /**
-             * Alias for protocol. Only for the otlp exporter. Defaults to http.
-             */
-            transport?: "http" | "grpc";
-            [k: string]: unknown;
-          };
-          additionalProperties?: never;
-          [k: string]: unknown;
-        }[]
-      | {
-          type?: "console" | "otlp" | "zipkin" | "memory" | "file";
-          /**
-           * Options for the exporter. These are passed directly to the exporter.
-           */
-          options?: {
-            /**
-             * The URL to send the traces to. Not used for console or memory exporters.
-             */
-            url?: string;
-            /**
-             * Headers to send to the exporter. Not used for console or memory exporters.
-             */
-            headers?: {
-              [k: string]: unknown;
-            };
-            /**
-             * The path to write the traces to. Only for file exporter.
-             */
-            path?: string;
-            /**
-             * The OTLP transport protocol to use. Only for the otlp exporter. Defaults to http.
-             */
-            protocol?: "http" | "grpc";
-            /**
-             * Alias for protocol. Only for the otlp exporter. Defaults to http.
-             */
-            transport?: "http" | "grpc";
-            [k: string]: unknown;
-          };
-          additionalProperties?: never;
-          [k: string]: unknown;
-        };
-    /**
-     * Enable the OpenTelemetry diagnostic logger. Diagnostic messages are forwarded to the Platformatic global logger using the current logger level.
-     */
-    diagLogger?: boolean | string;
-    /**
-     * How much to trace. Omitted, everything is recorded. Either a type out of the set OpenTelemetry defines for OTEL_TRACES_SAMPLER, or a package exporting a sampler.
-     */
-    sampler?:
-      | {
-          type:
-            | "always_on"
-            | "always_off"
-            | "traceidratio"
-            | "parentbased_always_on"
-            | "parentbased_always_off"
-            | "parentbased_traceidratio";
-          /**
-           * Options for the sampler, for instance { "ratio": 0.1 } for the ratio based ones.
-           */
-          options?: {
-            [k: string]: unknown;
-          };
-        }
+    instrumentations?: (
+      | string
       | {
           package: string;
           exportName?: string;
           options?: {
             [k: string]: unknown;
           };
-        };
-  };
-  verticalScaler?: {
-    enabled?: boolean;
-    maxTotalWorkers?: number;
-    maxTotalMemory?: number;
-    minWorkers?: number;
-    maxWorkers?: number;
-    cooldownSec?: number;
-    gracePeriod?: number;
-    scaleUpELU?: number;
-    scaleDownELU?: number;
-    /**
-     * @deprecated
-     */
-    timeWindowSec?: number;
-    /**
-     * @deprecated
-     */
-    scaleDownTimeWindowSec?: number;
-    /**
-     * @deprecated
-     */
-    scaleIntervalSec?: number;
-    applications?: {
-      [k: string]: {
-        minWorkers?: number;
-        maxWorkers?: number;
-        scaleUpELU?: number;
-        scaleDownELU?: number;
-      };
-    };
-  };
-  inspectorOptions?: {
-    host?: string;
-    port?: number;
-    breakFirstLine?: boolean;
-    watchDisabled?: boolean;
-    [k: string]: unknown;
-  };
-  applicationTimeout?: number | string;
-  startupConcurrency?: number | string;
-  messagingTimeout?: number | string;
-  resolvedApplicationsBasePath?: string;
-  env?: {
-    [k: string]: string;
-  };
-  envfile?: string;
-  /**
-   * When set to true, the configuration loading fails if a {PLT_*} placeholder references an environment variable which is not set. When set to "warn", a warning listing the missing variables is logged but the placeholders are still replaced with an empty string. Defaults to false.
-   */
-  strictEnv?: boolean | string;
-  sourceMaps?: boolean;
-  nodeModulesSourceMaps?: string[];
-  scheduler?: {
-    enabled?: boolean | string;
-    name: string;
-    cron: string;
-    callbackUrl: string;
-    method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
-    headers?: {
-      [k: string]: string;
-    };
-    body?:
-      | string
-      | {
           [k: string]: unknown;
-        };
-    maxRetries?: number;
+        }
+    )[];
     [k: string]: unknown;
-  }[];
-  policies?: {
-    deny: {
-      /**
-       * This interface was referenced by `undefined`'s JSON-Schema definition
-       * via the `patternProperty` "^.*$".
-       */
-      [k: string]: string | [string, ...string[]];
-    };
   };
   compileCache?:
     | boolean
@@ -1200,6 +353,801 @@ export type PlatformaticRuntimeConfig = {
          * Directory to store compile cache. Defaults to .plt/compile-cache in app root
          */
         directory?: string;
+        /**
+         * Wait for the first worker to start before starting the remaining workers
+         */
+        awaitFirstWorker?: boolean;
       };
-  module?: string;
-};
+  management?:
+    | boolean
+    | {
+        enabled?: boolean;
+        operations?: string[];
+      };
+}
+export interface ApplicationWorkersOptions {
+  static?: number;
+  dynamic?: boolean;
+  minimum?: number;
+  maximum?: number;
+  eluThreshold?: number;
+  heapThresholdMb?: number;
+}
+export interface ApplicationHealthOptions {
+  enabled?: boolean | string;
+  interval?: number | string;
+  gracePeriod?: number | string;
+  maxUnhealthyChecks?: number | string;
+  maxELU?: number | string;
+  maxELULogLevel?: (
+    | ("fatal" | "error" | "warn" | "info" | "debug" | "trace" | "silent")
+    | {
+        [k: string]: unknown;
+      }
+  ) &
+    string;
+  maxEventLoopDelay?: number | string;
+  maxEventLoopDelayP99?: number | string;
+  maxHeapUsed?: number | string;
+  maxHeapUsedLogLevel?: (
+    | ("fatal" | "error" | "warn" | "info" | "debug" | "trace" | "silent")
+    | {
+        [k: string]: unknown;
+      }
+  ) &
+    string;
+  maxHeapTotal?: number | string;
+  maxYoungGeneration?: number | string;
+  codeRangeSize?: number | string;
+  bufferPoolSize?: number | string;
+  defaultHighWaterMark?: number | string;
+}
+export interface PermissionsOptions {
+  fs?: {
+    read?: string[];
+    write?: string[];
+  };
+}
+export interface ApplicationTelemetryOverrides {
+  /**
+   * An array of instrumentations loaded if tracing is enabled
+   */
+  instrumentations?: (
+    | string
+    | {
+        package: string;
+        exportName?: string;
+        options?: {
+          [k: string]: unknown;
+        };
+        [k: string]: unknown;
+      }
+  )[];
+  [k: string]: unknown;
+}
+export interface CompileCacheOptions {
+  /**
+   * Enable Node.js module compile cache for faster startup
+   */
+  enabled?: boolean;
+  /**
+   * Directory to store compile cache. Defaults to .plt/compile-cache in app root
+   */
+  directory?: string;
+  /**
+   * Wait for the first worker to start before starting the remaining workers
+   */
+  awaitFirstWorker?: boolean;
+}
+export interface ApplicationWorkersOptions1 {
+  static?: number;
+  dynamic?: boolean;
+  minimum?: number;
+  maximum?: number;
+  eluThreshold?: number;
+  heapThresholdMb?: number;
+}
+export interface ApplicationHealthOptions1 {
+  enabled?: boolean | string;
+  interval?: number | string;
+  gracePeriod?: number | string;
+  maxUnhealthyChecks?: number | string;
+  maxELU?: number | string;
+  maxELULogLevel?: (
+    | ("fatal" | "error" | "warn" | "info" | "debug" | "trace" | "silent")
+    | {
+        [k: string]: unknown;
+      }
+  ) &
+    string;
+  maxEventLoopDelay?: number | string;
+  maxEventLoopDelayP99?: number | string;
+  maxHeapUsed?: number | string;
+  maxHeapUsedLogLevel?: (
+    | ("fatal" | "error" | "warn" | "info" | "debug" | "trace" | "silent")
+    | {
+        [k: string]: unknown;
+      }
+  ) &
+    string;
+  maxHeapTotal?: number | string;
+  maxYoungGeneration?: number | string;
+  codeRangeSize?: number | string;
+  bufferPoolSize?: number | string;
+  defaultHighWaterMark?: number | string;
+}
+export interface PermissionsOptions1 {
+  fs?: {
+    read?: string[];
+    write?: string[];
+  };
+}
+export interface ApplicationTelemetryOverrides1 {
+  /**
+   * An array of instrumentations loaded if tracing is enabled
+   */
+  instrumentations?: (
+    | string
+    | {
+        package: string;
+        exportName?: string;
+        options?: {
+          [k: string]: unknown;
+        };
+        [k: string]: unknown;
+      }
+  )[];
+  [k: string]: unknown;
+}
+export interface CompileCacheOptions1 {
+  /**
+   * Enable Node.js module compile cache for faster startup
+   */
+  enabled?: boolean;
+  /**
+   * Directory to store compile cache. Defaults to .plt/compile-cache in app root
+   */
+  directory?: string;
+  /**
+   * Wait for the first worker to start before starting the remaining workers
+   */
+  awaitFirstWorker?: boolean;
+}
+export interface ApplicationWorkersOptions2 {
+  static?: number;
+  dynamic?: boolean;
+  minimum?: number;
+  maximum?: number;
+  eluThreshold?: number;
+  heapThresholdMb?: number;
+}
+export interface ApplicationHealthOptions2 {
+  enabled?: boolean | string;
+  interval?: number | string;
+  gracePeriod?: number | string;
+  maxUnhealthyChecks?: number | string;
+  maxELU?: number | string;
+  maxELULogLevel?: (
+    | ("fatal" | "error" | "warn" | "info" | "debug" | "trace" | "silent")
+    | {
+        [k: string]: unknown;
+      }
+  ) &
+    string;
+  maxEventLoopDelay?: number | string;
+  maxEventLoopDelayP99?: number | string;
+  maxHeapUsed?: number | string;
+  maxHeapUsedLogLevel?: (
+    | ("fatal" | "error" | "warn" | "info" | "debug" | "trace" | "silent")
+    | {
+        [k: string]: unknown;
+      }
+  ) &
+    string;
+  maxHeapTotal?: number | string;
+  maxYoungGeneration?: number | string;
+  codeRangeSize?: number | string;
+  bufferPoolSize?: number | string;
+  defaultHighWaterMark?: number | string;
+}
+export interface PermissionsOptions2 {
+  fs?: {
+    read?: string[];
+    write?: string[];
+  };
+}
+export interface ApplicationTelemetryOverrides2 {
+  /**
+   * An array of instrumentations loaded if tracing is enabled
+   */
+  instrumentations?: (
+    | string
+    | {
+        package: string;
+        exportName?: string;
+        options?: {
+          [k: string]: unknown;
+        };
+        [k: string]: unknown;
+      }
+  )[];
+  [k: string]: unknown;
+}
+export interface CompileCacheOptions2 {
+  /**
+   * Enable Node.js module compile cache for faster startup
+   */
+  enabled?: boolean;
+  /**
+   * Directory to store compile cache. Defaults to .plt/compile-cache in app root
+   */
+  directory?: string;
+  /**
+   * Wait for the first worker to start before starting the remaining workers
+   */
+  awaitFirstWorker?: boolean;
+}
+export interface WorkersOptions {
+  static?: number;
+  dynamic?: boolean;
+  minimum?: number;
+  maximum?: number;
+  total?: number;
+  maxMemory?: number;
+  eluThreshold?: number;
+  heapThresholdMb?: number;
+  processIntervalMs?: number;
+  maxScaleUpStep?: number;
+  redistributionMs?: number;
+  alphaUp?: number;
+  alphaDown?: number;
+  betaUp?: number;
+  betaDown?: number;
+  cooldowns?: {
+    scaleUpAfterScaleUpMs?: number;
+    scaleUpAfterScaleDownMs?: number;
+    scaleDownAfterScaleUpMs?: number;
+    scaleDownAfterScaleDownMs?: number;
+  };
+}
+export interface RuntimeLoggerOptions {
+  /**
+   * A standard Pino log level or a level defined in customLevels.
+   */
+  level?: string;
+  transport?:
+    | {
+        target?: string;
+        options?: {
+          [k: string]: unknown;
+        };
+      }
+    | {
+        targets?: {
+          target?: string;
+          options?: {
+            [k: string]: unknown;
+          };
+          level?: string;
+        }[];
+        options?: {
+          [k: string]: unknown;
+        };
+      };
+  pipeline?: {
+    target?: string;
+    options?: {
+      [k: string]: unknown;
+    };
+  };
+  formatters?: {
+    path: string;
+  };
+  timestamp?: "epochTime" | "unixTime" | "nullTime" | "isoTime";
+  redact?: {
+    paths: string[];
+    censor?: string;
+    /**
+     * Remove the redacted keys entirely instead of replacing their values with the censor. Defaults to false.
+     */
+    remove?: boolean;
+  };
+  base?: {
+    [k: string]: unknown;
+  } | null;
+  messageKey?: string;
+  /**
+   * The key used for the timestamp in emitted logs. Defaults to time.
+   */
+  timestampKey?: string;
+  /**
+   * The key used for the level in emitted logs. Defaults to level.
+   */
+  levelKey?: string;
+  customLevels?: {
+    [k: string]: unknown;
+  };
+  /**
+   * The numeric value of the level defined in level, when it is not one of the standard pino levels.
+   */
+  levelVal?: number;
+  /**
+   * Only use the levels defined in customLevels and omit the standard pino ones.
+   */
+  useOnlyCustomLevels?: boolean;
+  /**
+   * How log levels are compared to the logger level. Use DESC when lower values are more severe. Defaults to ASC.
+   */
+  levelComparison?: "ASC" | "DESC";
+  /**
+   * A string prefixed to every message, including the ones of child loggers.
+   */
+  msgPrefix?: string;
+  /**
+   * The key under which any logged object is placed.
+   */
+  nestedKey?: string;
+  /**
+   * The key used for the serialized error in the log object. Defaults to err.
+   */
+  errorKey?: string;
+  /**
+   * The stringification limit at a specific nesting depth when logging circular objects. Defaults to 5.
+   */
+  depthLimit?: number;
+  /**
+   * The stringification limit of properties or elements when logging a circular object or array. Defaults to 100.
+   */
+  edgeLimit?: number;
+  /**
+   * Terminate each log line with \r\n instead of \n. Defaults to false.
+   */
+  crlf?: boolean;
+  /**
+   * Set to false to disable logging entirely. Defaults to true.
+   */
+  enabled?: boolean;
+  openTelemetryExporter?: {
+    protocol: "grpc" | "http";
+    url: string;
+  };
+  captureStdio?: boolean;
+  pino?: {
+    level?: string;
+    time?: string;
+    message?: string;
+  };
+  [k: string]: unknown;
+}
+export interface GracefulShutdownOptions {
+  runtime: number | string;
+  application: number | string;
+  /**
+   * Add Connection: close header to HTTP responses during graceful shutdown
+   */
+  closeConnections?: boolean;
+}
+export interface HealthOptions {
+  enabled?: boolean | string;
+  interval?: number | string;
+  gracePeriod?: number | string;
+  maxUnhealthyChecks?: number | string;
+  maxELU?: number | string;
+  maxELULogLevel?: (
+    | ("fatal" | "error" | "warn" | "info" | "debug" | "trace" | "silent")
+    | {
+        [k: string]: unknown;
+      }
+  ) &
+    string;
+  maxEventLoopDelay?: number | string;
+  maxEventLoopDelayP99?: number | string;
+  maxHeapUsed?: number | string;
+  maxHeapUsedLogLevel?: (
+    | ("fatal" | "error" | "warn" | "info" | "debug" | "trace" | "silent")
+    | {
+        [k: string]: unknown;
+      }
+  ) &
+    string;
+  maxHeapTotal?: number | string;
+  maxYoungGeneration?: number | string;
+  codeRangeSize?: number | string;
+  bufferPoolSize?: number | string;
+  defaultHighWaterMark?: number | string;
+}
+export interface HealthProbesOptions {
+  enabled?: boolean | string;
+  hostname?: string;
+  port?: number | string;
+  readiness?:
+    | boolean
+    | {
+        endpoint?: string;
+        success?: {
+          statusCode?: number;
+          body?: string;
+        };
+        fail?: {
+          statusCode?: number;
+          body?: string;
+        };
+      };
+  liveness?:
+    | boolean
+    | {
+        endpoint?: string;
+        success?: {
+          statusCode?: number;
+          body?: string;
+        };
+        fail?: {
+          statusCode?: number;
+          body?: string;
+        };
+      };
+}
+export interface UndiciOptions {
+  agentOptions?: {
+    [k: string]: unknown;
+  };
+  interceptors?:
+    | {
+        module: string;
+        options: {
+          [k: string]: unknown;
+        };
+        [k: string]: unknown;
+      }[]
+    | {
+        Client?: {
+          module: string;
+          options: {
+            [k: string]: unknown;
+          };
+          [k: string]: unknown;
+        }[];
+        Pool?: {
+          module: string;
+          options: {
+            [k: string]: unknown;
+          };
+          [k: string]: unknown;
+        }[];
+        Agent?: {
+          module: string;
+          options: {
+            [k: string]: unknown;
+          };
+          [k: string]: unknown;
+        }[];
+        [k: string]: unknown;
+      };
+  [k: string]: unknown;
+}
+export interface HttpCacheOptions {
+  store?: string;
+  /**
+   * @minItems 1
+   */
+  methods?: [string, ...string[]];
+  cacheTagsHeader?: string;
+  maxSize?: number;
+  maxEntrySize?: number;
+  maxCount?: number;
+  /**
+   * Whitelist of origins to cache. Supports exact strings and regex patterns (e.g., "/https:\\/\\/.*\\.example\\.com/").
+   */
+  origins?: string[];
+  /**
+   * Default cache duration in seconds for responses without explicit expiration headers.
+   */
+  cacheByDefault?: number;
+  /**
+   * Cache type. "shared" caches may be shared between users, "private" caches are user-specific.
+   */
+  type?: "shared" | "private";
+  [k: string]: unknown;
+}
+export interface ManagementApiOptions {
+  logs?: {
+    maxSize?: number;
+  };
+  /**
+   * Custom path for the control socket. If not specified, uses the default platform-specific location.
+   */
+  socket?: string;
+}
+export interface MetricsOptions {
+  port?: number | string;
+  enabled?: boolean | string;
+  hostname?: string;
+  endpoint?: string;
+  https?: HttpsOptions;
+  auth?: {
+    username: string;
+    password: string;
+  };
+  labels?: {
+    [k: string]: string;
+  };
+  /**
+   * The label name to use for the application identifier in metrics (e.g., applicationId, serviceId)
+   */
+  applicationLabel?: string;
+  /**
+   * Enable outgoing HTTP client request duration metrics
+   */
+  httpClientMetrics?: boolean | string;
+  /**
+   * Merge the metrics of all the workers of each application into a single set of series without the workerId label. Summaries are still reported per worker. Defaults to false.
+   */
+  aggregateWorkers?: boolean | string;
+  readiness?:
+    | boolean
+    | {
+        endpoint?: string;
+        success?: {
+          statusCode?: number;
+          body?: string;
+        };
+        fail?: {
+          statusCode?: number;
+          body?: string;
+        };
+      };
+  liveness?:
+    | boolean
+    | {
+        endpoint?: string;
+        success?: {
+          statusCode?: number;
+          body?: string;
+        };
+        fail?: {
+          statusCode?: number;
+          body?: string;
+        };
+      };
+  /**
+   * @deprecated
+   * Deprecated. Health probe timeout configuration is no longer used.
+   */
+  healthChecksTimeouts?: number | string;
+  plugins?: string[];
+  timeout?: number | string;
+  /**
+   * Configuration for exporting metrics to an OTLP endpoint
+   */
+  otlpExporter?: {
+    /**
+     * Enable or disable OTLP metrics export
+     */
+    enabled?: boolean | string;
+    /**
+     * OTLP endpoint URL (e.g., http://collector:4318/v1/metrics)
+     */
+    endpoint: string;
+    /**
+     * Interval in milliseconds between metric pushes
+     */
+    interval?: number | string;
+    /**
+     * Additional HTTP headers for authentication
+     */
+    headers?: {
+      [k: string]: string;
+    };
+    /**
+     * Service name for OTLP resource attributes
+     */
+    serviceName?: string;
+    /**
+     * Service version for OTLP resource attributes
+     */
+    serviceVersion?: string;
+  };
+  /**
+   * Configuration for forwarding user OpenTelemetry metrics to an OTLP endpoint
+   */
+  opentelemetry?: {
+    /**
+     * Enable or disable OpenTelemetry metrics forwarding
+     */
+    enabled?: boolean | string;
+    /**
+     * OTLP metrics endpoint URL (e.g., http://collector:4318/v1/metrics)
+     */
+    endpoint: string;
+    /**
+     * Interval in milliseconds between metric forwards
+     */
+    interval?: number | string;
+    /**
+     * Additional HTTP headers for authentication
+     */
+    headers?: {
+      [k: string]: string;
+    };
+  };
+  /**
+   * Custom labels to add to HTTP metrics (http_request_all_duration_seconds). Each label extracts its value from an HTTP request header.
+   */
+  httpCustomLabels?: {
+    /**
+     * The label name to use in metrics
+     */
+    name: string;
+    /**
+     * The HTTP request header to extract the value from
+     */
+    header: string;
+    /**
+     * Default value when header is missing (defaults to "unknown")
+     */
+    default?: string;
+  }[];
+}
+export interface HttpsOptions {
+  allowHTTP1?: boolean;
+  key:
+    | string
+    | {
+        path?: string;
+      }
+    | (
+        | string
+        | {
+            path?: string;
+          }
+      )[];
+  cert:
+    | string
+    | {
+        path?: string;
+      }
+    | (
+        | string
+        | {
+            path?: string;
+          }
+      )[];
+  requestCert?: boolean;
+  rejectUnauthorized?: boolean;
+}
+export interface TelemetryOptions {
+  enabled?: boolean | string;
+  /**
+   * The name of the application. Defaults to the folder name if not specified.
+   */
+  applicationName: string;
+  /**
+   * The version of the application (optional)
+   */
+  version?: string;
+  /**
+   * An array of paths to skip when creating spans. Useful for health checks and other endpoints that do not need to be traced.
+   */
+  skip?: {
+    /**
+     * The path to skip. Can be a string or a regex.
+     */
+    path?: string;
+    /**
+     * HTTP method to skip
+     */
+    method?: "GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "HEAD" | "OPTIONS";
+    [k: string]: unknown;
+  }[];
+  exporter?:
+    | {
+        type?: "console" | "otlp" | "zipkin" | "memory" | "file";
+        /**
+         * Options for the exporter. These are passed directly to the exporter.
+         */
+        options?: {
+          /**
+           * The URL to send the traces to. Not used for console or memory exporters.
+           */
+          url?: string;
+          /**
+           * Headers to send to the exporter. Not used for console or memory exporters.
+           */
+          headers?: {
+            [k: string]: unknown;
+          };
+          /**
+           * The path to write the traces to. Only for file exporter.
+           */
+          path?: string;
+          /**
+           * The OTLP transport protocol to use. Only for the otlp exporter. Defaults to http.
+           */
+          protocol?: "http" | "grpc";
+          /**
+           * Alias for protocol. Only for the otlp exporter. Defaults to http.
+           */
+          transport?: "http" | "grpc";
+          [k: string]: unknown;
+        };
+        additionalProperties?: never;
+        [k: string]: unknown;
+      }[]
+    | {
+        type?: "console" | "otlp" | "zipkin" | "memory" | "file";
+        /**
+         * Options for the exporter. These are passed directly to the exporter.
+         */
+        options?: {
+          /**
+           * The URL to send the traces to. Not used for console or memory exporters.
+           */
+          url?: string;
+          /**
+           * Headers to send to the exporter. Not used for console or memory exporters.
+           */
+          headers?: {
+            [k: string]: unknown;
+          };
+          /**
+           * The path to write the traces to. Only for file exporter.
+           */
+          path?: string;
+          /**
+           * The OTLP transport protocol to use. Only for the otlp exporter. Defaults to http.
+           */
+          protocol?: "http" | "grpc";
+          /**
+           * Alias for protocol. Only for the otlp exporter. Defaults to http.
+           */
+          transport?: "http" | "grpc";
+          [k: string]: unknown;
+        };
+        additionalProperties?: never;
+        [k: string]: unknown;
+      };
+  /**
+   * Enable the OpenTelemetry diagnostic logger. Diagnostic messages are forwarded to the Platformatic global logger using the current logger level.
+   */
+  diagLogger?: boolean | string;
+  /**
+   * How much to trace. Omitted, everything is recorded. Either a type out of the set OpenTelemetry defines for OTEL_TRACES_SAMPLER, or a package exporting a sampler.
+   */
+  sampler?:
+    | {
+        type:
+          | "always_on"
+          | "always_off"
+          | "traceidratio"
+          | "parentbased_always_on"
+          | "parentbased_always_off"
+          | "parentbased_traceidratio";
+        /**
+         * Options for the sampler, for instance { "ratio": 0.1 } for the ratio based ones.
+         */
+        options?: {
+          [k: string]: unknown;
+        };
+      }
+    | {
+        package: string;
+        exportName?: string;
+        options?: {
+          [k: string]: unknown;
+        };
+      };
+}
+export interface CompileCacheOptions3 {
+  /**
+   * Enable Node.js module compile cache for faster startup
+   */
+  enabled?: boolean;
+  /**
+   * Directory to store compile cache. Defaults to .plt/compile-cache in app root
+   */
+  directory?: string;
+  /**
+   * Wait for the first worker to start before starting the remaining workers
+   */
+  awaitFirstWorker?: boolean;
+}

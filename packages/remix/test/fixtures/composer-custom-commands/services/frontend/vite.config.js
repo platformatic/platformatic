@@ -1,4 +1,4 @@
-import { getBasePath, getITC } from '@platformatic/globals'
+import { getBasePath, getITC, registerCloseCallback } from '@platformatic/globals'
 import { vitePlugin as remix } from '@remix-run/dev'
 import { defineConfig } from 'vite'
 
@@ -8,6 +8,9 @@ export default defineConfig({
     remix({ basename: getBasePath({ throwOnMissing: false }) ?? '/' }),
     {
       name: 'platformatic',
+      configureServer: server => {
+        registerCloseCallback(() => server.close())
+      },
       configResolved: config => {
         const itc = getITC()
         itc.notify('config', config)

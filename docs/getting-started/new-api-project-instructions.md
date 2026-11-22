@@ -1,54 +1,29 @@
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
+Install the [official Watt skill](../guides/use-watt-with-ai-agents.md):
 
-To start the Watt creator wizard, run the appropriate command for your package manager in your terminal:
-
-<Tabs groupId="package-manager-create">
-<TabItem value="npm" label="npm">
-
-```bash
-npm create wattpm
+```sh
+npx skills add platformatic/skills --skill watt
 ```
 
-</TabItem>
-<TabItem value="yarn" label="yarn">
+Select the exact published Watt 4 version and authorize its local installation first,
+creating a minimal package manifest if necessary. The discovery skill reads instructions
+from that installation; see [new-project setup](../guides/use-watt-with-ai-agents.md#new-projects).
 
-```bash
-yarn create wattpm
-```
+Ask your agent:
 
-</TabItem>
-<TabItem value="pnpm" label="pnpm">
+> Create a Watt 4 npm workspace in this directory with a database application named
+> `db` under `web/db`. Use ESM, `watt.config.ts`, SQLite, and port 3042. Add package
+> scripts, a sample `movies` table with paired `001.do.sql` / `001.undo.sql`
+> migrations, plugins, routes, and tests. Configure
+> `process.env.PLT_DB_DATABASE_URL` with the local default `sqlite://./db.sqlite`.
+> Use `PLT_DB_APPLY_MIGRATIONS` to control migration auto-apply for this development
+> tutorial. Preserve existing files and ask before installing dependencies.
 
-```bash
-pnpm create wattpm
-```
+The result should include a root package with `workspaces: ["web/*"]`, a root
+`watt.config.ts` referencing `web/db`, whose own configuration exposes port 3042, and a database application's
+own package, configuration, migration directory, and tests. Keep actual credentials
+in `.env` and commit only an env example.
 
-</TabItem>
-</Tabs>
-
-This interactive command-line tool will guide you through setting up a new Watt project. For this guide, please choose the following options:
-
-```
-Hello YOURNAME, welcome to Watt 3.0.0!
-? Where would you like to create your project? .
-✔ Installing @platformatic/runtime@^3.0.0 using npm ...
-? Which kind of application do you want to create? @platformatic/db
-✔ Installing @platformatic/db@^3.0.0 using npm ...
-? What is the name of the application? db
-? What is the connection string? sqlite://./db.sqlite
-? Do you want to create default migrations? yes
-? Do you want to use TypeScript? no
-? Do you want to create another application? no
-? What port do you want to use? 3042
-```
-
-After completing the wizard, your Watt application will be ready in the specified folder. This includes example migration files, plugin scripts, routes, and tests within your application directory.
-
-:::note
-
-If the wizard does not handle dependency installation, ensure to run `npm/yarn/pnpm` install command manually.
-
-`wattpm` sets up workspaces for the selected package manager. Running a manual installation with a different package manager may cause issues or trigger warnings.
-
-:::
+If you prefer to write the project manually, follow the
+[service and database skill reference](../skills/watt/references/services.md) and
+[workspace setup](../skills/watt/references/scaffolding.md). Install with the same
+package manager throughout the tutorial; Watt does not create files through a wizard.

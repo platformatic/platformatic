@@ -1,5 +1,5 @@
 {
-  "name": "opentelemetry-metrics-command-main",
+  "name": "main",
   "main": "index.mjs",
   "dependencies": {
     "@opentelemetry/sdk-metrics": "^2.8.0",

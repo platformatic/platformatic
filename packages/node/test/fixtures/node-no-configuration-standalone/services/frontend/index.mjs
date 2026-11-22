@@ -1,3 +1,4 @@
+import { getHost, getPort } from '@platformatic/globals'
 import { createServer } from 'node:http'
 
 const server = createServer((req, res) => {
@@ -16,4 +17,7 @@ const server = createServer((req, res) => {
   }
 })
 
-server.listen(0)
+server.listen({
+  host: getHost() === true ? '127.0.0.1' : getHost(),
+  port: getPort() === true ? 0 : getPort()
+})

@@ -57,6 +57,25 @@ function enhanceNextCacheConfig (nextConfig, modifications) {
   }
 }
 
+function externalizeGlobals (nextConfig, nextVersion) {
+  const packageName = '@platformatic/globals'
+
+  if (nextVersion.major >= 15) {
+    nextConfig.serverExternalPackages ??= []
+
+    if (!nextConfig.serverExternalPackages.includes(packageName)) {
+      nextConfig.serverExternalPackages.push(packageName)
+    }
+  } else {
+    nextConfig.experimental ??= {}
+    nextConfig.experimental.serverComponentsExternalPackages ??= []
+
+    if (!nextConfig.experimental.serverComponentsExternalPackages.includes(packageName)) {
+      nextConfig.experimental.serverComponentsExternalPackages.push(packageName)
+    }
+  }
+}
+
 export async function enhanceNextConfig (nextConfig, ...args) {
   // This is to avoid https://github.com/vercel/next.js/issues/76981
   Headers.prototype[Symbol.for('nodejs.util.inspect.custom')] = undefined
@@ -67,7 +86,10 @@ export async function enhanceNextConfig (nextConfig, ...args) {
 
   const basePath = getBasePath()
   const config = getConfig()
+  const nextVersion = getNextVersion()
   const notifyConfig = getNotifyConfig()
+
+  externalizeGlobals(nextConfig, nextVersion)
 
   if (typeof nextConfig.basePath === 'undefined') {
     nextConfig.basePath = basePath
@@ -109,3 +131,5 @@ export * from './lib/config.js'
 export * as errors from './lib/errors.js'
 export * from './lib/image-optimizer.js'
 export { packageJson, schema, schemaComponents, version } from './lib/schema.js'
+
+export * from './lib/factory.js'

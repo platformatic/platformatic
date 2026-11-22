@@ -1,12 +1,15 @@
+import { ITC } from '@platformatic/itc'
 import { strict as assert, deepStrictEqual } from 'node:assert'
 import { join } from 'node:path'
 import { test } from 'node:test'
-import { createRuntime } from '../helpers.js'
+import { transform } from '../../index.js'
+import { PredictiveWorkersScaler } from '../../lib/predictive-worker-scaler.js'
+import { configurationFileIn, createRuntime } from '../helpers.js'
 import { waitForEvents } from './helper.js'
 
-async function prepareRuntime (t, applicationsId, fixture) {
+async function prepareRuntime (t, applicationsId, fixture, context) {
   const appPath = join(import.meta.dirname, '..', '..', 'fixtures', fixture)
-  const runtime = await createRuntime(join(appPath, 'platformatic.json'))
+  const runtime = await createRuntime(configurationFileIn(appPath), null, context)
   t.after(async () => {
     await runtime.close()
   })
@@ -21,9 +24,147 @@ async function prepareRuntime (t, applicationsId, fixture) {
   return { runtime, resourcesInfo }
 }
 
+test('requesting one worker during a restart preserves the replacement worker', { timeout: 30000 }, async t => {
+  const { runtime } = await prepareRuntime(t, ['node'], 'update-service-workers')
+  await runtime.updateApplicationsResources([{ application: 'node', workers: 1 }])
+
+  const originalWorkers = Object.entries(await runtime.getWorkers())
+    .filter(([, worker]) => worker.application === 'node')
+  assert.equal(originalWorkers.length, 1)
+  const originalWorkerId = originalWorkers[0][0]
+
+  // Hold the restart after its replacement starts, before retiring the old worker.
+  const restart = await runtime.restartApplication('node', true)
+  try {
+    const restartingWorkers = Object.entries(await runtime.getWorkers())
+      .filter(([, worker]) => worker.application === 'node')
+    assert.equal(restartingWorkers.length, 2)
+    const replacementWorkerId = restartingWorkers.find(([id]) => id !== originalWorkerId)[0]
+
+    await runtime.updateApplicationsResources([{ application: 'node', workers: 1 }])
+
+    for (const retirement of restart.retirements) {
+      await retirement.retire()
+    }
+    restart.complete()
+
+    const remainingWorkers = Object.entries(await runtime.getWorkers())
+      .filter(([, worker]) => worker.application === 'node')
+    assert.deepEqual(remainingWorkers.map(([id]) => id), [replacementWorkerId])
+    assert.equal(remainingWorkers[0][1].status, 'started')
+
+    const response = await runtime.inject('node', { method: 'GET', url: '/' })
+    assert.equal(response.statusCode, 200)
+    assert.deepEqual(JSON.parse(response.payload), { from: 'node' })
+  } finally {
+    restart.release()
+  }
+})
+
+test('reducing the worker count cancels a removed worker replacement before it starts', { timeout: 30000 }, async t => {
+  const { runtime } = await prepareRuntime(t, ['node'], 'update-service-workers', {
+    async transform (config, ...args) {
+      config.startTimeout = 0
+      return transform(config, ...args)
+    }
+  })
+  await runtime.updateApplicationsResources([{ application: 'node', workers: 2 }])
+
+  const replacementWaiting = Promise.withResolvers()
+  const resumeStart = Promise.withResolvers()
+  const send = ITC.prototype.send
+  let replacementStarts = 0
+  t.mock.method(ITC.prototype, 'send', async function (name, ...args) {
+    if (name === 'start' && ++replacementStarts === 2) {
+      // Let the first replacement finish, then hold the second before its start command.
+      replacementWaiting.resolve()
+      await resumeStart.promise
+    }
+    return send.call(this, name, ...args)
+  })
+
+  const startedWorkers = []
+  runtime.on('application:worker:started', ({ application, worker }) => {
+    if (application === 'node') startedWorkers.push(worker)
+  })
+  const restart = runtime.restartApplication('node').then(
+    () => ({ error: null }),
+    error => ({ error })
+  )
+
+  try {
+    await replacementWaiting.promise
+    await runtime.updateApplicationsResources([{ application: 'node', workers: 1 }])
+  } finally {
+    resumeStart.resolve()
+  }
+
+  const { error } = await restart
+  assert.ifError(error)
+  assert.equal(startedWorkers.length, 1, 'the removed worker replacement must not start')
+
+  const remainingWorkers = Object.values(await runtime.getWorkers())
+    .filter(worker => worker.application === 'node')
+  assert.equal(remainingWorkers.length, 1)
+  assert.equal(remainingWorkers[0].status, 'started')
+  assert.equal(remainingWorkers[0].worker, String(startedWorkers[0]))
+
+  const response = await runtime.inject('node', { method: 'GET', url: '/' })
+  assert.equal(response.statusCode, 200)
+  assert.deepEqual(JSON.parse(response.payload), { from: 'node' })
+})
+
+test('updates a zero-worker application without blocking other applications in the batch', async t => {
+  const { runtime } = await prepareRuntime(t, ['node', 'service'], 'update-service-workers')
+  const [healthReport] = await runtime.updateApplicationsResources([
+    { application: 'node', health: { maxHeapTotal: '512MB' } }
+  ])
+  assert.equal(healthReport.application, 'node')
+  assert.equal(healthReport.health.success, true)
+  const { health } = await runtime.getApplicationResourcesInfo('node')
+  await runtime.stopApplication('node')
+
+  assert.deepEqual(await runtime.getApplicationResourcesInfo('node'), { workers: 0, health })
+  const report = await runtime.updateApplicationsResources([
+    { application: 'node', workers: 1 },
+    { application: 'service', workers: 2 }
+  ])
+  assert.equal(report.length, 2)
+  assert.ok(report.every(update => update.workers.success))
+  assert.deepEqual(await runtime.getApplicationResourcesInfo('node'), { workers: 1, health })
+  assert.equal((await runtime.getApplicationResourcesInfo('service')).workers, 2)
+})
+
+test('stopping an application removes it from scaling until it is started again', async t => {
+  const add = t.mock.method(PredictiveWorkersScaler.prototype, 'add')
+  const remove = t.mock.method(PredictiveWorkersScaler.prototype, 'remove')
+  const appPath = join(import.meta.dirname, '..', '..', 'fixtures', 'update-service-workers')
+  const runtime = await createRuntime(configurationFileIn(appPath), null, {
+    async transform (config, ...args) {
+      config = await transform(config, ...args)
+      config.workers.dynamic = true
+      config.workers.processIntervalMs = 60000
+      return config
+    }
+  })
+  t.after(() => runtime.close())
+  await runtime.start()
+  const initialRegistrations = add.mock.calls.filter(call => call.arguments[0].id === 'node').length
+  runtime.once('application:stopping', id => {
+    assert.equal(id, 'node')
+    assert.deepEqual(remove.mock.calls.at(-1).arguments, ['node'])
+  })
+
+  await runtime.stopApplication('node')
+  assert.equal((await runtime.getApplicationResourcesInfo('node')).workers, 0)
+  await runtime.startApplication('node')
+  assert.equal(add.mock.calls.filter(call => call.arguments[0].id === 'node').length, initialRegistrations + 1)
+  assert.ok((await runtime.getApplicationResourcesInfo('node')).workers > 0)
+})
+
 test('should throw error for invalid parameters of updateApplicationsResources', async t => {
   const appPath = join(import.meta.dirname, '..', '..', 'fixtures', 'update-service-workers')
-  const runtime = await createRuntime(join(appPath, 'platformatic.json'))
+  const runtime = await createRuntime(configurationFileIn(appPath))
   t.after(async () => {
     await runtime.close()
   })
@@ -39,7 +180,7 @@ test('should throw error for invalid parameters of updateApplicationsResources',
 test('should throw error for invalid parameters of updateApplicationsResources', async t => {
   const applicationId = 'node'
   const appPath = join(import.meta.dirname, '..', '..', 'fixtures', 'update-service-workers')
-  const runtime = await createRuntime(join(appPath, 'platformatic.json'))
+  const runtime = await createRuntime(configurationFileIn(appPath))
   t.after(async () => {
     await runtime.close()
   })
@@ -55,10 +196,7 @@ test('should throw error for invalid parameters of updateApplicationsResources',
     ])
     assert.fail('Expected error was not thrown')
   } catch (err) {
-    assert.equal(
-      err.message,
-      'Application non-existent-service not found. Available applications are: node, service, composer'
-    )
+    assert.ok(err.message.startsWith('Application non-existent-service not found'))
   }
 
   try {
@@ -405,7 +543,11 @@ for (const heap of heapCases) {
           assert.equal(appReport.workers.started.length, variation, `Should have started ${variation} workers`)
         } else {
           assert.ok(Array.isArray(appReport.workers.stopped), 'Should have stopped array')
-          assert.equal(appReport.workers.stopped.length, Math.abs(variation), `Should have stopped ${Math.abs(variation)} workers`)
+          assert.equal(
+            appReport.workers.stopped.length,
+            Math.abs(variation),
+            `Should have stopped ${Math.abs(variation)} workers`
+          )
         }
 
         // Verify health report

@@ -6,8 +6,5 @@
   "dependencies": {
     "@platformatic/service": ">=3.0.0",
     "@fastify/reply-from": "^11.0.0"
-  },
-  "engines": {
-    "node": "^18.8.0 || >=20.6.0"
   }
 }

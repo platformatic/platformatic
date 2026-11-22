@@ -177,6 +177,7 @@ test('simple db, simple rest API', async t => {
         title: 'Hello fields'
       }
     })
+    equal(res.headers.location, '/pages/1', 'PUT /pages/1?fields=title location')
     same(
       res.json(),
       {
@@ -648,7 +649,7 @@ test('not found', async t => {
   }
 })
 
-test('PUT with an Id', async t => {
+test('PUT with a missing Id returns not found', async t => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -673,11 +674,7 @@ test('PUT with an Id', async t => {
         title: 'Hello World'
       }
     })
-    equal(res.statusCode, 200, 'PUT /pages/1 status code')
-    same(res.json(), {
-      id: '1',
-      title: 'Hello World'
-    })
+    equal(res.statusCode, 404, 'PUT /pages/1 status code')
   }
 })
 

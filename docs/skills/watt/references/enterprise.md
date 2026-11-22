@@ -1,79 +1,166 @@
-# Multi-application Watt 3 deployments
+# Enterprise patterns for Watt 4
 
-## Topology and ownership
+Watt orchestrates applications; `@platformatic/gateway` exposes routes and composes
+APIs. Preserve existing directory names such as `web/` when integrating, but use
+`applications/` for new examples. Composer is legacy terminology, not the Watt 4 package
+to scaffold. Install compatible capability dependencies in their owning workspace packages.
 
-Inventory applications, IDs, listeners, build commands, and database ownership before
-reorganizing a monorepo. Use `@platformatic/gateway` for a new gateway. Older examples
-using Composer, `internal://`, or v2 schema URLs are not templates for this release.
+## Multi-application architecture
 
-An explicit runtime root `watt.json`:
-
-```json
-{
-  "module": "wattpm",
-  "entrypoint": "gateway",
-  "server": { "hostname": "0.0.0.0", "port": "{PORT}" },
-  "applications": [
-    { "id": "gateway", "path": "./web/gateway" },
-    { "id": "frontend", "path": "./web/frontend", "workers": 2 },
-    { "id": "api", "path": "./web/api" },
-    { "id": "db", "path": "./web/db" }
-  ]
-}
+```text
+Public listener → Gateway → Frontend / API / DB / Content worker
 ```
 
-Alternatively use `autoload: { "path": "web" }`, with `autoload.mappings` for per-app
-options. Root runtime settings belong at the root; `runtime` wrapping belongs in a
-standalone capability configuration. Root `workers` supplies a default count; per-app
-counts belong on the application entries, not in a root map keyed by ID.
+Example layout:
 
-`web/gateway/watt.json`:
+```text
+enterprise-app/
+├── watt.config.js
+├── package.json
+├── .env.example
+└── applications/
+    ├── gateway/       # Public listener and routing.
+    ├── frontend/      # Framework build/configuration.
+    ├── api/           # Fastify or Platformatic Service.
+    ├── db/            # Platformatic DB and migrations.
+    └── content-worker/
+```
 
-```json
-{
-  "module": "@platformatic/gateway",
-  "gateway": {
-    "applications": [
-      { "id": "frontend", "proxy": { "prefix": "/" } },
-      { "id": "api", "proxy": { "prefix": "/api" } }
+Each application has its own manifest, configuration, and code. Declare workspaces
+using the existing manager. Root `watt.config.js`, in an ESM package:
+
+```js
+import { createWattConfig } from 'wattpm'
+
+export default createWattConfig({
+  logger: { level: process.env.LOG_LEVEL || 'info' },
+  applications: [
+    { id: 'gateway', path: './applications/gateway' },
+    {
+      id: 'frontend',
+      path: './applications/frontend',
+      workers: Number(process.env.PLT_FRONTEND_WORKERS || 1)
+    },
+    { id: 'api', path: './applications/api', workers: 2 },
+    { id: 'db', path: './applications/db' },
+    { id: 'content-worker', path: './applications/content-worker' }
+  ]
+})
+```
+
+Alternatively `autoload: { path: './applications' }` discovers applications. Use the
+installed autoload override contract for per-application options; do not create an
+obsolete root worker map. Explicit IDs may differ from directory names; Gateway and
+mesh calls must match the configured ID. Keep worker counts on orchestration entries.
+
+## Gateway routing
+
+`applications/gateway/watt.config.js`:
+
+```js
+import { createGatewayConfig } from '@platformatic/gateway'
+
+export default createGatewayConfig({
+  server: {
+    hostname: process.env.HOST || '127.0.0.1',
+    port: Number(process.env.PORT || 3042)
+  },
+  gateway: {
+    applications: [
+      { id: 'frontend', proxy: { prefix: '/' } },
+      { id: 'api', proxy: { prefix: '/api', rewritePrefix: '/' } },
+      { id: 'content-worker', proxy: { prefix: '/content', rewritePrefix: '/' } }
     ]
   }
-}
+})
 ```
 
-Keep the database private unless its APIs are intentionally public. Review prefix
-rewriting, authentication, redirects, OpenAPI composition, and WebSocket routes.
-Do not infer route priority from array ordering; verify representative routes.
+Within Watt, Gateway can use the application ID without an `origin`. For remote
+services, inspect `origin`/`proxy.upstream` and the installed Gateway schema. Do not
+carry Composer `internal://` examples forward as a requirement. Verify prefix
+rewriting and the target application's own base path, redirects, assets, and WebSockets.
+Do not assume array order is a universal route-priority rule. Test overlapping prefixes
+and use supported method/route constraints where needed.
+
+Typical public routes: `/` frontend, `/api/*` business API, `/content/*` CMS webhook.
+Expose DB REST/GraphQL or composed OpenAPI only when explicitly intended and protected.
+Avoid publishing admin secrets, diagnostic endpoints, or an unrestricted DB API.
 
 ## Internal communication
 
-Server-side code can call `http://api.plt.local/path` using application IDs. These URLs
-are internal to Watt, not browser-accessible hostnames. Gateway entries can omit
-`origin` for applications in the same runtime. External services need actual HTTP origins.
+Server-side application code uses configured IDs:
 
-Declare startup dependencies when one application needs another during initialization.
-Keep handlers resilient to restart and unavailable dependencies; a shared process does
-not make remote calls infallible.
+```js
+const response = await fetch('http://db.plt.local/users')
+const products = await fetch('http://api.plt.local/products')
+```
+
+These addresses belong to Watt's internal mesh, not browser DNS. Keep internal
+applications off fixed public ports when the capability supports it. Some framework
+capabilities need a listener even for internal requests; consult the installed contract.
+A public listener belongs to its application, never root `server`/`entrypoint`.
+Multiple fixed-port workers need supported port sharing or explicit port assignment;
+inspect OS behavior and capability `server.portAssignment`.
+
+## Database application
+
+Use [services and databases](services.md) for DB config, REST/GraphQL, types, migrations,
+and authorization. Preserve the user's DB engine/schema and admin-secret semantics.
+Do not enable production automatic migrations implicitly. Each database application
+should have its own connection env name where needed.
 
 ## Multiple repositories
 
-Application entries can carry `url`, `path`, and `gitBranch` for external repositories.
-Use the existing v3 `wattpm import` / `wattpm resolve` workflow only when authorized.
-Inspect local changes before cloning or updating a checkout, pin deployable revisions,
-and preserve local sibling paths used for development.
+Keep source boundaries and existing local sibling development paths. For production,
+declare compatible remote applications and resolve them inside the project:
 
-Build and deploy a reproducible set of application revisions and a frozen lockfile.
-Treat resolving repositories, installing dependencies, and starting the application as
-separate operations with separately reported outcomes.
+```js
+import { createWattConfig } from 'wattpm'
 
-## Production review
+export default createWattConfig(({ command }) => ({
+  applications: [
+    { id: 'gateway', path: './applications/gateway' },
+    command === 'dev'
+      ? { id: 'users', path: '../users' }
+      : {
+          id: 'users',
+          url: 'https://github.com/example/users.git',
+          gitBranch: 'production',
+          path: './external/users'
+        }
+  ]
+}))
+```
 
-- Budget memory and CPU across workers and replicas; benchmark before increasing counts.
-- Avoid multiplying database connection pools beyond the database limit.
-- Use shared storage when caches must be consistent across workers or replicas.
-- Supply secrets through the deployment environment and keep public listeners explicit.
-- Verify readiness, rolling replacement, shutdown, and routing under worker restarts.
-- Check installed addons' documentation rather than inventing `extends` or enterprise options.
+The sibling development path must already exist and be authorized; do not clone/move
+source there automatically. Replace example URLs/revisions with user-provided ones.
+Read [integration](integration.md) before proposing `wattpm-utils resolve --for start`.
+It fetches and normally installs; use `--skip-dependencies` when install is not authorized.
+Do not pass passwords in URLs/CLI arguments, rewrite `.env` to record resolved paths,
+or evaluate every configuration context blindly.
 
-See [services](services.md), [observability](observability.md),
-[performance](performance.md), and [Kubernetes](deployment/kubernetes.md).
+Scripts use `wattpm dev`, `build`, `start`; a resolve script uses `wattpm-utils resolve`,
+not `wattpm resolve`. Build all apps before production startup.
+
+## Enterprise extensions
+
+Existing Watt-Extra/ICC integrations may provide monitoring, policy, auth, audit, or
+caching features, but their schema and Watt 4 compatibility are external contracts.
+Do not emit unverified `extends`, `monitoring`, or `authentication` blocks. Inspect the
+installed addon and its release documentation; report unsupported compatibility.
+Preserve existing auth/audit behavior rather than substituting a generic template.
+
+## Development infrastructure and deployment
+
+Retain local Compose databases/caches, health checks, and persistent volumes. Credentials
+in examples are local-only; production uses secret references. Keep public listener host
+`0.0.0.0` inside containers, coordinate worker resources, and test graceful termination.
+See [Docker](deployment/docker.md), [Kubernetes](deployment/kubernetes.md), and
+[CMS](cms-integration.md) for detailed deployment/webhook patterns.
+
+## Resources
+
+- [Gateway configuration](https://docs.platformatic.dev/docs/reference/gateway/configuration)
+- [Multi-repository guide](https://docs.platformatic.dev/docs/guides/use-watt-multiple-repository)
+- [Platformatic DB](https://docs.platformatic.dev/docs/reference/db/configuration)
+- [Composer demo](https://github.com/platformatic/composer-next-node-fastify) — legacy source; review versions before reuse.

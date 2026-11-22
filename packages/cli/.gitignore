@@ -1,5 +1,0 @@
-**/.astro
-**/.next
-**/.vite
-**/dist
-test/fixtures/sqlite/db

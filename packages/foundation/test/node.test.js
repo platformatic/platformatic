@@ -1,4 +1,4 @@
-import { ok, throws } from 'node:assert'
+import { strictEqual, throws } from 'node:assert'
 import test from 'node:test'
 import { checkNodeVersionForApplications, features } from '../index.js'
 
@@ -23,13 +23,14 @@ test('checkNodeVersionForApplications - should throw for old Node.js version', t
   })
 
   throws(() => checkNodeVersionForApplications(), {
-    name: 'Error',
+    name: 'FastifyError',
+    code: 'PLT_UNSUPPORTED_NODE_VERSION',
     message:
-      /Your current Node\.js version is v18\.0\.0, while the minimum supported version is v22\.19\.0\. Please upgrade Node\.js and try again\./
+      /Your current Node\.js version is v18\.0\.0, while the minimum supported version is v24\.20\.0\. Please upgrade Node\.js and try again\./
   })
 })
 
 test('features - should have node features object', () => {
-  ok(typeof features.node.reusePort)
-  ok(typeof features.node.worker.getHeapStatistics)
+  strictEqual(typeof features.node.reusePort, 'boolean')
+  strictEqual(typeof features.node.permission.network, 'boolean')
 })

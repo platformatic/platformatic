@@ -1,5 +1,5 @@
 import { parseArgs } from '@platformatic/foundation'
-import { runDelegatedCommand } from './create.js'
+import { runDelegatedCommand } from '../delegated-command.js'
 
 export async function adminCommand (logger, args) {
   const {

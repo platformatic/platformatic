@@ -11,9 +11,9 @@ async function main() {
     connectionString: connectionString,
     log: logger,
   })
-  const res = await mapper.entities.page.save({ 
-    fields: ['id', 'title' ],
-      input: { id: 10, title: 'FizzBuzz' },
+  const res = await mapper.entities.page.upsert({
+    fields: ['id', 'title'],
+    input: { id: 10, title: 'FizzBuzz' }
   })
   logger.info(res)
   await mapper.db.dispose()

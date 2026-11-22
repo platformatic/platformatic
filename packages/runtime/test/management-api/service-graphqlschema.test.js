@@ -3,13 +3,13 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 import { isatty } from 'tty'
 import { Client } from 'undici'
-import { createRuntime } from '../helpers.js'
+import { configurationFileIn, createRuntime } from '../helpers.js'
 
 const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
 test('should get application graphql schema', async t => {
   const projectDir = join(fixturesDir, 'management-api')
-  const configFile = join(projectDir, 'platformatic.json')
+  const configFile = configurationFileIn(projectDir)
   const app = await createRuntime(configFile)
 
   await app.start()
@@ -122,8 +122,11 @@ type moviesCount {
 }
 
 type Mutation {
-  saveMovie(input: MovieInput!): Movie
+  insertMovie(input: MovieInput!): Movie
   insertMovies(inputs: [MovieInput]!): [Movie]
+  updateMovie(input: MovieInput!): Movie
+  upsertMovie(input: MovieInput!): Movie
+  saveMovie(input: MovieInput!): Movie @deprecated(reason: "Use upsertMovie instead.")
   deleteMovies(where: MovieWhereArguments): [Movie]
 }
 

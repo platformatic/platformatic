@@ -23,15 +23,19 @@ npm install @platformatic/nuxt
 
 ## Example configuration file
 
-Create a `watt.json` in the root folder of your application with the following contents:
+Create a `watt.config.ts` in the root folder of your application with the following contents:
 
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/nuxt/3.52.4.json",
-  "application": {
-    "basePath": "/frontend"
+```ts config
+import { createNuxtConfig } from '@platformatic/nuxt'
+
+export default createNuxtConfig({
+  application: {
+    basePath: '/frontend'
+  },
+  server: {
+    port: Number(process.env.PORT ?? 3042)
   }
-}
+})
 ```
 
 ## Architecture
@@ -42,13 +46,13 @@ When running in production mode, Platformatic runs the Nuxt/Nitro server output 
 
 Nuxt uses Vite internally, but Platformatic Nuxt is not a plain Vite application. Development, build, and production lifecycle are managed through Nuxt and Nitro.
 
-When using the `commands` property, the command is responsible for starting an HTTP server. Platformatic will integrate the external application in the runtime and select the server port used by the runtime.
+When using the `commands` property, the command is responsible for starting an HTTP server. Platformatic observes the selected address without rewriting it.
 
 ## Skew protection
 
 To include the deployment ID in client assets and server-rendered HTML, add the Platformatic skew module to `nuxt.config.ts`:
 
-```ts
+```ts source
 export default defineNuxtConfig({
   modules: ['@platformatic/nuxt/skew']
 })

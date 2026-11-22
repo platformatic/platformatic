@@ -7,7 +7,7 @@ import { test } from 'node:test'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { Worker } from 'node:worker_threads'
 import { Agent, Client, setGlobalDispatcher } from 'undici'
-import { createThreadInterceptor } from 'undici-thread-interceptor'
+import { createCoordinator, createInterceptor } from 'undici-thread-interceptor'
 import { ChildManager } from '../../lib/worker/child-manager.js'
 import { create, createTemporaryDirectory, getExecutedCommandLogMessage } from '../helper.js'
 
@@ -47,6 +47,68 @@ test('ChildProcess - can load a script with additional loader and scripts', asyn
   deepStrictEqual(capability.stdout.messages.slice(1), ['IMPORTED', 'LOADED true'])
 })
 
+test('ChildProcess - duplicate shutdown waits for cleanup and exits naturally', async t => {
+  const capability = await create(t)
+  const executablePath = fileURLToPath(new URL('../fixtures/shutdown-contract.js', import.meta.url))
+  const ready = waitForChildEvent(t, capability, 'ready')
+  const execution = capability.buildWithCommand(['node', executablePath])
+  const [manager, , socket] = await ready
+  const started = once(manager, 'cleanup:started')
+  const finished = once(manager, 'finished')
+  const first = manager.send(socket, 'close')
+  await started
+  const second = manager.send(socket, 'close')
+  await manager.send(socket, 'release')
+  await Promise.all([first, second])
+  const [order] = await finished
+  deepStrictEqual(order, ['second:start', 'second:end', 'first', 'signal'])
+  await execution
+})
+
+test('ChildProcess - close replies only after asynchronous SIGINT work drains', async t => {
+  const capability = await create(t)
+  const executablePath = fileURLToPath(new URL('../fixtures/shutdown-contract.js', import.meta.url))
+  const ready = waitForChildEvent(t, capability, 'ready')
+  const execution = capability.buildWithCommand(['node', executablePath, '--delayed-signal'])
+  const [manager, , socket] = await ready
+  const started = once(manager, 'cleanup:started')
+  let finished = false
+  manager.once('finished', order => {
+    deepStrictEqual(order, ['second:start', 'second:end', 'first', 'signal', 'signal:finished'])
+    finished = true
+  })
+  const closing = manager.send(socket, 'close')
+  await started
+  await manager.send(socket, 'release')
+  await closing
+  equal(finished, true)
+  await execution
+})
+
+test('ChildProcess - duplicate failures return the aggregate error code and still run SIGINT', async t => {
+  const capability = await create(t)
+  const executablePath = fileURLToPath(new URL('../fixtures/shutdown-contract.js', import.meta.url))
+  const ready = waitForChildEvent(t, capability, 'ready')
+  const execution = capability.buildWithCommand(['node', executablePath, '--fail'])
+  const exited = rejects(execution, { code: 'PLT_BASIC_NON_ZERO_EXIT_CODE' })
+  const [manager, , socket] = await ready
+  const started = once(manager, 'cleanup:started')
+  const finished = once(manager, 'finished')
+  const check = error => {
+    equal(error.handlerErrorCode, 'PLT_BASIC_APPLICATION_SHUTDOWN')
+    equal(error.handlerError.message, 'Application shutdown failed')
+    return true
+  }
+  const first = rejects(manager.send(socket, 'close'), check)
+  await started
+  const second = rejects(manager.send(socket, 'close'), check)
+  await manager.send(socket, 'release')
+  await Promise.all([first, second])
+  const [order] = await finished
+  deepStrictEqual(order, ['second:start', 'second:end', 'first', 'signal'])
+  await exited
+})
+
 test('ChildProcess - the process will close upon request', async t => {
   const capability = await create(t)
 
@@ -54,8 +116,11 @@ test('ChildProcess - the process will close upon request', async t => {
   const ready = waitForChildEvent(t, capability, 'ready')
   const promise = capability.buildWithCommand(['node', executablePath])
   const [childManager, , socket] = await ready
-  await childManager.send(socket, 'close')
-  await rejects(() => promise, /Process exited with non zero exit code/)
+  const processExit = rejects(() => promise, /Process exited with non zero exit code/)
+  await rejects(() => childManager.send(socket, 'close'), {
+    handlerErrorCode: 'PLT_BASIC_APPLICATION_SHUTDOWN'
+  })
+  await processExit
 })
 
 test('ChildProcess - the process exits in case of invalid messages', async t => {
@@ -108,22 +173,42 @@ test('ChildProcess - should not modify HTTP options for UNIX sockets', async t =
   await promise
 })
 
-test('ChildProcess - should notify listen error', async t => {
+test('ChildProcess - should not modify application-owned listen options', async t => {
   const capability = await create(t, {
-    isEntrypoint: true,
     serverConfig: {
       hostname: '123.123.123.123',
       port: 1000
+    },
+    runtimeConfig: {
+      gracefulShutdown: {
+        application: 1000
+      }
     }
   })
 
   const executablePath = fileURLToPath(new URL('../fixtures/server.js', import.meta.url))
-  const errored = waitForChildEvent(t, capability, 'error')
-  const promise = rejects(capability.buildWithCommand(['node', executablePath]))
-  const [, error] = await errored
+  await capability.startWithCommand(`node ${executablePath}`)
 
-  deepStrictEqual(error.code, 'EADDRNOTAVAIL')
-  await promise
+  ok(capability.url.startsWith('http://127.0.0.1:'))
+  await capability.stopCommand()
+})
+
+test('ChildProcess - nested worker servers do not replace the public URL', async t => {
+  const capability = await create(t, { runtimeConfig: { gracefulShutdown: { application: 1000 } } })
+  const executablePath = fileURLToPath(new URL('../fixtures/server-with-worker.js', import.meta.url))
+  await capability.startWithCommand([process.execPath, executablePath])
+  t.after(() => capability.stopCommand())
+
+  const url = capability.url
+  const manager = capability.getChildManager()
+  const urls = []
+  manager.on('url', url => urls.push(url))
+  const listening = once(manager, 'internal:listening', { signal: AbortSignal.timeout(10000) })
+  await manager.send(capability.clientWs, 'startInternalServer')
+  await listening
+
+  deepStrictEqual(urls, [])
+  equal(capability.url, url)
 })
 
 test('ChildProcess - should intercept fetch calls', async t => {
@@ -131,18 +216,17 @@ test('ChildProcess - should intercept fetch calls', async t => {
   await once(server, 'listening')
 
   const tcpWirer = new Worker(new URL('../fixtures/tcp-wirer.js', import.meta.url), {
-    workerData: { port: server.address().port }
+    workerData: { port: server.address().port, meshId: 'basic-child-process' }
   })
 
-  const interceptor = createThreadInterceptor({
-    domain: '.plt.local' // The prefix for all local domains
-  })
+  const coordinator = createCoordinator({ meshId: 'basic-child-process' })
+  const interceptor = createInterceptor({ meshId: 'basic-child-process', domain: '.plt.local' })
 
-  interceptor.route('service', tcpWirer)
+  await once(tcpWirer, 'message')
+  await interceptor.ready
   setGlobalDispatcher(new Agent().compose(interceptor))
 
   const capability = await create(t, {
-    isEntrypoint: true,
     serverConfig: {
       hostname: '123.123.123.123',
       port: 1000
@@ -158,6 +242,8 @@ test('ChildProcess - should intercept fetch calls', async t => {
 
   await promise
   await server.close()
+  interceptor.close()
+  coordinator.destroy()
   tcpWirer.terminate()
 
   ok(capability.stdout.messages[0].includes(getExecutedCommandLogMessage(`node ${executablePath}`)))
@@ -168,7 +254,7 @@ test('ChildProcess - should intercept fetch calls', async t => {
       '200 { ok: true }',
       '200 { ok: true }',
       '200 { ok: true }',
-      '502 No target found for service2.plt.local in thread 0.'
+      '502 No available target found for http:service2.plt.local.'
     ]
   )
 })
@@ -188,12 +274,11 @@ test('ChildProcess - should change directory before command execution when reque
       },
       exitOnUnhandledErrors: false,
       host: true,
-      isEntrypoint: false,
       logLevel: capability.logger.level,
       port: true,
       reuseTcpPorts: false,
       root: pathToFileURL(root).toString(),
-      telemetryConfig: { enabled: false },
+      tracingConfig: { enabled: false },
       workerId: 0
     }
   })

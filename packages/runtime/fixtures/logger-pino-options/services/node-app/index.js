@@ -9,4 +9,4 @@ app.get('/logs', async () => {
   return 'ok'
 })
 
-await app.listen({ port: 0 })
+await app.listen({ host: '127.0.0.1', port: 0 })

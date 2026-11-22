@@ -9,12 +9,13 @@ Before you can Watt to manage your application, you need to enable
 the application management API in your application's configuration file. This will
 allow the CLI to communicate with your application.
 
-To enable the application management API, add the following configuration to your application's `platformatic.json` file:
+To enable the application management API, add the following configuration to your `watt.config.ts` file:
 
-```json
-{
-  "managementApi": true
-}
+```ts
+export default createWattConfig({
+  // ...
+  managementApi: true
+})
 ```
 
 ## Installing
@@ -116,21 +117,17 @@ wattpm env [<PID> | <NAME>]
 
 You can list environment variables for a running application by specifying either its PID or its name.
 
-### Printing application config file
+### Printing the resolved configuration
 
-To print the application config file, run the following command:
-
-```bash
-wattpm config [<PID> | <NAME>]
-```
-
-To print the application config file, run the following command:
+Configuration is a program, so it is inspected where it is evaluated rather than fetched from
+a running server:
 
 ```bash
-wattpm config [<PID> | <NAME>] <APPLICATION>
+wattpm start --debug-config
 ```
 
-You can print the application config file for a running application by specifying either its PID or its name.
+This prints the fully resolved configuration and boots nothing. There is no `wattpm config`
+command to fetch it from a running server — `--debug-config` is the way to inspect it.
 
 ### Injecting an HTTP request into a running application
 
@@ -140,8 +137,8 @@ To inject an HTTP request into a running application, run the following command:
 wattpm inject [<PID> | <NAME>] [<APPLICATION>] -m <method> -p <URL> -H <header> -d <data>
 ```
 
-With the inject command you can make requests not only to endpoints that are exposed by the application, but also to internal endpoints
-that are not exposed via the application entrypoint. To do so, you can append the application name before URL arguments.
+With the inject command you can make requests to any managed application, including one without a public listener.
+Specify the application name before the URL arguments to target it directly.
 
 **Example:**
 
@@ -166,10 +163,10 @@ wattpm applications [<PID> | <NAME>]
 The list command shows all applications that are currently running in the application.
 
 ```
-NAME      Workers   Type      Entrypoint
-movies    1         db        no
-payment   1         db        no
-gateway   1         gateway  yes
+NAME      Workers   Type
+movies    1         db
+payment   1         db
+gateway   1         gateway
 ```
 
 You can list all applications in a running application by specifying either its PID or its name.

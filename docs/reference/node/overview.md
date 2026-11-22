@@ -23,15 +23,16 @@ npm install @platformatic/node
 
 ## Example configuration file
 
-Create a `watt.json` in the root folder of your application with the following contents:
+Create a `watt.config.ts` in the root folder of your application with the following contents:
 
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/node/2.0.0.json",
-  "application": {
-    "basePath": "/frontend"
+```ts config
+import { createNodeConfig } from '@platformatic/node'
+
+export default createNodeConfig({
+  application: {
+    basePath: '/frontend'
   }
-}
+})
 ```
 
 ## Specify application info
@@ -114,28 +115,22 @@ configured retry policy.
 
 ## Architecture
 
-If your server entrypoint exports a `create` function, then Platformatic Node will execute it and then will wait for it to return a server object. In this situation the server will be used without starting a TCP server. The TCP server is started if the application is the runtime entrypoint.
+If your server entrypoint exports a `create` function, Platformatic Node executes it and waits for it to return a server object. Returning a server delegates its listener lifecycle to the Node capability. The capability calls `listen()` only when `server.port` is configured; without it, the server remains available for ITC injection without opening a TCP listener.
 
-If your server entrypoint does not export a function, then Platformatic runtime will execute the function and wait for a TCP server to be started.
+If your server entrypoint does not export a function, Platformatic executes it and observes the TCP server started by the application without changing its listener options.
 
-In both cases, the listening port is always modified and chosen randomly, overriding any user or application setting.
-
-If the application uses the `commands` property then it's always responsible to start a HTTP server and the `create` functions are not supported anymore.
-
-In all cases, Platformatic runtime will modify the server port replacing it with a random port and then it will integrate the external application in the runtime.
+If the application uses the `commands` property, it is responsible for starting its own HTTP server and `create` functions are not supported.
 
 If your application entrypoint exports a `create` or `build` function that returns an object with `isBackgroundApplication` set to `true`, then Platformatic Node will treat the application as a background application which doesn't expose any HTTP port. If the returned object has a `close` function, it will be called upon application shutdown as `close(app)`, where `app` is the returned object.
 
-Alternatively, your application entrypoint can export a `hasServer` variable set to `false`, or you can set the `node.hasServer` property to false in your `watt.json` file. To gracefully shut down an application with `hasServer=false`, you may export a `close` function that will be called upon application shutdown.
+Alternatively, your application entrypoint can export a `hasServer` variable set to `false`, or you can set the `node.hasServer` property to false in your `watt.config.ts` file. To gracefully shut down an application with `hasServer=false`, you may export a `close` function that will be called upon application shutdown.
 
 ## HTTPS
 
-When a `@platformatic/node` application is the Watt entrypoint, configure HTTPS in the runtime `server.https` object:
+Configure HTTPS in this Node.js capability's `server.https` object. The `server` object belongs in the capability's own `watt.config.ts`, not in the Runtime or Watt root configuration:
 
 ```json
 {
-  "$schema": "https://schemas.platformatic.dev/wattpm/3.0.0.json",
-  "entrypoint": "api",
   "server": {
     "hostname": "127.0.0.1",
     "port": 3042,
@@ -143,13 +138,7 @@ When a `@platformatic/node` application is the Watt entrypoint, configure HTTPS 
       "key": { "path": "./certs/server.key" },
       "cert": { "path": "./certs/server.crt" }
     }
-  },
-  "applications": [
-    {
-      "id": "api",
-      "path": "./services/api"
-    }
-  ]
+  }
 }
 ```
 
@@ -166,7 +155,7 @@ const server = createServer(getAdditionalServerOptions(), (req, res) => {
 server.listen(0)
 ```
 
-Watt reads `key` and `cert` file paths before loading the application, so `getAdditionalServerOptions()` returns the sanitized TLS options that `node:https` expects. `reuseTcpPorts` remains enabled by default and HTTPS servers use `SO_REUSEPORT` when the current Node.js version and operating system support it.
+Watt reads `key` and `cert` file paths before loading the application, so `getAdditionalServerOptions()` returns the sanitized TLS options that `node:https` expects.
 
 ## Example applications entrypoints
 
@@ -270,21 +259,6 @@ export async function close () {
 }
 ```
 
-### `close` Event Handler
-
-Alternatively, you can register a close event handler using the Platformatic events getter. `getEvents()` returns `PlatformaticEvents`, an `EventEmitter` with an additional `emitAndNotify(event, ...args)` method for emitting locally and notifying the runtime.
-
-```js
-import { getEvents } from '@platformatic/globals'
-
-const events = getEvents()
-events.on('close', () => {
-  console.log('Received close event, cleaning up...')
-
-  // Perform your cleanup operations
-})
-```
-
 ### `closeServer`
 
 When using `NodeCapability` programmatically, call `closeServer()` to close the application's listening HTTP server without stopping the capability. It returns `undefined` when no server is listening, otherwise it returns a promise that resolves when the server is closed.
@@ -315,7 +289,7 @@ export function create () {
 }
 ```
 
-This follows the [TC39 Explicit Resource Management](https://github.com/tc39/proposal-explicit-resource-management) convention. The `Symbol.asyncDispose` method is called after the `close` event is emitted and before the server is closed.
+This follows the [TC39 Explicit Resource Management](https://github.com/tc39/proposal-explicit-resource-management) convention. The `Symbol.asyncDispose` method is called during application shutdown before the server is closed.
 
 ### Fastify Applications
 
@@ -328,13 +302,15 @@ Platformatic Node handles closing the main application components:
 - **Applications with `create` function**: It will invoke the `close` method on the server returned by the function.
 - **Applications without `create` function**: It will invoke the `close` method on the first `node:http` server that listened on a TCP port.
 
-However, **additional resources must be manually closed** using the mechanisms described above, otherwise the application will hang during shutdown and eventually timeout.
+However, **additional asynchronous cleanup should be registered with `registerCloseCallback()`**. These callbacks are awaited after the framework/server shutdown. `SIGINT` listeners are invoked afterward, without awaiting their return values.
 
-In applications launched via custom commands only the `close` event handler is available for cleanup and the `close` function is ignored.
+In applications launched via custom commands, cleanup runs in the child process. The application is responsible for closing its resources through `registerCloseCallback()` and/or `SIGINT` listeners; exported `close` functions are not invoked by this path.
 
-:::warn
-If your application needs to clean up some shared states (connection pool, etc), you must export a `close` function, handle the `close` event, or implement `Symbol.asyncDispose` on the object returned by your factory. If you don't, Platformatic will log a warning message suggesting you implement proper cleanup to avoid exit timeouts. The exception is Fastify.
+:::info
+The `close` event is not emitted anymore during application shutdown. Use `registerCloseCallback()` for application-owned resources.
 :::
+
+See [Application shutdown](../runtime/shutdown.md) for the complete sequence, signal handling, and shutdown deadlines.
 
 ### Typescript
 
@@ -344,19 +320,20 @@ To make Typescript work in development mode, setup a `commands.development` valu
 
 When configuring production mode instead, you have to configure both the `commands.build` and `commands.production` values. The former will be used to compile your application, while the latter will be used to start it.
 
-A complete typical setup for the application `watt.json` file will be something like this:
+A complete typical setup for the application `watt.config.ts` file will be something like this:
 
-```
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/node/2.9.1.json",
-  "application": {
-    "commands": {
-      "development": "node --import tsx server.ts",
-      "build": "tsc",
-      "production": "node dist/server.js"
+```ts config
+import { createNodeConfig } from '@platformatic/node'
+
+export default createNodeConfig({
+  application: {
+    commands: {
+      development: 'node --import tsx server.ts',
+      build: 'tsc',
+      production: 'node dist/server.js'
     }
   }
-}
+})
 ```
 
 Watt supports setting up `npm run ...` commands so you can reuse your existing npm scripts flow.

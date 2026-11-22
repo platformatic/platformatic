@@ -48,8 +48,8 @@ test('insert, save and updateMany support JSON fields', async () => {
   const pageEntity = mapper.entities.page
 
   // insert
-  const [inserted] = await pageEntity.insert({
-    inputs: [{ metadata: { foo: 'bar' } }]
+  const inserted = await pageEntity.insert({
+    input: { metadata: { foo: 'bar' } }
   })
   deepEqual(parseJSONField(inserted.metadata), { foo: 'bar' })
 

@@ -1,0 +1,8 @@
+{
+  "name": "mock-application",
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+    "@platformatic/service": "workspace:*"
+  }
+}

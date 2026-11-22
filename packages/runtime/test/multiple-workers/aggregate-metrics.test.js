@@ -1,18 +1,11 @@
 import { deepStrictEqual, ok, strictEqual } from 'node:assert'
-import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { createRuntime } from '../helpers.js'
 import { fixturesDir } from './helper.js'
 
 const fixtureRoot = join(fixturesDir, 'aggregate-worker-metrics')
-const configFile = join(fixtureRoot, 'platformatic.json')
-
-async function createRuntimeWithMetricsConfig (metricsConfig) {
-  const config = JSON.parse(await readFile(configFile, 'utf-8'))
-  config.metrics = { ...config.metrics, ...metricsConfig }
-  return createRuntime(fixtureRoot, config)
-}
+const configFile = join(fixtureRoot, 'watt.config.js')
 
 async function sendRequests (app, count) {
   const workers = new Set()
@@ -156,33 +149,8 @@ test('concurrent collections share the same result', async t => {
   deepStrictEqual(getCounter(metrics), [{ value: 6, labels: { route: '/hello', applicationId: 'node' } }])
 })
 
-test('resets the HTTP metrics after each collection by default', async t => {
+test('keeps the HTTP metrics cumulative', async t => {
   const app = await createRuntime(configFile)
-
-  t.after(async () => {
-    await app.close()
-  })
-
-  await app.start()
-  await sendRequests(app, 9)
-
-  let { metrics } = await app.getMetrics()
-  strictEqual(getHttpRequestsCount(metrics), 9)
-
-  metrics = (await app.getMetrics()).metrics
-  strictEqual(getHttpRequestsCount(metrics), 0)
-
-  // The values of the replaced workers are not carried forward
-  await sendRequests(app, 3)
-  await app.restartApplication('node')
-  await sendRequests(app, 3)
-
-  metrics = (await app.getMetrics()).metrics
-  strictEqual(getHttpRequestsCount(metrics), 3)
-})
-
-test('keeps the HTTP metrics cumulative when resetHttpMetrics is false', async t => {
-  const app = await createRuntimeWithMetricsConfig({ resetHttpMetrics: false })
 
   t.after(async () => {
     await app.close()

@@ -2,14 +2,12 @@
 export const packages = [
   '@platformatic/astro',
   '@platformatic/basic',
-  '@platformatic/composer',
   '@platformatic/control',
   '@platformatic/db',
   '@platformatic/db-authorization',
   '@platformatic/db-core',
   '@platformatic/foundation',
   '@platformatic/gateway',
-  '@platformatic/generators',
   '@platformatic/globals',
   '@platformatic/itc',
   '@platformatic/metrics',
@@ -29,12 +27,9 @@ export const packages = [
   '@platformatic/sql-mapper',
   '@platformatic/sql-openapi',
   '@platformatic/tanstack',
-  '@platformatic/telemetry',
+  '@platformatic/tracing',
   '@platformatic/vite',
   '@platformatic/wattpm-pprof-capture',
-  'create-platformatic',
-  'create-wattpm',
-  'platformatic',
   'wattpm',
   'wattpm-utils'
 ]

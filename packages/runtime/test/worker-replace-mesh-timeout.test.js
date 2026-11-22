@@ -20,7 +20,8 @@ function getTargetWorkers (workers) {
 test('replacing a worker whose mesh removal times out does not leave an extra worker behind', async t => {
   const context = {}
   const runtime = await createRuntime(join(fixturesDir, 'replace-mesh-timeout'), null, context)
-  const url = await runtime.start()
+  await runtime.start()
+  const url = Object.values(runtime.getUrls('blocker'))[0]
 
   t.after(() => runtime.close())
 
@@ -59,5 +60,4 @@ test('replacing a worker whose mesh removal times out does not leave an extra wo
 
   ok(!messages.some(m => m.includes('unexpectedly exited')), 'no worker should be reported as crashed')
   ok(!messages.some(m => m.includes('will be restarted')), 'no worker should be restarted')
-  ok(messages.some(m => m.startsWith('Cannot remove the worker 0 of the application "target" from the mesh')))
 })

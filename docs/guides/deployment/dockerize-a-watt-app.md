@@ -20,7 +20,7 @@ This guide shows you how to create a multi-stage Docker build that optimizes you
 
 ## Step 1: Configure Your Application for Containers
 
-Ensure your `watt.json` or `platformatic.json` uses environment variables for hostname and port:
+Ensure the configuration file for the capability that serves your application uses environment variables for hostname and port:
 
 ```json
 {
@@ -48,7 +48,7 @@ Create a `Dockerfile` in your project root with this multi-stage build configura
 # syntax=docker/dockerfile:1.7-labs
 
 # Stage 1: Build
-ARG NODE_VERSION=22
+ARG NODE_VERSION=24.20.0
 FROM node:${NODE_VERSION}-alpine AS build
 
 WORKDIR /app
@@ -142,18 +142,19 @@ Caches npm downloads between builds, significantly speeding up subsequent builds
 
 **Module Compile Cache:**
 
-Enable Node.js module compile cache in your `watt.json` for faster container startup times:
+Node.js module compile cache is enabled by default for faster container startup times. To disable it in your `watt.config.ts`:
 
-```json
-{
-  "compileCache": true
-}
+```ts
+export default createWattConfig({
+  // ...
+  compileCache: false
+})
 ```
 
 When enabled, the compile cache is populated during `npm run build` and baked into your Docker image. This means every container started from the image benefits from pre-compiled V8 code, significantly reducing startup time.
 
 :::note
-Module compile cache requires Node.js 22.1.0 or later.
+Module compile cache is available on all supported Node.js versions.
 :::
 
 **Workspace Handling:**

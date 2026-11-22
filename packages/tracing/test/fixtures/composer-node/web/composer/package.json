@@ -1,0 +1,9 @@
+{
+  "name": "composer",
+  "devDependencies": {
+    "fastify": "^5.7.0"
+  },
+  "dependencies": {
+    "@platformatic/gateway": ">=3.0.0"
+  }
+}

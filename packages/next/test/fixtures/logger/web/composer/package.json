@@ -1,12 +1,9 @@
 {
-  "name": "gateway",
+  "name": "composer",
   "devDependencies": {
     "fastify": "^5.7.0"
   },
   "dependencies": {
     "@platformatic/gateway": ">=3.0.0"
-  },
-  "engines": {
-    "node": "^18.8.0 || >=20.6.0"
   }
 }

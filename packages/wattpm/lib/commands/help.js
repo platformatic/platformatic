@@ -11,7 +11,7 @@ async function loadCommands () {
 
   for (const file of [
     'build',
-    'create',
+    'skill',
     'execution',
     'applications',
     'scheduler',
@@ -22,8 +22,7 @@ async function loadCommands () {
     'metrics',
     'pprof',
     'repl',
-    'snapshot',
-    'skill'
+    'snapshot'
   ]) {
     const category = await import(`./${file}.js`)
     Object.assign(commands, category.help)

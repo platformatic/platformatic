@@ -314,24 +314,25 @@ These packages collect Prometheus metrics and OpenTelemetry traces.
   contain request paths, headers, and other potentially sensitive
   information.
 
-### Code Generation and Tooling
+### Agent Skills and Utility Tooling
 
-**Packages:** `generators`, `create-wattpm`, `create-platformatic`,
-`wattpm-utils`
+**Packages:** `wattpm-utils`; bundled agent instructions in `wattpm`.
 
-Development-time scaffolding and project creation tools.
+Agent skills replace development-time scaffolding generators. Utility commands
+install/update dependencies, resolve remote applications, and migrate configuration.
 
 **Trusted:**
 
-- User input during interactive project creation.
+- User-authorized project changes made by a coding agent.
 - npm registry responses when resolving packages.
-- Template files and archives downloaded during scaffolding.
+- Remote repositories and package archives downloaded by utility commands.
 
-These packages run as CLI tools during development and are not part of
+These utility commands run as CLI tools during development and are not part of
 the production runtime. They are outside the security threat model for
 deployed applications. Vulnerabilities in these packages would only be
 relevant if they could lead to the generation of insecure application
-code by default.
+code by default. Review agent-generated code and configuration before running it;
+reading `wattpm skill` itself does not execute project-generation instructions.
 
 ---
 

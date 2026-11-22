@@ -31,7 +31,7 @@ export function setupEmitter ({ log, mq, mapper, connectionString }) {
     // The publish topic requires the primary key, so make sure it is always
     // retrieved even when the caller did not select it
     function ensurePrimaryKeyField (data) {
-      if (Array.isArray(data.fields) && data.fields.length > 0 && !data.fields.includes(primaryKey)) {
+      if (Array.isArray(data.fields) && !data.fields.includes(primaryKey)) {
         return { ...data, fields: data.fields.concat(primaryKey) }
       }
       return data
@@ -39,7 +39,7 @@ export function setupEmitter ({ log, mq, mapper, connectionString }) {
 
     // Remove the primary key from the result when the caller did not select it
     function stripPrimaryKey (res, requestedFields) {
-      if (Array.isArray(requestedFields) && requestedFields.length > 0 && !requestedFields.includes(primaryKey)) {
+      if (Array.isArray(requestedFields) && !requestedFields.includes(primaryKey)) {
         const { [primaryKey]: _, ...rest } = res
         return rest
       }
@@ -47,12 +47,23 @@ export function setupEmitter ({ log, mq, mapper, connectionString }) {
     }
 
     mapper.addEntityHooks(entityName, {
-      async save (original, data) {
+      insert: singleElement('save'),
+      insertMany: multiElement('save'),
+      update: singleElement('save'),
+      updateMany: multiElement('save'),
+      delete: multiElement('delete')
+    })
+
+    function singleElement (action) {
+      return async function (original, data) {
         const ctx = data.ctx
         /* istanbul ignore next */
         const _log = ctx?.reply?.request?.log || log
         const res = await original(ensurePrimaryKeyField(data))
-        const topic = await entity.getPublishTopic({ action: 'save', data: res, ctx })
+        if (!res) {
+          return res
+        }
+        const topic = await entity.getPublishTopic({ action, data: res, ctx })
         if (topic) {
           const payload = {
             [primaryKey]: res[primaryKey]
@@ -69,12 +80,8 @@ export function setupEmitter ({ log, mq, mapper, connectionString }) {
           })
         }
         return stripPrimaryKey(res, data.fields)
-      },
-
-      delete: multiElement('delete'),
-      insert: multiElement('save'),
-      updateMany: multiElement('save')
-    })
+      }
+    }
 
     function multiElement (action) {
       return async function (original, data) {

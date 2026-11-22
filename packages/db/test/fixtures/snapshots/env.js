@@ -72,8 +72,11 @@ type pagesCount {
 }
 
 type Mutation {
-  savePage(input: PageInput!): Page
+  insertPage(input: PageInput!): Page
   insertPages(inputs: [PageInput]!): [Page]
+  updatePage(input: PageInput!): Page
+  upsertPage(input: PageInput!): Page
+  savePage(input: PageInput!): Page @deprecated(reason: "Use upsertPage instead.")
   deletePages(where: PageWhereArguments): [Page]
 }
 

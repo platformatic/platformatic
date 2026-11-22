@@ -1,11 +1,10 @@
 import { createCliLogger, logFatalError, parseArgs } from '@platformatic/foundation'
 import { updateGlobals } from '@platformatic/globals'
 import { bold } from 'colorette'
-import { createCommand } from './lib/commands/create.js'
 import { installCommand, updateCommand } from './lib/commands/dependencies.js'
-import { importCommand, resolveCommand } from './lib/commands/external.js'
+import { migrateCommand } from './lib/commands/migrate.js'
+import { resolveCommand } from './lib/commands/external.js'
 import { helpCommand } from './lib/commands/help.js'
-import { patchConfigCommand } from './lib/commands/patch-config.js'
 import { version } from './lib/version.js'
 
 export async function main () {
@@ -55,26 +54,17 @@ export async function main () {
   let command
   const requestedCommand = unparsed[0] || 'help'
   switch (requestedCommand) {
-    case 'import':
-      command = importCommand
-      break
     case 'resolve':
       command = resolveCommand
       break
-    case 'patch-config':
-      command = patchConfigCommand
+    case 'migrate':
+      command = migrateCommand
       break
     case 'install':
       command = installCommand
       break
     case 'update':
       command = updateCommand
-      break
-    /* c8 ignore next 2 - aliases */
-    case 'init':
-    case 'add':
-    case 'create':
-      command = createCommand
       break
     case 'help':
       command = helpCommand

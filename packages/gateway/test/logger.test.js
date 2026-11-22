@@ -11,7 +11,7 @@ test('should use logger options - formatters, timestamp, redact', async t => {
   const file = path.join(process.env.LOG_DIR, 'application.log')
   const applicationRoot = path.join(import.meta.dirname, 'logger')
 
-  const app = await create(applicationRoot, path.resolve(applicationRoot, 'platformatic.json'))
+  const app = await create(applicationRoot, path.resolve(applicationRoot, 'watt.config.js'))
   t.after(async () => {
     await app.stop()
   })

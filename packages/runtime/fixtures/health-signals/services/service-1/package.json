@@ -1,7 +1,7 @@
 {
   "name": "service-1",
   "scripts": {
-    "start": "platformatic start",
+    "start": "wattpm start",
     "test": "borp"
   },
   "devDependencies": {
@@ -11,8 +11,5 @@
   "dependencies": {
     "@platformatic/globals": ">=3.0.0",
     "@platformatic/service": "^3.0.0"
-  },
-  "engines": {
-    "node": "^18.8.0 || >=20.6.0"
   }
 }

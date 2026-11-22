@@ -2,11 +2,11 @@ import { on } from 'node:events'
 import { test } from 'node:test'
 import split2 from 'split2'
 import { prepareRuntime } from '../../basic/test/helper.js'
-import { wattpm } from './helper.js'
-import { ok } from 'node:assert'
+import { parseRuntimeLog, wattpm, wattpmNoRuntime } from './helper.js'
+import { deepStrictEqual, ok } from 'node:assert'
 
 test('metrics - should return runtime metrics without format opt', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
 
   t.after(() => {
     startProcess.kill('SIGINT')
@@ -16,7 +16,11 @@ test('metrics - should return runtime metrics without format opt', async t => {
   const startProcess = wattpm('start', rootDir)
 
   for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
-    const parsed = JSON.parse(log.toString())
+    const parsed = parseRuntimeLog(log)
+
+    if (!parsed) {
+      continue
+    }
 
     if (parsed.msg.startsWith('Platformatic is now listening')) {
       break
@@ -32,7 +36,7 @@ test('metrics - should return runtime metrics without format opt', async t => {
 })
 
 test('metrics - should return runtime metrics with text format', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.config.mjs')
 
   t.after(() => {
     startProcess.kill('SIGINT')
@@ -42,7 +46,11 @@ test('metrics - should return runtime metrics with text format', async t => {
   const startProcess = wattpm('start', rootDir)
 
   for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
-    const parsed = JSON.parse(log.toString())
+    const parsed = parseRuntimeLog(log)
+
+    if (!parsed) {
+      continue
+    }
 
     if (parsed.msg.startsWith('Platformatic is now listening')) {
       break
@@ -57,12 +65,10 @@ test('metrics - should return runtime metrics with text format', async t => {
 })
 
 test('metrics - should handle no matching runtime', async t => {
-  let error
-  try {
-    await wattpm('metrics')
-  } catch (e) {
-    error = e
-  }
+  // From a throwaway directory: getMatchingRuntime otherwise falls back to a sibling runtime still
+  // shutting down in the shared package directory, so "no runtime" flakily finds one.
+  const metricsProcess = await wattpmNoRuntime(t, 'metrics', { reject: false })
 
-  ok(error.stdout.includes('Cannot find a matching runtime'))
+  deepStrictEqual(metricsProcess.exitCode, 1)
+  ok(metricsProcess.stdout.includes('Cannot find a matching runtime'))
 })

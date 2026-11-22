@@ -19,19 +19,8 @@ test('isFetchable unit test', t => {
   const cases = [
     { label: 'empty application', params: {}, expected: false },
     { label: 'openapi application from file', params: { openapi: { file: '/to/file' } }, expected: false },
-    {
-      label: 'openapi+graphql application, openapi has url',
-      params: { openapi: { url: 'http://application/opeanapi' }, graphql: true },
-      expected: true
-    },
-    { label: 'openapi+graphql application with default', params: { graphql: true, openapi: true }, expected: true },
-    { label: 'graphql application', params: { graphql: { graphqlEndpoint: '/graphql' } }, expected: true },
-    { label: 'graphql application from file', params: { graphql: { file: '/to/schema.graphql' } }, expected: false },
-    {
-      label: 'openapi+graphql application, openapi has url, graphql from file',
-      params: { openapi: { url: 'http://application/opeanapi' }, graphql: { file: '/to/schema.graphql' } },
-      expected: true
-    }
+    { label: 'openapi application with url', params: { openapi: { url: 'http://application/opeanapi' } }, expected: true },
+    { label: 'openapi application with default', params: { openapi: true }, expected: false }
   ]
 
   for (const c of cases) {

@@ -4,7 +4,7 @@ import Issues from '../../getting-started/issues.md';
 
 When using Platformatic Astro, you can easily cache your pages and actions.
 
-First of all, make sure you use a [gateway](../gateway/overview.md) as the entrypoint of the application.
+First of all, make sure you use a [gateway](../gateway/overview.md) as the public application.
 
 Then, enable `httpCache` in the [application configuration](../runtime/configuration.md#httpcache) file.
 

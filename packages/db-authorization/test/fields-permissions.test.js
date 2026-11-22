@@ -654,9 +654,17 @@ test('save and insert without selected fields are checked against the rule field
     ]
   })
 
-  // insert is not exposed through REST, so it is called with the request context
+  // insert and insertMany are not exposed through REST, so they are called with the request context
   app.post('/insert', async (request, reply) => {
     return app.platformatic.entities.page.insert({
+      input: request.body,
+      fields: request.query.fields?.split(','),
+      ctx: { app, reply }
+    })
+  })
+
+  app.post('/insert-many', async (request, reply) => {
+    return app.platformatic.entities.page.insertMany({
       inputs: request.body,
       fields: request.query.fields?.split(','),
       ctx: { app, reply }
@@ -699,9 +707,15 @@ test('save and insert without selected fields are checked against the rule field
   }
 
   {
-    const res = await request('POST', '/insert', [page])
+    const res = await request('POST', '/insert', page)
     equal(res.statusCode, 403, 'insert without fields status code')
     deepEqual(res.json(), forbidden, 'insert without fields response')
+  }
+
+  {
+    const res = await request('POST', '/insert-many', [page])
+    equal(res.statusCode, 403, 'insertMany without fields status code')
+    deepEqual(res.json(), forbidden, 'insertMany without fields response')
   }
 
   deepEqual(await app.platformatic.entities.page.find({ fields: ['id'] }), [], 'no page was created')
@@ -713,9 +727,15 @@ test('save and insert without selected fields are checked against the rule field
   }
 
   {
-    const res = await request('POST', '/insert?fields=id,title', [{ ...page, title: 'TITLE_2' }])
+    const res = await request('POST', '/insert?fields=id,title', { ...page, title: 'TITLE_2' })
     equal(res.statusCode, 200, 'insert with fields status code')
-    deepEqual(res.json(), [{ id: 2, title: 'TITLE_2' }], 'insert with fields response')
+    deepEqual(res.json(), { id: 2, title: 'TITLE_2' }, 'insert with fields response')
+  }
+
+  {
+    const res = await request('POST', '/insert-many?fields=id,title', [{ ...page, title: 'TITLE_3' }])
+    equal(res.statusCode, 200, 'insertMany with fields status code')
+    deepEqual(res.json(), [{ id: 3, title: 'TITLE_3' }], 'insertMany with fields response')
   }
 
   {
@@ -1124,7 +1144,7 @@ async function setupUpdateAndDeleteApp (t) {
   })
 
   // Seed without authorization so that the hidden fields hold known values
-  await app.platformatic.entities.page.insert({
+  await app.platformatic.entities.page.insertMany({
     inputs: [
       { title: 'TITLE_1', author: 'SECRET_AUTHOR', topic: 'TOPIC_1', reviewedBy: 'TEST', userId: 42 },
       { title: 'TITLE_2', author: 'SECRET_AUTHOR', topic: 'TOPIC_2', reviewedBy: 'TEST', userId: 42 }

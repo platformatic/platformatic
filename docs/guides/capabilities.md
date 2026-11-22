@@ -9,24 +9,25 @@ A capability is essentially a Node.js package that implements the Platformatic c
 - **Single Capability Applications**: Simple applications with one primary function (e.g., a Next.js frontend or a database API)
 - **Multi-Capability Applications**: Complex applications that combine multiple capabilities (e.g., a database backend with a React frontend and an API gateway)
 
-Each Watt project can define a set of application, each using its own capability by defining them in the main `watt.json` file via the [autoload](../reference/runtime/configuration.md#autoload) or the [applications](../reference/runtime/configuration.md#application) properties.
+Each Watt project can define a set of applications, each using its own capability, by declaring them in the root `watt.config.ts` via the [autoload](../reference/runtime/configuration.md#autoload) or the [applications](../reference/runtime/configuration.md#applications) properties.
 
-Each application gets its own folder and the capability is determined by looking at the `$schema` property of the application `watt.json`.
+Each application gets its own folder, and the capability is the one the application's own `watt.config.ts` imports and calls.
 
-For instance, to use the `@platformatic/next`, you set the `watt.json` (or `platformatic.json`) file as follows:
+For instance, to use `@platformatic/next`:
 
-```js
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/next/3.0.0.json",
-  // ...
-}
+```ts config
+import { createNextConfig } from '@platformatic/next'
+
+export default createNextConfig({
+  server: { port: Number(process.env.PORT ?? 3042) }
+})
 ```
 
-If no `watt.json` is present, then Watt will try to autodetect the right capability by looking at the dependencies in the `package.json` file.
+If the application has no configuration file, Watt autodetects the capability from the dependencies in its `package.json`.
 
 #### Role of Configuration Files
 
-The `watt.json` or `platformatic.json` configuration file serves as the authoritative source for:
+The `watt.config.ts` configuration file serves as the authoritative source for:
 
 - **Service Definition**: Explicitly specifies which capability to use (e.g., `@platformatic/next`, `@platformatic/db`)
 - **Application Entry Point**: Points to your application's main file or build output directory
@@ -36,29 +37,50 @@ The `watt.json` or `platformatic.json` configuration file serves as the authorit
 
 This configuration-first approach ensures predictable behavior and allows developers to override automatic detection when needed.
 
-#### Embedding Runtime Configuration
+#### Orchestration lives in the runtime configuration
 
-Each capability configuration file supports a `runtime` property that allows you to embed runtime-level settings directly in the application's configuration. This is useful for configuring workers, logging, health checks, and other runtime features specific to an application.
+An application's own file configures the capability and nothing else. Workers, logging, health checks
+and the rest are orchestration, and they belong to the runtime configuration — in a single-application
+project, alongside the `application` shorthand:
 
-For example:
+```ts config
+import { createWattConfig } from 'wattpm'
+import { createNextConfig } from '@platformatic/next'
 
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/next/3.31.0.json",
-  "runtime": {
-    "logger": {
-      "level": "debug"
-    },
-    "workers": {
-      "dynamic": true,
-      "minimum": 1,
-      "maximum": 4
-    }
+export default createWattConfig({
+  logger: { level: 'debug' },
+  workers: { dynamic: true, minimum: 1, maximum: 4 },
+  application: {
+    config: createNextConfig({
+      server: { port: Number(process.env.PORT ?? 3042) }
+    })
   }
-}
+})
 ```
 
-See the capability configuration documentation (e.g., [Next.js](../reference/next/configuration.md#runtime), [Node](../reference/node/configuration.md#runtime)) for the full list of available runtime properties.
+These settings do not live under a `runtime` property inside the application's own file; see [Runtime settings for a single application](../reference/next/configuration.md#runtime-settings-for-a-single-application).
+
+#### Where the capability package must be resolvable from
+
+A capability factory called from an application's own `watt.config.*` (the usual, per-application
+style) resolves the same way any other import from that file does — the capability just needs to be
+a dependency of that application, exactly as before.
+
+When an application's own `watt.config.*` imports a capability, resolution checks the
+application's own dependencies first and falls back to the copy bundled with Watt. Under a
+hoisted dependency tree, an application that vendors its own copy of a capability the root also
+depends on gets its own copy, not the root's.
+
+Calling the factory **inline at the root**, as in the example above, is different: the import runs
+from the root configuration file, so the capability package must be resolvable from the *root*
+`package.json`. Under a strict dependency layout (for example pnpm), an application-local-only
+dependency is not visible from the root, and the loader reports it with a targeted error:
+
+```output
+✗ Cannot resolve '@platformatic/next' from watt.config.ts.
+  Add it to the root package.json, or configure the application in
+  web/frontend/watt.config.ts instead.
+```
 
 ### Available Capabilities
 
@@ -178,107 +200,27 @@ See the capability configuration documentation (e.g., [Next.js](../reference/nex
 
 ### Adding Custom Capabilities
 
-Use the `--module` option to specify additional capabilities beyond the default ones:
+Install the custom capability in its owning workspace package, check Watt 4
+compatibility, and set its package name as `module` in the application configuration.
+Read its schema and documentation for the actual options; a generator implementation
+is not required.
 
-```bash
-# Add a custom capability
-npm create wattpm --module=my-custom-capability
+## Skill-first workflow
 
-# Add multiple capabilities
-npm create wattpm --module=@my-org/plugin1 --module=@my-org/plugin2
+Install the [Watt agent skill](./use-watt-with-ai-agents.md), then ask your agent to
+create or integrate the application using the appropriate capability. The agent
+inspects framework signals, preserves your package manager, and writes source,
+configuration, workspace manifests, env examples, and tests directly.
 
-# Short form
-npm create wattpm --module=my-plugin
-```
+Examples:
 
-## Interactive Workflow
+- "Create a Watt HTTP service using `@platformatic/service`."
+- "Integrate this existing Next.js application using `@platformatic/next`."
+- "Add `@my-company/custom-plugin` using its schema and package documentation."
+- "Create a workspace with a database API and a Next.js frontend."
 
-When you run `npm create wattpm`, you'll be guided through:
-
-1. **Project Location**: Choose where to create your project
-2. **Service Type**: Select the type of service you want to create
-3. **Service Configuration**: Configure service-specific options
-4. **Multi-Service Setup**: Optionally add additional services
-5. **Entry Point**: Choose which service should be exposed (for multi-service projects)
-6. **Package Manager**: Select npm, yarn, or pnpm
-7. **Git Initialization**: Optionally initialize a Git repository
-
-## Examples
-
-### Creating a Basic HTTP Service
-
-```bash
-npm create wattpm
-```
-
-Follow the prompts:
-
-- Choose project location: `my-watt-app`
-- Select service type: `@platformatic/service`
-- Configure TypeScript and other options
-- Choose to install dependencies
-
-### Creating a Next.js Application
-
-```bash
-npm create wattpm
-```
-
-Follow the prompts:
-
-- Choose project location: `my-next-app`
-- Select service type: `@platformatic/next`
-- Configure your Next.js specific options
-
-### Creating with Custom Capabilities
-
-```bash
-npm create wattpm --module=@my-company/custom-plugin
-```
-
-This will include your custom capability in the list of available service types during the interactive setup.
-
-### Multi-Service Application
-
-During the interactive setup, you can choose to create multiple services:
-
-- First service: `@platformatic/db` (database API)
-- Second service: `@platformatic/next` (frontend)
-- Choose which service to expose as the main entry point
-
-## Wrapping Existing Applications
-
-`create-wattpm` can wrap existing applications into the Watt runtime environment:
-
-1. Run `npm create wattpm` in a directory containing an existing application
-2. The tool will detect your application type (React, Next.js, etc.)
-3. Choose to wrap the existing application into Watt
-4. Your application will be integrated with Watt's runtime features
-
-### Supported Application Types
-
-The tool can automatically detect and wrap:
-
-- React applications
-- Next.js applications
-- Nitro applications using `nitro` or `nitropack`
-- Vite-based projects
-- Other JavaScript/TypeScript applications
-
-## Package Manager Support
-
-`create-wattpm` supports and auto-detects:
-
-- **npm** - Default Node.js package manager
-- **yarn** - Alternative package manager
-- **pnpm** - Fast, disk space efficient package manager
-
-The tool will detect existing lockfiles and use the appropriate package manager, or prompt you to choose one.
-
-## Git Integration
-
-The tool offers to initialize a Git repository with:
-
-- Initial commit with generated files
-- Appropriate `.gitignore` file
-- Remote origin setup (if applicable)
+See [scaffolding](../skills/watt/references/scaffolding.md),
+[frameworks](../skills/watt/references/frameworks.md), and
+[application integration](../skills/watt/references/integration.md) for complete steps.
+Use npm, Yarn, or pnpm consistently with the existing lockfile. Git initialization,
+commits, and pushes are separate user-authorized operations, not part of scaffolding.

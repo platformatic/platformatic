@@ -7,5 +7,8 @@
   "dependencies": {
     "@platformatic/node": ">=3.0.0",
     "fastify": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=24.20.0"
   }
 }

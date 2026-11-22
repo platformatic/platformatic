@@ -1,10 +1,10 @@
-import { abstractLogger, kMetadata, loadConfiguration } from '@platformatic/foundation'
+import { abstractLogger, kMetadata } from '@platformatic/foundation'
 import { create } from '../../index.js'
-import { transform } from '../config.js'
-import { schema } from '../schema.js'
+import { resolveCommandConfiguration } from './configuration.js'
 
-export async function printSchema (logger, configFile, args, { colorette: { bold }, logFatalError }) {
-  const config = await loadConfiguration(configFile, schema, { transform })
+export async function printSchema (logger, configuration, args, context) {
+  const { colorette: { bold }, logFatalError } = context
+  const config = await resolveCommandConfiguration(configuration, context)
 
   const type = args[0]
 
@@ -14,7 +14,7 @@ export async function printSchema (logger, configFile, args, { colorette: { bold
     logFatalError(logger, `Invalid schema type ${bold(type)}. Use ${bold('openapi')} or ${bold('graphql')}.`)
   }
 
-  const app = await create(config[kMetadata].root, configFile, { logger: abstractLogger })
+  const app = await create(config[kMetadata].root, config, { logger: abstractLogger })
   await app.init()
 
   let output

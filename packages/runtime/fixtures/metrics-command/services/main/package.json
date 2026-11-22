@@ -1,4 +1,4 @@
 {
-  "name": "metrics-command-main",
+  "name": "main",
   "main": "index.mjs"
 }

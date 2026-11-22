@@ -23,10 +23,7 @@ for (const scenario of [
   test(`health threshold logging: ${scenario.name}`, { timeout: 30000 }, async t => {
     const context = {}
     const app = await createRuntime(root, {
-      $schema: 'https://schemas.platformatic.dev/@platformatic/runtime/3.75.1.json',
-      entrypoint: 'main',
-      applications: [{ id: 'main', path: './services/main', config: 'platformatic.service.json', health: scenario.application }],
-      server: { hostname: '127.0.0.1', port: 0 },
+      applications: [{ id: 'main', path: './services/main', health: scenario.application }],
       logger: { level: 'trace' },
       restartOnError: 100,
       health: {
@@ -64,10 +61,8 @@ for (const scenario of [
 for (const option of ['maxELULogLevel', 'maxHeapUsedLogLevel']) {
   test(`rejects invalid ${option}`, async () => {
     await rejects(createRuntime(root, {
-      $schema: 'https://schemas.platformatic.dev/@platformatic/runtime/3.75.1.json',
-      entrypoint: 'main',
-      applications: [{ id: 'main', path: './services/main', config: 'platformatic.service.json' }],
+      applications: [{ id: 'main', path: './services/main' }],
       health: { [option]: 'invalid' }
-    }), { code: 'PLT_CONFIGURATION_DOES_NOT_VALIDATE_AGAINST_SCHEMA' })
+    }), { code: 'PLT_INVALID_ROOT_CONFIGURATION' })
   })
 }

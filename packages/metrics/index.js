@@ -22,7 +22,6 @@ import version from '@platformatic/prom-client/lib/metrics/version.js'
 
 export * as client from '@platformatic/prom-client'
 
-const { eventLoopUtilization } = performance
 const { Registry, Gauge, Counter, Histogram, collectDefaultMetrics } = client
 
 export const kMetricsGroups = Symbol('plt.metrics.MetricsGroups')
@@ -137,13 +136,6 @@ export const THREAD_LEVEL_METRICS = [
   'thread_cpu_percent_usage'
 ]
 
-// Metrics that are reset after each collection, unless resetHttpMetrics is false.
-export const RESET_ON_COLLECT_METRICS = [
-  'http_request_all_duration_seconds',
-  'http_request_all_summary_seconds',
-  'http_client_request_duration_seconds'
-]
-
 export function registerMetricsGroup (registry, group) {
   getRegistrySet(registry, kMetricsGroups).add(group)
 }
@@ -195,16 +187,7 @@ function isHttpClientMetricsEnabled (metricsConfig) {
   return metricsConfig.httpClientMetrics === true || metricsConfig.httpClientMetrics === 'true'
 }
 
-export function isHttpMetricsResetEnabled (metricsConfig) {
-  const reset = metricsConfig?.resetHttpMetrics
-  return reset !== false && reset !== 'false'
-}
-
-function resetAfterCollection () {
-  process.nextTick(() => this.reset())
-}
-
-export function collectHttpClientMetrics (registry, metricsConfig = {}) {
+export function collectHttpClientMetrics (registry) {
   if (ensureMetricsGroup(registry, 'http-client')) {
     return
   }
@@ -213,7 +196,6 @@ export function collectHttpClientMetrics (registry, metricsConfig = {}) {
     name: 'http_client_request_duration_seconds',
     help: 'outgoing HTTP client request duration in seconds',
     labelNames: ['method', 'status_code', 'dispatcher_stats_url', 'error_type'],
-    collect: isHttpMetricsResetEnabled(metricsConfig) ? resetAfterCollection : undefined,
     registers: [registry]
   })
 
@@ -279,22 +261,35 @@ function collectHttpServerMetrics (registry, metricsConfig) {
 
   // Build custom labels configuration
   const { customLabels, getCustomLabels } = buildCustomLabelsConfig(metricsConfig.httpCustomLabels)
-  const collect = isHttpMetricsResetEnabled(metricsConfig) ? resetAfterCollection : undefined
 
   collectHttpMetrics(registry, {
     customLabels,
     getCustomLabels,
     histogram: {
       name: 'http_request_all_duration_seconds',
-      help: 'request duration in seconds summary for all requests',
-      collect
+      help: 'request duration in seconds summary for all requests'
     },
     summary: {
       name: 'http_request_all_summary_seconds',
-      help: 'request duration in seconds histogram for all requests',
-      collect
+      help: 'request duration in seconds histogram for all requests'
     }
   })
+}
+
+function createSamplingWindow (registry, sample) {
+  const baseline = sample()
+  const samples = [baseline, baseline]
+  let oldest = 0
+
+  // Keep between one and two minutes of samples without letting reads reset the window.
+  const timer = setInterval(() => {
+    samples[oldest] = sample()
+    oldest ^= 1
+  }, 60000)
+  timer.unref()
+  registerMetricsCleanup(registry, () => clearInterval(timer))
+
+  return () => samples[oldest]
 }
 
 export async function collectThreadCpuMetrics (registry) {
@@ -302,8 +297,9 @@ export async function collectThreadCpuMetrics (registry) {
     return
   }
 
-  let lastSample = process.hrtime.bigint()
-  let lastUsage = process.threadCpuUsage()
+  const sample = () => ({ time: process.hrtime.bigint(), ...process.threadCpuUsage() })
+  const getBaseline = createSamplingWindow(registry, sample)
+  let lastUsage = getBaseline()
 
   const threadCpuUserUsageCounterMetric = new Counter({
     name: 'thread_cpu_user_system_seconds_total',
@@ -328,19 +324,19 @@ export async function collectThreadCpuMetrics (registry) {
     help: 'Total user and system CPU time spent in seconds for the current threads.',
     // Use this one metric's `collect` to set all metrics' values.
     collect () {
-      const newSample = process.hrtime.bigint()
-      const newUsage = process.threadCpuUsage()
+      const newUsage = sample()
       const user = newUsage.user - lastUsage.user
       const system = newUsage.system - lastUsage.system
-      const elapsed = Number(newSample - lastSample)
+      const baseline = getBaseline()
+      const elapsed = Number(newUsage.time - baseline.time)
+      const usage = newUsage.user - baseline.user + newUsage.system - baseline.system
 
       lastUsage = newUsage
-      lastSample = newSample
 
       threadCpuSystemUsageCounterMetric.inc(system / 1e6)
       threadCpuUserUsageCounterMetric.inc(user / 1e6)
       threadCpuUsageCounterMetric.inc((user + system) / 1e6)
-      threadCpuPercentUsageGaugeMetric.set((100 * ((user + system) * 1000)) / elapsed)
+      threadCpuPercentUsageGaugeMetric.set(elapsed > 0 ? (100 * usage * 1000) / elapsed : 0)
     },
     registers: [registry]
   })
@@ -357,36 +353,34 @@ export function collectSystemCpuMetric (registry) {
     return
   }
 
-  let previousIdleTime = 0
-  let previousTotalTime = 0
+  const sample = () => {
+    let idleTime = 0
+    let totalTime = 0
+
+    for (const { times } of os.cpus()) {
+      for (const type in times) {
+        totalTime += times[type]
+        if (type === 'idle') {
+          idleTime += times[type]
+        }
+      }
+    }
+
+    return { idleTime, totalTime }
+  }
+  const getBaseline = createSamplingWindow(registry, sample)
   const cpuMetric = new Gauge({
     name: 'process_cpu_percent_usage',
     help: 'The process CPU percent usage.',
     collect: () => {
-      const cpus = os.cpus()
-      let idleTime = 0
-      let totalTime = 0
+      const { idleTime, totalTime } = sample()
+      const baseline = getBaseline()
+      const idleDiff = idleTime - baseline.idleTime
+      const totalDiff = totalTime - baseline.totalTime
 
-      for (let i = 0; i < cpus.length; i++) {
-        const cpu = cpus[i]
-        const times = cpu.times
-        for (const type in times) {
-          totalTime += times[type]
-          if (type === 'idle') {
-            idleTime += times[type]
-          }
-        }
-      }
-
-      const idleDiff = idleTime - previousIdleTime
-      const totalDiff = totalTime - previousTotalTime
-
-      const usagePercent = 100 - (100 * idleDiff) / totalDiff
+      const usagePercent = totalDiff > 0 ? 100 - (100 * idleDiff) / totalDiff : 0
       const roundedUsage = Math.round(usagePercent * 100) / 100
       cpuMetric.set(roundedUsage)
-
-      previousIdleTime = idleTime
-      previousTotalTime = totalTime
     },
     registers: [registry]
   })
@@ -399,17 +393,16 @@ export function collectEluMetric (registry) {
     return
   }
 
-  let startELU = eventLoopUtilization()
+  const getBaseline = createSamplingWindow(registry, () => performance.eventLoopUtilization())
   const eluMetric = new Gauge({
     name: 'nodejs_eventloop_utilization',
     help: 'The event loop utilization as a fraction of the loop time. 1 is fully utilized, 0 is fully idle.',
     // When the metrics of multiple workers are merged, report the mean utilization
     aggregator: 'average',
     collect: () => {
-      const endELU = eventLoopUtilization()
-      const result = eventLoopUtilization(endELU, startELU).utilization
+      const endELU = performance.eventLoopUtilization()
+      const result = performance.eventLoopUtilization(endELU, getBaseline()).utilization
       eluMetric.set(result)
-      startELU = endELU
     },
     registers: [registry]
   })
@@ -488,7 +481,7 @@ export async function collectThreadMetrics (applicationId, workerId, metricsConf
   if (metricsConfig.httpMetrics) {
     collectHttpServerMetrics(registry, metricsConfig)
     if (isHttpClientMetricsEnabled(metricsConfig)) {
-      collectHttpClientMetrics(registry, metricsConfig)
+      collectHttpClientMetrics(registry)
     }
   }
 
@@ -553,7 +546,7 @@ export async function collectMetrics (applicationId, workerId, metricsConfig = {
   if (metricsConfig.httpMetrics) {
     collectHttpServerMetrics(registry, metricsConfig)
     if (isHttpClientMetricsEnabled(metricsConfig)) {
-      collectHttpClientMetrics(registry, metricsConfig)
+      collectHttpClientMetrics(registry)
     }
   }
 

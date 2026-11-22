@@ -3,9 +3,6 @@ import { resolve } from 'node:path'
 import { test } from 'node:test'
 import { Client } from 'undici'
 import { createRuntime, setFixturesDir } from '../../basic/test/helper.js'
-
-process.setMaxListeners(100)
-
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
 test('should set telemetry in config on all the node applications', async t => {
@@ -31,7 +28,7 @@ test('should set telemetry in config on all the node applications', async t => {
   assert.strictEqual(statusCode, 200)
 
   const applicationConfig = await body.json()
-  assert.deepEqual(applicationConfig.telemetry, {
+  assert.deepEqual(applicationConfig.tracing, {
     applicationName: 'test-application-api',
     version: '1.0.0',
     exporter: {

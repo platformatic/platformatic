@@ -1,8 +1,8 @@
+import getPort from 'get-port'
 import { deepStrictEqual } from 'node:assert'
-import { cp } from 'node:fs/promises'
 import path, { resolve } from 'node:path'
 import { test } from 'node:test'
-import { commonFixturesRoot, prepareRuntime, updateFile } from '../../basic/test/helper.js'
+import { copyCommonApplication, prepareRuntime, updateFile } from '../../basic/test/helper.js'
 import { updateConfigFile } from '../../runtime/test/helpers.js'
 
 const envs = {
@@ -33,15 +33,18 @@ function waitServerOptions (runtime) {
 
 for (const [env, options] of Object.entries(envs)) {
   test(`nest application should properly use backlog option in ${env}`, async t => {
+    let port
     const { runtime } = await prepareRuntime({
       t,
       root: path.resolve(import.meta.dirname, './fixtures/fastify-standalone'),
       build: options.build,
       production: options.production,
       async additionalSetup (root) {
+        port = await getPort()
         return updateConfigFile(resolve(root, 'services/frontend/platformatic.application.json'), config => {
           config.server ??= {}
           config.server.backlog = 100
+          config.server.port = port
         })
       }
     })
@@ -50,7 +53,8 @@ for (const [env, options] of Object.entries(envs)) {
 
     await runtime.start()
     const serverOptions = await promise
-    deepStrictEqual(serverOptions.backlog, 100)
+    deepStrictEqual(serverOptions.backlog, options.production ? 100 : undefined)
+    deepStrictEqual(serverOptions.port, port)
   })
 
   test(`nest application should properly use backlog option in ${env} when using custom commands`, async t => {
@@ -61,9 +65,7 @@ for (const [env, options] of Object.entries(envs)) {
       production: options.production,
       async additionalSetup (root, config) {
         for (const type of ['backend', 'composer']) {
-          await cp(resolve(commonFixturesRoot, `${type}-js`), resolve(root, `services/${type}`), {
-            recursive: true
-          })
+          await copyCommonApplication(root, type)
         }
 
         await updateFile(resolve(root, 'services/composer/routes/root.js'), contents => {
@@ -73,10 +75,10 @@ for (const [env, options] of Object.entries(envs)) {
         await updateConfigFile(resolve(root, 'services/frontend/platformatic.application.json'), config => {
           config.server ??= {}
           config.server.backlog = 100
+          if (options.production) {
+            config.server.port = 0
+          }
         })
-
-        // Make sure we start an HTTP server in the service
-        config.applications[0].useHttp = true
       }
     })
 
@@ -84,6 +86,6 @@ for (const [env, options] of Object.entries(envs)) {
 
     await runtime.start()
     const serverOptions = await promise
-    deepStrictEqual(serverOptions.backlog, 100)
+    deepStrictEqual(serverOptions.backlog, options.production ? 100 : undefined)
   })
 }

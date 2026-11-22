@@ -5,7 +5,12 @@ import { resolve } from 'node:path'
 import { test } from 'node:test'
 import { features } from '@platformatic/foundation'
 import { Agent, request } from 'undici'
-import { prepareRuntime, setFixturesDir, startRuntime } from '../../basic/test/helper.js'
+import {
+  prepareRuntime,
+  setFixturesDir,
+  startRuntime,
+  updateTargetApplicationConfig
+} from '../../basic/test/helper.js'
 
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
@@ -36,13 +41,20 @@ async function getPort () {
 test('supports https server options', async t => {
   const dispatcher = createDispatcher(t)
 
-  const { runtime } = await prepareRuntime(t, 'node-https-standalone', false, null, async (root, config) => {
-    config.applications[0].permissions = { fs: { read: ['.', repoRoot] } }
-    config.server.https = {
-      key: { path: resolve(root, 'https.key') },
-      cert: { path: resolve(root, 'https.crt') }
-    }
-  })
+  const { runtime } = await prepareRuntime(t, 'node-https-standalone', false, null, Object.assign(
+    async (root, config) => {
+      config.applications[0].permissions = { fs: { read: ['.', repoRoot] } }
+      await updateTargetApplicationConfig(config, applicationConfig => {
+        applicationConfig.server ??= {}
+        applicationConfig.server.https = {
+          key: { path: resolve(root, 'https.key') },
+          cert: { path: resolve(root, 'https.crt') }
+        }
+      })
+    },
+    // Reads the loaded configuration, so it runs after the load and before start.
+    { runAfterPrepare: true }
+  ))
 
   const url = await startRuntime(t, runtime)
 
@@ -61,18 +73,25 @@ test('supports reusePort with https server options', async t => {
   const dispatcher = createDispatcher(t, { pipelining: 0 })
   const port = await getPort()
 
-  const { runtime } = await prepareRuntime(t, 'node-https-standalone', false, null, async (root, config) => {
-    config.server = {
-      ...config.server,
-      port,
-      https: {
-        key: { path: resolve(root, 'https.key') },
-        cert: { path: resolve(root, 'https.crt') }
-      }
-    }
-    config.applications[0].workers = { static: 5, dynamic: false }
-    config.applications[0].permissions = { fs: { read: ['.', repoRoot] } }
-  })
+  const { runtime } = await prepareRuntime(t, 'node-https-standalone', false, null, Object.assign(
+    async (root, config) => {
+      await updateTargetApplicationConfig(config, applicationConfig => {
+        applicationConfig.server = {
+          ...applicationConfig.server,
+          hostname: '127.0.0.1',
+          port,
+          https: {
+            key: { path: resolve(root, 'https.key') },
+            cert: { path: resolve(root, 'https.crt') }
+          }
+        }
+      })
+      config.applications[0].workers = { static: features.node.reusePort ? 5 : 1, dynamic: false }
+      config.applications[0].permissions = { fs: { read: ['.', repoRoot] } }
+    },
+    // Reads the loaded configuration, so it runs after the load and before start.
+    { runAfterPrepare: true }
+  ))
 
   const url = await startRuntime(t, runtime)
   deepStrictEqual(url, `https://127.0.0.1:${port}`)

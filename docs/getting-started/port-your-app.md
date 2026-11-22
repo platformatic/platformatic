@@ -28,7 +28,7 @@ Follow these steps to make your project run in Watt:
 
 Before we begin, make sure you have the following installed:
 
-- [Node.js](https://nodejs.org/) (v22.19.0+)
+- [Node.js](https://nodejs.org/) (v24.20.0+)
 - A Node.js application to run. These steps have been tested on the official Fastify [demo](https://github.com/fastify/demo).
 
 ### 1. Clone your Project
@@ -46,49 +46,59 @@ cd demo
 npm install
 ```
 
-### 2. Use `npm create wattpm`
+### 2. Integrate with the Watt skill
 
-Use `npm create wattpm` to wrap your application inside Watt.
+Install the [official skill](../guides/use-watt-with-ai-agents.md):
 
-```bash
-$ npm create wattpm
-Hello YOURNAME, welcome to Watt 3.0.0!
-? This folder seems to already contain a Node.js application. Do you want to wrap into Watt? yes
-? What port do you want to use? 3042
-[15:59:20.315] INFO (53128): /home/user/work/demo/.env written!
-[15:59:20.319] INFO (53128): /home/user/work/demo/.env.sample written!
-[15:59:20.319] INFO (53128): /home/user/work/demo/package.json written!
-[15:59:20.320] INFO (53128): /home/user/work/demo/watt.json written!
-[15:59:20.320] INFO (53128): Installing dependencies for the application using npm ...
-[15:59:37.237] INFO (53128): You are all set! Run `npm start` to start your project.
+```sh
+npx skills add platformatic/skills --skill watt
 ```
+
+Select the exact published Watt 4 version and authorize its local installation before
+delegating to the skill. If the project already uses Watt 3, explicitly select
+[destination-version migration guidance](../guides/use-watt-with-ai-agents.md#migrating-an-existing-watt-3-project)
+instead of treating its local v3 instructions as v4 instructions.
+
+Ask your agent to integrate the existing application with Watt 4 on port 3042,
+preserving its source, module convention, original scripts, and environment files.
+It should add `wattpm`, the matching capability, and a minimal configuration.
+Review changes and authorize dependency installation. For manual integration, see
+the [framework reference](../skills/watt/references/frameworks.md).
+
+Use `watt.config.mjs` when the package does not declare `"type": "module"`, or
+`watt.config.js` / `watt.config.ts` in an ESM package. Keep one configuration file.
 
 ### 3. Setup application commands (optional)
 
-If your application is using custom commands to start, you must set them in your `watt.json`. Modify the `application.commands` property like in the example below:
+If your application is using custom commands to start, you must set them in your configuration file. Modify the `application.commands` property like in the example below:
 
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/node/3.0.0.json",
-  "application": {
-    "commands": {
-      "development": "npm run dev",
-      "build": "npm run build",
-      "production": "npm run start"
+```ts config
+export default {
+  logger: { level: process.env.LOG_LEVEL ?? 'info' },
+  application: {
+    config: {
+      module: '@platformatic/node',
+      server: {
+        hostname: process.env.HOSTNAME ?? '127.0.0.1',
+        port: Number(process.env.PORT ?? 3042)
+      },
+      application: {
+        commands: {
+          development: 'npm run dev',
+          build: 'npm run build',
+          production: 'npm run start'
+        }
+      }
     }
-  },
-  "runtime": {
-    "logger": {
-      "level": "{PLT_SERVER_LOGGER_LEVEL}"
-    },
-    "server": {
-      "hostname": "{PLT_SERVER_HOSTNAME}",
-      "port": "{PORT}"
-    },
-    "managementApi": "{PLT_MANAGEMENT_API}"
   }
 }
 ```
+
+The file reads `process.env` directly. Runtime settings like `logger` belong to the
+root; capability settings sit under `application.config`. Use `createWattConfig`
+from `wattpm` for typed configuration, or add a versioned `$schema` when generating
+a plain-object file. Preserve the original framework scripts under different names
+to avoid recursively invoking Watt from `application.commands`.
 
 ## Starting Your Application
 
@@ -107,33 +117,31 @@ wattpm start
 
 ## Port your Next.js application to Watt
 
-In order to run your existing Next.js application with Watt, you can use the import capability of `wattpm-utils`.
+Ask your agent to integrate the existing Next.js application, or install the packages directly.
 
 From the root of your application, run:
 
+```sh
+npm install wattpm @platformatic/next
 ```
-npx wattpm-utils import
-```
 
-The command will create a `watt.json` for you and also install `@platformatic/next` as part of your dependencies.
+An inferred single-application project can run without configuration. Write a file
+when you need a specific port or other settings.
 
-By default, Watt will run on random port. If you want to choose a specific port, add an entry in the `watt.json` file:
+By default, Watt will run on a random port. If you want to choose a specific port — or anything else the defaults do not cover — write a `watt.config.mjs` at the root of your application:
 
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/next/3.8.0.json?autogenerated=true",
-  "runtime": {
-    "server": {
-      "port": 3000
-    }
-  }
-}
+```ts config
+import { createNextConfig } from '@platformatic/next'
+
+export default createNextConfig({
+  server: { port: 3000 }
+})
 ```
 
 ## Common Issues and Solutions
 
-- **Port conflicts**: If the specified port is already in use, Watt will try the next one.
-- **Missing scripts**: If you use a custom start script, insert into the `watt.json` file in the section `application.commands.production`. See the step 3 above for more informations.
+- **Port conflicts**: If the specified port is already in use, the application fails to start. Choose another port in the capability configuration.
+- **Missing scripts**: If you use a custom start script, set it in your configuration file under `application.commands.production`. See step 3 above for more information.
 - **Build step**: For TypeScript projects, ensure you've built your project before running Watt. You can use `wattpm build` to compile your TypeScript files.
 - **Environment variables**: Confirm that all required environment variables are available.
 
@@ -141,5 +149,6 @@ By default, Watt will run on random port. If you want to choose a specific port,
 
 - [Migrate from Express](../learn/migrations/from-express.md) - a staged migration, from zero-change wrapping to splitting into multiple applications
 - [Migrate from Fastify](../learn/migrations/from-fastify.md) - the same, with Fastify specifics
+- [Migrate to Watt v4](../guides/migrate-v4.md) - update Watt configuration, globals, listeners, interceptors, and application shutdown
 - [Watt Quick Start](/docs/getting-started/quick-start/)
 - [Framework Integration Guides](/docs/guides/frameworks) - Setup guides for Next.js, Astro, Remix, Vite, and more

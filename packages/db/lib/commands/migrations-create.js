@@ -1,13 +1,13 @@
-import { kMetadata, loadConfiguration } from '@platformatic/foundation'
+import { kMetadata } from '@platformatic/foundation'
 import { mkdir, writeFile } from 'node:fs/promises'
 import { join, relative } from 'node:path'
-import { transform } from '../config.js'
 import * as errors from '../errors.js'
 import { Migrator } from '../migrator.js'
-import { schema } from '../schema.js'
+import { resolveCommandConfiguration } from './configuration.js'
 
-export async function createMigrations (logger, configFile, _, { colorette: { bold } }) {
-  const config = await loadConfiguration(configFile, schema, { transform })
+export async function createMigrations (logger, configuration, _, context) {
+  const { colorette: { bold } } = context
+  const config = await resolveCommandConfiguration(configuration, context)
   const root = config[kMetadata].root
 
   let migrator = null

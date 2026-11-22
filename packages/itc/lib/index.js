@@ -114,9 +114,11 @@ export function generateUnhandledErrorResponse (error) {
 }
 
 function sanitizeError (error, transferList) {
-  let needsSanitization = false
+  const isAggregateError = error instanceof AggregateError
+  let needsSanitization = isAggregateError
 
-  for (const value of Object.values(error)) {
+  const values = isAggregateError ? [...Object.values(error), error.errors] : Object.values(error)
+  for (const value of values) {
     const valueType = typeof value
     if (valueType === 'function' || valueType === 'symbol') {
       needsSanitization = true
@@ -147,6 +149,7 @@ function sanitizeError (error, transferList) {
   if (error.stack) sanitized.stack = error.stack
   if (error.code) sanitized.code = error.code
   if (error.statusCode) sanitized.statusCode = error.statusCode
+  if (isAggregateError) sanitized.errors = sanitizeValue(error.errors, transferList)
 
   for (const [key, value] of Object.entries(error)) {
     if (key === 'message' || key === 'stack' || key === 'name' || key === 'code' || key === 'statusCode') continue
@@ -267,7 +270,7 @@ export class ITC extends EventEmitter {
   #waitingRequests
   #handlers
   #listening
-  #handling
+  #activeRequests
   #closedResponse
   #closeAfterCurrentRequest
   #throwOnMissingHandler
@@ -288,7 +291,7 @@ export class ITC extends EventEmitter {
     this.#waitingRequests = new Map()
     this.#handlers = new Map()
     this.#listening = false
-    this.#handling = false
+    this.#activeRequests = 0
     this.#closeAfterCurrentRequest = false
     this.#throwOnMissingHandler = throwOnMissingHandler ?? true
 
@@ -444,7 +447,7 @@ export class ITC extends EventEmitter {
   }
 
   close () {
-    if (this.#handling) {
+    if (this.#activeRequests > 0) {
       this.#closeAfterCurrentRequest = true
       return
     }
@@ -471,12 +474,18 @@ export class ITC extends EventEmitter {
   }
 
   async #handleRequest (raw, context) {
-    const response = await this.#dispatchRequest(raw, context)
+    this.#activeRequests++
 
-    this._send(response, context)
+    try {
+      const response = await this.#dispatchRequest(raw, context)
+      this._send(response, context)
+    } finally {
+      this.#activeRequests--
 
-    if (this.#closeAfterCurrentRequest) {
-      this.close()
+      if (this.#closeAfterCurrentRequest && this.#activeRequests === 0) {
+        // Bypass overrides after all responses have been sent and close the transport.
+        this._close()
+      }
     }
   }
 
@@ -484,8 +493,6 @@ export class ITC extends EventEmitter {
     let request = null
     let handler = null
     let response = null
-
-    this.#handling = true
 
     try {
       request = parseRequest(raw)
@@ -514,10 +521,7 @@ export class ITC extends EventEmitter {
 
         response = generateResponse(request, failedError, null)
       }
-    } finally {
-      this.#handling = false
     }
-
     return response
   }
 

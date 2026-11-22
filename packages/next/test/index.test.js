@@ -99,6 +99,31 @@ describe('keyFor', () => {
 })
 
 describe('enhanceNextConfig with caching', () => {
+  test('externalizes globals on Next.js 15 and newer', async () => {
+    setupGlobal()
+    const nextConfig = await enhanceNextConfig({ serverExternalPackages: ['existing'] })
+
+    deepEqual(nextConfig.serverExternalPackages, ['existing', '@platformatic/globals'])
+  })
+
+  test('does not add globals to serverExternalPackages twice', async () => {
+    setupGlobal()
+    const nextConfig = await enhanceNextConfig({ serverExternalPackages: ['@platformatic/globals'] })
+
+    deepEqual(nextConfig.serverExternalPackages, ['@platformatic/globals'])
+  })
+
+  test('externalizes globals using the experimental option on Next.js 14', async () => {
+    setupGlobal(({ nextVersion }) => {
+      nextVersion.major = 14
+    })
+    const nextConfig = await enhanceNextConfig({
+      experimental: { serverComponentsExternalPackages: ['existing'] }
+    })
+
+    deepEqual(nextConfig.experimental.serverComponentsExternalPackages, ['existing', '@platformatic/globals'])
+  })
+
   test('sets deploymentId from the build environment', async () => {
     const originalDeploymentId = process.env.PLT_DEPLOYMENT_ID
     process.env.PLT_DEPLOYMENT_ID = 'dpl-test'

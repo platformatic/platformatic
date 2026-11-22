@@ -17,7 +17,6 @@ import {
   verifyPlatformaticService
 } from '../../basic/test/helper.js'
 
-process.setMaxListeners(100)
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
 const viteVersions = ['5.4.0', '6.3.5', '7.3.6', '8.2.2']

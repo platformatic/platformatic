@@ -1,8 +1,7 @@
 export default function () {
   return {
     runtime: [
-      { op: 'add', path: '/restartOnError', value: true },
-      { op: 'add', path: '/entrypoint', value: 'alternate' }
+      { op: 'add', path: '/restartOnError', value: true }
     ],
     applications: {
       main: [

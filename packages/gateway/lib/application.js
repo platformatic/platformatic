@@ -5,29 +5,16 @@ import deepEqual from 'fast-deep-equal'
 import { workerData } from 'node:worker_threads'
 import { fetchOpenApiSchema } from './commands/openapi-fetch-schemas.js'
 import { gatewayHook } from './gateway-hook.js'
-import { fetchGraphqlSubgraphs, isSameGraphqlSchema } from './graphql-fetch.js'
-import { graphqlGenerator } from './graphql-generator.js'
-import { graphql } from './graphql.js'
 import { openApiGateway, openApiGenerator } from './openapi-generator.js'
 import { proxy } from './proxy.js'
 import { isFetchable } from './utils.js'
 
-const EXPERIMENTAL_GRAPHQL_GATEWAY_FEATURE_MESSAGE = 'graphql composer is an experimental feature'
-
-async function detectApplicationsUpdate ({
-  app,
-  applications,
-  graphqlApplications,
-  fetchOpenApiSchema,
-  fetchGraphqlSubgraphs,
-  composeEndpointMissCache
-}) {
+async function detectApplicationsUpdate ({ app, applications, fetchOpenApiSchema }) {
   let changed
-  let watchingGraphqlApplications = false
 
   // assumes applications here are fetchable
   for (const application of applications) {
-    const { id, origin, openapi, graphql } = application
+    const { id, origin, openapi } = application
 
     if (openapi) {
       const currentSchema = app.openApiSchemas.find(schema => schema.id === id)?.originSchema || null
@@ -45,25 +32,6 @@ async function detectApplicationsUpdate ({
         break
       }
     }
-
-    if (graphql) {
-      watchingGraphqlApplications = true
-    }
-  }
-
-  // When at least one graphql application is fetched, compose the supergraph again from all of them:
-  // the applications with a schema file reuse the schema read at startup.
-  if (!changed && watchingGraphqlApplications) {
-    const graphqlSupergraph = await fetchGraphqlSubgraphs(
-      graphqlApplications,
-      app.graphqlComposerOptions,
-      app,
-      composeEndpointMissCache
-    )
-    if (!isSameGraphqlSchema(graphqlSupergraph, app.graphqlSupergraph)) {
-      changed = true
-      app.graphqlSupergraph = graphqlSupergraph
-    }
   }
 
   return changed
@@ -72,7 +40,7 @@ async function detectApplicationsUpdate ({
 /**
  * poll applications to detect changes, every `opts.gateway.refreshTimeout`
  * polling is disabled on refreshTimeout = 0
- * or there are no network openapi nor graphql remote applications (the applications are from file or they don't have a schema/graph to fetch)
+ * or there are no network OpenAPI applications (the applications are from file or they don't have a schema to fetch)
  */
 async function watchApplications (app, { config, capability }) {
   const { applications, refreshTimeout } = config.gateway
@@ -84,9 +52,6 @@ async function watchApplications (app, { config, capability }) {
   if (watching.length < 1) {
     return
   }
-  const graphqlApplications = applications.filter(application => application.graphql)
-
-  const composeEndpointMissCache = new Map()
 
   try {
     getRuntimeId()
@@ -101,16 +66,7 @@ async function watchApplications (app, { config, capability }) {
 
   const timer = setInterval(async () => {
     try {
-      if (
-        await detectApplicationsUpdate({
-          app,
-          applications: watching,
-          graphqlApplications,
-          fetchOpenApiSchema,
-          fetchGraphqlSubgraphs,
-          composeEndpointMissCache
-        })
-      ) {
+      if (await detectApplicationsUpdate({ app, applications: watching, fetchOpenApiSchema })) {
         clearInterval(timer)
         app.log.info('detected applications changes, restarting ...')
 
@@ -176,7 +132,7 @@ export async function ensureApplications (gatewayId, config) {
 
 export async function platformaticGateway (app, capability) {
   const config = await capability.getConfig()
-  let hasGraphqlApplications, hasOpenapiApplications
+  let hasOpenapiApplications
 
   // When no applications are specified, get the list from the runtime.
   await ensureApplications(capability.applicationId, config)
@@ -189,9 +145,6 @@ export async function platformaticGateway (app, capability) {
     }
     if (application.openapi && !hasOpenapiApplications) {
       hasOpenapiApplications = true
-    }
-    if (application.graphql && !hasGraphqlApplications) {
-      hasGraphqlApplications = true
     }
   }
 
@@ -227,12 +180,6 @@ export async function platformaticGateway (app, capability) {
 
   if (generatedComposedOpenAPI) {
     await app.register(openApiGateway, { opts: config.gateway, generated: generatedComposedOpenAPI })
-  }
-
-  if (hasGraphqlApplications) {
-    app.log.warn(EXPERIMENTAL_GRAPHQL_GATEWAY_FEATURE_MESSAGE)
-    app.register(graphql, config.gateway)
-    await app.register(graphqlGenerator, config.gateway)
   }
 
   if (!app.hasRoute({ url: '/', method: 'GET' }) && !app.hasRoute({ url: '/*', method: 'GET' })) {

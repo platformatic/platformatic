@@ -1,10 +1,8 @@
-import { loadConfiguration } from '@platformatic/foundation'
-import { transform } from '../config.js'
-import { schema } from '../schema.js'
 import { execute } from '../types.js'
+import { resolveCommandConfiguration } from './configuration.js'
 
-export async function generateTypes (logger, configFile, _args) {
-  const config = await loadConfiguration(configFile, schema, { transform })
+export async function generateTypes (logger, configuration, _args, context) {
+  const config = await resolveCommandConfiguration(configuration, context)
 
   const count = await execute({ logger, config })
 

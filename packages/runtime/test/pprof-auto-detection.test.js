@@ -12,7 +12,7 @@ function isWattpmPprofCapturePreloaded (preload) {
 
 test('should auto-detect @platformatic/wattpm-pprof-capture by default', async t => {
   // Use existing monorepo fixture which loads services
-  const configFile = join(fixturesDir, 'configs', 'monorepo.json')
+  const configFile = join(fixturesDir, 'configs', 'monorepo', 'watt.config.mjs')
 
   // Load config with runtime transformation
   const config = await loadConfiguration(configFile)

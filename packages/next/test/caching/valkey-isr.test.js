@@ -22,9 +22,6 @@ import {
   verifyValkeySequence,
   withValkeyUser
 } from './helper.js'
-
-process.setMaxListeners(100)
-
 setFixturesDir(resolve(import.meta.dirname, '../fixtures'))
 const configuration = 'caching-valkey'
 

@@ -1,39 +1,83 @@
-# Express on Watt 3
+# Express with Watt 4
 
-Use `@platformatic/node` for an existing Express application. Preserve middleware,
-routers, error handling, and the project's ESM/CommonJS convention.
+Detect `express` in dependencies and the actual entrypoint (`package.json.main`,
+`src/index.*`, `src/app.*`, `index.*`, or `server.*`). Install compatible `wattpm` and
+`@platformatic/node` only with authorization, preserving the package manager.
 
-`watt.json`:
+## Managed factory
 
-```json
-{
-  "module": "@platformatic/node",
-  "node": { "main": "./server.js" },
-  "runtime": { "server": { "hostname": "0.0.0.0", "port": "{PORT}" } }
-}
-```
-
-An ESM entrypoint can export a factory without starting a second listener:
+Prefer an ESM `create()` factory; preserve routes, middleware, authentication, and errors:
 
 ```js
 import express from 'express'
+import cors from 'cors'
+import helmet from 'helmet'
 
-export async function create () {
+export function create () {
   const app = express()
-  app.get('/health', (request, response) => response.json({ status: 'ok' }))
+  app.use(helmet())
+  app.use(cors())
+  app.use(express.json())
+  app.get('/health', (req, res) => {
+    res.json({ status: 'ok' })
+  })
   return app
 }
 ```
 
-Install the matching major 3 Node capability and Watt with authorization. For CommonJS,
-export the factory through `module.exports` instead of converting the entire project.
+`watt.config.js` in an ESM project:
 
-Review `trust proxy`, cookies, redirects, body size limits, and mounted path prefixes
-behind a gateway. Server-side callers use `http://<application-id>.plt.local`.
-Use the framework's error-handling conventions and stable application error codes.
+```js
+import { createNodeConfig } from '@platformatic/node'
 
-For a self-listening entrypoint, preserve one owner for `listen()` and provide a
-supported shutdown path for the HTTP server, timers, and external connections.
-Test startup, representative routes, and graceful shutdown after integration.
+export default createNodeConfig({
+  main: './src/index.js',
+  server: {
+    hostname: process.env.HOST || '127.0.0.1',
+    port: Number(process.env.PORT || 3000)
+  }
+})
+```
 
-See [integration](../integration.md) and [enterprise](../enterprise.md).
+Match `main` to the actual factory path. For TS, native stripping is limited to erasable
+syntax; keep compilation for framework transforms/aliases and point at build output.
+The managed factory must not also call `listen()`.
+
+## Existing self-listening apps
+
+Preserve standalone usage when needed. The app chooses its own listener; Watt does not
+write `PORT` or move it to the next free port. Bind public containers to `0.0.0.0`, not
+every internal application. An in-thread self-listening entrypoint can export:
+
+```js
+export async function close () {
+  await new Promise((resolve, reject) => {
+    server.close(error => {
+      if (error) {
+        reject(error)
+      } else {
+        resolve()
+      }
+    })
+  })
+}
+```
+
+Here `server` is the application's existing listener. For extra asynchronous cleanup,
+use `registerCloseCallback()` from `@platformatic/globals`, not legacy close events.
+Custom-command child processes must register their own cleanup; Watt does not invoke
+their exported factories/`close()` automatically. Do not register the same cleanup twice.
+
+## Scripts and health
+
+Use `wattpm dev`, `build`, `start`; preserve original scripts under clear names to avoid
+recursive custom build commands. Remove PM2/forever only within the requested integration
+scope. `/health` above is an application route, not an automatic Watt endpoint. Use it
+for probes only after verifying the route through the deployed listener.
+
+## Common issues
+
+- Startup failure: inspect actual env requirements and configuration mode without dumping secrets.
+- Container unreachable: confirm the public listener's hostname/port, not just `PORT` existence.
+- Address in use: identify the owner before stopping anything; choose a new explicit port.
+- Shutdown warnings: close servers, DB pools, timers, and resources using the correct execution mode.

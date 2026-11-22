@@ -3,6 +3,7 @@ import { mkdir, rm, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
 import { request } from 'undici'
+import { updateConfigFile } from '../../runtime/test/helpers.js'
 import { swapVersion } from '../../basic/test/helper-version.js'
 import {
   getLogsFromFile,
@@ -38,6 +39,13 @@ test('checks Nitro versions in Nitro Vite development', async t => {
 test('starts production output without a Nitro package or version check', async t => {
   const { runtime } = await prepareRuntime(t, 'standalone-nitro', true, null, async root => {
     const applicationRoot = resolve(root, 'services/frontend')
+
+    // The application only starts its server when a port is configured
+    await updateConfigFile(resolve(applicationRoot, 'platformatic.application.json'), config => {
+      config.server ??= {}
+      config.server.port ??= 0
+    })
+
     const output = resolve(applicationRoot, '.output/server')
     await mkdir(output, { recursive: true })
     await writeFile(

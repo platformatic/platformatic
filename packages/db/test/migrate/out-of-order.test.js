@@ -483,15 +483,14 @@ test('the migrations apply command reports the files and applies nothing', async
 
   const root = await mkdtemp(join(tmpdir(), 'plt-db-out-of-order-config-'))
   t.after(() => rm(root, { recursive: true, force: true }))
-  const configFile = join(root, 'platformatic.json')
-  await writeFile(
-    configFile,
-    JSON.stringify({
-      server: { hostname: '127.0.0.1', port: 0 },
-      db: { connectionString: connectionInfo.connectionString },
-      migrations: { dir, outOfOrder: 'error' }
-    })
-  )
+  const configFile = join(root, 'watt.config.mjs')
+  const config = {
+    module: '@platformatic/db',
+    server: { hostname: '127.0.0.1', port: 0 },
+    db: { connectionString: connectionInfo.connectionString },
+    migrations: { dir, outOfOrder: 'error' }
+  }
+  await writeFile(configFile, `export default ${JSON.stringify(config, null, 2)}\n`)
   await writeFile(join(dir, '004.do.sql'), 'CREATE TABLE test4 (id INTEGER);')
 
   const logger = createCapturingLogger()

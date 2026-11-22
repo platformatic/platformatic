@@ -20,7 +20,7 @@ test('emits the exit event before a worker exits', async t => {
     }
   })
 
-  const configFile = join(fixturesDir, 'exit-event', 'platformatic.json')
+  const configFile = join(fixturesDir, 'exit-event', 'watt.config.js')
   const runtime = await createRuntime(configFile)
   t.after(() => runtime.close())
 

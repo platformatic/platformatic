@@ -12,7 +12,6 @@ import {
   verifyPlatformaticService
 } from '../../basic/test/helper.js'
 
-process.setMaxListeners(100)
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
 const files = ['services/frontend/dist/index.html']

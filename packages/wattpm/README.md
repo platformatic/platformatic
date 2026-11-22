@@ -17,29 +17,27 @@ Watt supports the stacks you love most, including [Next.js](https://nextjs.org/)
 ## Install
 
 ```bash
-# Create a new application
-npx wattpm@latest create
+# Replace VERSION with the exact published Watt 4 version selected for this project:
+npm install wattpm@VERSION
 
-# Or install manually:
-npm install wattpm
+# Install the official skill for your coding agent:
+npx skills add platformatic/skills --skill watt
+
+# Read the bundled instructions without an agent:
+./node_modules/.bin/wattpm skill
 ```
 
 Follow our [Quick Start Guide](https://docs.platformatic.dev/docs/getting-started/quick-start)
 to get up and running with Watt.
 
-## Agent instructions
+Watt 4 replaces project generators and the import command with agent skills. See
+[Use Watt with AI Coding Agents](https://docs.platformatic.dev/docs/guides/use-watt-with-ai-agents).
 
-Starting with Watt 3.74.0, the local CLI exposes release-matched instructions offline:
-
-```bash
-wattpm skill
-wattpm skill references/frameworks/nextjs.md
-```
-
-Use the project's installed binary for every read. Relative Markdown links resolve
-against the current document inside the bundle. See the
-[AI agent guide](https://docs.platformatic.dev/docs/guides/use-watt-with-ai-agents).
-Watt 3's existing scaffolding and import commands remain supported.
+The discovery skill delegates to the local CLI; references ship with the npm release.
+Use the same installation for every read and resolve relative Markdown links against
+the current bundled document. The discovery workflow requires Watt 3.74.0+ and `skill`
+support. Older installations stop rather than downloading a fallback. Migrating from
+v3 requires explicitly selecting destination-version instructions.
 
 ## Documentation
 

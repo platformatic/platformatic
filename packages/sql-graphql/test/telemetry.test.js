@@ -1,5 +1,5 @@
 import sqlMapper from '@platformatic/sql-mapper'
-import { telemetry } from '@platformatic/telemetry'
+import { telemetry } from '@platformatic/tracing'
 import fastify from 'fastify'
 import { equal, fail, ok as pass, deepEqual as same } from 'node:assert'
 import { test } from 'node:test'

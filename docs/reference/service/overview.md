@@ -44,13 +44,11 @@ If you run into a bug or have a suggestion for improvement, please
 The easiest way to create an HTTP Service is within a Watt application:
 
 ```bash
-# Create a new Watt application
-wattpm create my-app
-
-# This will create a workspace with HTTP Application included
+# Read the skill and ask your agent to create my-app with an HTTP service
+wattpm skill references/services.md
 cd my-app
 
-# Start in development mode
+# After setup, start in development mode
 wattpm dev
 ```
 

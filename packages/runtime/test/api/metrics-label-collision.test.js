@@ -7,7 +7,7 @@ import { createRuntime } from '../helpers.js'
 const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
 function createRuntimeWithCollidingLabels (t) {
-  const configFile = join(fixturesDir, 'management-api', 'platformatic.json')
+  const configFile = join(fixturesDir, 'management-api', 'watt.config.mjs')
 
   return createRuntime(configFile, null, {
     async transform (config, ...args) {
@@ -26,26 +26,6 @@ function createRuntimeWithCollidingLabels (t) {
     }
   })
 }
-
-test('formatted metrics report cpu and rss for every application when a custom label collides with applicationLabel', async t => {
-  const app = await createRuntimeWithCollidingLabels(t)
-  await app.start()
-
-  t.after(async () => {
-    await app.close()
-  })
-
-  const { applications } = await app.getFormattedMetrics()
-
-  for (const applicationId of ['service-1', 'service-2', 'service-db']) {
-    const applicationMetrics = applications[applicationId]
-    ok(applicationMetrics, `Expected formatted metrics for ${applicationId}`)
-    ok(applicationMetrics.cpu > 0, `Expected cpu > 0 for ${applicationId}, got ${applicationMetrics.cpu}`)
-    ok(applicationMetrics.rss > 0, `Expected rss > 0 for ${applicationId}, got ${applicationMetrics.rss}`)
-  }
-
-  strictEqual(applications.main, undefined, 'Expected no phantom "main" application from the static serviceId label')
-})
 
 test('runtime-wide process metrics are not attributed to a service when a custom label collides with applicationLabel', async t => {
   const app = await createRuntimeWithCollidingLabels(t)

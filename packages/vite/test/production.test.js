@@ -15,7 +15,6 @@ import {
 } from '../../basic/test/helper.js'
 import { copyServerEntrypoint } from './helper.js'
 
-process.setMaxListeners(100)
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
 const files = ['services/frontend/dist/index.html', 'services/frontend/dist/assets/index-*.js']

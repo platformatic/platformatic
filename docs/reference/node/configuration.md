@@ -1,17 +1,18 @@
 import Issues from '../../getting-started/issues.md';
 import RuntimeInCapabilities from '../\_runtime-in-capabilities.md';
+import ServerConfiguration from '../_server-in-capabilities.md';
 
 # Configuration
 
-Platformatic Node is configured with a configuration file. It supports the use
-of environment variables as setting values with [configuration placeholders](#configuration-placeholders).
+Platformatic Node is configured with a configuration file. The file is a module that exports its configuration, so it reads
+[environment variables](../service/configuration.md#environment-variables) directly.
 
 ## `application`
 
 Supported object properties:
 
 - **`basePath`**: Service proxy base path when exposing this application in a [gateway](../gateway/configuration.md) when setting the `proxy` property. If not specified, the application will be exposed on the application or a value specified in the application code via `platformatic.setBasePath()`.
-- **`outputDirectory`**: The subdirectory where production build is stored at when using `wattpm build` or `plt build`. The default is `dist`.
+- **`outputDirectory`**: The subdirectory where production build is stored at when using `wattpm build`. The default is `dist`.
 - **`include`**: The paths to include when deploying the application. The default is `['dist']`.
 - **`commands`**: An object specifying the commands to manage the application instead of directly executing the application entrypoint. Supported commands are:
   - **`install`**: The command to execute to install the application dependencies. The default is `npm ci --omit-dev`.
@@ -47,7 +48,7 @@ Configures the `logger`, see the [runtime](../runtime/configuration.md#logger) d
 
 ## `server`
 
-Configures the HTTP server, see the [runtime](../runtime/configuration.md#server) documentation.
+<ServerConfiguration />
 
 ## `watch`
 

@@ -1,6 +1,6 @@
 import httpProxy from '@fastify/http-proxy'
 import { ensureLoggableError, loadModule } from '@platformatic/foundation'
-import { getITC, getPrometheus } from '@platformatic/globals'
+import { getITC, getPrometheus, getUndiciThreadInterceptor } from '@platformatic/globals'
 import fp from 'fastify-plugin'
 import { createRequire } from 'node:module'
 import { resolve } from 'node:path'
@@ -8,11 +8,10 @@ import { workerData } from 'node:worker_threads'
 import { getGlobalDispatcher } from 'undici'
 import { registerCompression, resolveCompression, sendCompressed } from './compression.js'
 import { createDeduplicationHandler } from './deduplication/index.js'
-import { InvalidCustomHandlerError, WsNoTcpUpstreamError } from './errors.js'
+import { InvalidCustomHandlerError } from './errors.js'
 import { headersOverrideHandler, kHeadersOverride, prepareHeadersOverride } from './headers-override.js'
 import { kGatewayProxyResponseHandler } from './symbols.js'
 import { initMetrics } from './metrics.js'
-import { WsUpstreams } from './ws-upstreams.js'
 
 const kProxyRoute = Symbol('plt.gateway.proxy.route')
 const kProxiedUpstream = Symbol('plt.gateway.proxy.upstream')
@@ -34,11 +33,6 @@ function isMeshUpstream (upstream) {
     return false
   }
 }
-
-function isWebSocketUpgrade (request) {
-  return typeof request.headers.upgrade === 'string' && request.headers.upgrade.toLowerCase() === 'websocket'
-}
-
 async function resolveApplicationProxyParameters (application, root) {
   // Get meta information from the application, if any, to eventually hook up to a TCP port
   // Only fetch meta for local applications - remote applications won't be in the runtime
@@ -99,6 +93,7 @@ async function resolveApplicationProxyParameters (application, root) {
     methods: application.proxy?.methods,
     routes: application.proxy?.routes,
     url: meta.url,
+    childProcess: meta.childProcess === true,
     prefix,
     rewritePrefix,
     internalRewriteLocationHeader,
@@ -169,7 +164,6 @@ async function proxyPlugin (app, opts) {
   const meta = { proxies: {} }
   const hostnameLessProxies = []
   const root = opts.capability?.root ?? import.meta.dirname
-  let wsUpstreams = null
 
   const compression = resolveCompression(opts.compression, opts.context?.isProduction ? 'production' : 'development')
   if (compression) {
@@ -183,7 +177,7 @@ async function proxyPlugin (app, opts) {
     if (!application.proxy) {
       // When a application defines no expose config at all
       // we assume a proxy exposed with a prefix equals to its id or meta.prefix
-      if (application.proxy === false || application.openapi || application.graphql) {
+      if (application.proxy === false || application.openapi) {
         continue
       }
     }
@@ -193,6 +187,7 @@ async function proxyPlugin (app, opts) {
       prefix,
       origin,
       url,
+      childProcess,
       routes,
       methods,
       rewritePrefix,
@@ -281,70 +276,12 @@ async function proxyPlugin (app, opts) {
       metrics = initMetrics(prometheus)
     }
 
-    const customGetUpstream = getCustomHandler(application, 'getUpstream')
+    let getUpstream = getCustomHandler(application, 'getUpstream')
     const customRewriteHeaders = getCustomHandler(application, 'rewriteHeaders')
     const customOnError = getCustomHandler(application, 'onError')
     const getHeadersOverride = getCustomHandler(application, 'getHeadersOverride')
     const customPreRewrite = getCustomHandler(application, 'preRewrite')
     const customPreValidation = getCustomHandler(application, 'preValidation')
-
-    // A WebSocket upgrade to this application can never succeed: the resolved WS upstream
-    // (see wsUpstream below) would be the virtual mesh origin, which the raw WebSocket
-    // client used by @fastify/http-proxy cannot resolve, so the upgrade would hang.
-    // The absence checks deliberately mirror the nullish semantics of the wsUpstream expression.
-    const wsMeshOnly = isLocalApplication(application) && url == null && ws?.upstream == null && customGetUpstream == null
-
-    let wsGuardPreHandler
-    if (wsMeshOnly) {
-      if (ws) {
-        // The user explicitly configured proxy.ws for an application which cannot accept
-        // WebSocket connections: warn at boot instead of letting the first upgrade fail.
-        app.log.warn(
-          `The "${application.id}" application has WebSocket options configured in "proxy.ws" but it does not expose a TCP server. WebSocket upgrades to this application will fail. Set "websocket": true on the application, make it listen on a TCP port (e.g. "useHttp": true), set "proxy.ws.upstream", or provide a custom "proxy.custom.getUpstream".`
-        )
-      }
-
-      // @fastify/http-proxy dispatches WebSocket upgrades through the regular Fastify
-      // router, so a route-level preHandler rejects the upgrade before any dial attempt.
-      wsGuardPreHandler = function wsMeshOnlyGuard (request, reply, done) {
-        if (isWebSocketUpgrade(request)) {
-          done(new WsNoTcpUpstreamError(application.id))
-          return
-        }
-
-        done()
-      }
-    }
-
-    // For local applications exposing a TCP server ("useHttp" or "websocket" flags), resolve
-    // the WebSocket upstream per connection instead of freezing the registration-time URL:
-    // workers bind a new ephemeral port on every (re)start, so a static wsUpstream would
-    // leave the gateway dialing a dead port after a crash or a restart. HTTP requests keep
-    // being dispatched to the same upstream as before.
-    let getUpstream = customGetUpstream
-    let proxyRewritePrefix = rewritePrefix
-    const wsTcpHandoff = isLocalApplication(application) && url != null && ws?.upstream == null && customGetUpstream == null
-    if (wsTcpHandoff) {
-      wsUpstreams ??= new WsUpstreams(app.log)
-      wsUpstreams.track(application.id, url)
-
-      const httpUpstream = application.proxy?.upstream ?? origin
-
-      // Leaving the upstream undefined (see below) also disables the rewrite prefix
-      // derivation @fastify/http-proxy performs on the upstream URL pathname:
-      // replicate it so that HTTP requests keep being rewritten as before.
-      if (!proxyRewritePrefix) {
-        proxyRewritePrefix = new URL(httpUpstream).pathname
-      }
-
-      getUpstream = function tcpHandoffGetUpstream (request) {
-        if (isWebSocketUpgrade(request)) {
-          return wsUpstreams.get(application.id)
-        }
-
-        return httpUpstream
-      }
-    }
 
     // Record the destination getUpstream settles on. The span for the proxied
     // call is built in rewriteRequestHeaders, which @fastify/reply-from runs
@@ -377,6 +314,18 @@ async function proxyPlugin (app, opts) {
       })
     }
 
+    const threadInterceptor = getUndiciThreadInterceptor({ throwOnMissing: false })
+    const upgradeAgent = threadInterceptor?.createUpgradeAgent?.()
+    if (upgradeAgent) {
+      app.addHook('onClose', async () => {
+        // Failed or unfinished upgrades can leave TCP sockets owned by the agent
+        // after the WebSocket proxy closes, preventing the worker from exiting.
+        upgradeAgent.destroy()
+      })
+    }
+    // Child-process applications expose a real TCP listener; the mesh interceptor only handles HTTP dispatch.
+    const wsOrigin = childProcess ? (url ?? origin) : origin
+
     // Wrappers receive the complete proxy path, including deduplication and native output policy.
     if (wrappingHandler) {
       const next = proxyHandler ?? defaultProxyHandler
@@ -385,9 +334,6 @@ async function proxyPlugin (app, opts) {
     }
 
     const preHandler = []
-    if (wsGuardPreHandler) {
-      preHandler.push(wsGuardPreHandler)
-    }
 
     if (getHeadersOverride) {
       if (!app.hasRequestDecorator(kHeadersOverride)) {
@@ -405,11 +351,14 @@ async function proxyPlugin (app, opts) {
 
     const proxyOptions = {
       prefix,
-      rewritePrefix: proxyRewritePrefix,
+      rewritePrefix,
       upstream,
       handler: proxyHandler,
       preRewrite: customPreRewrite ?? preRewrite,
       preValidation: customPreValidation,
+      wsClientOptions: upgradeAgent
+        ? { agent: upgradeAgent }
+        : undefined,
       // false stops @fastify/http-proxy from registering its catch-all content
       // type parsers, which hand a custom getUpstream an unparsed stream.
       // Without this, supplying a preValidation hook that does nothing is the
@@ -420,7 +369,7 @@ async function proxyPlugin (app, opts) {
       websocket: true,
       // When getUpstream is provided and no explicit WebSocket upstream is configured,
       // leave wsUpstream undefined so that getUpstream is used to select the upstream per-connection
-      wsUpstream: ws?.upstream ?? (getUpstream ? undefined : (url ?? origin)),
+      wsUpstream: ws?.upstream ?? (getUpstream ? undefined : wsOrigin),
       wsReconnect: ws?.reconnect,
       wsHooks: {
         onConnect: (...args) => {
@@ -574,13 +523,6 @@ async function proxyPlugin (app, opts) {
     }
 
     await app.register(httpProxy, options)
-  }
-
-  if (wsUpstreams) {
-    const upstreams = wsUpstreams
-    app.addHook('onClose', () => {
-      upstreams.close()
-    })
   }
 
   opts.capability?.registerMeta(meta)

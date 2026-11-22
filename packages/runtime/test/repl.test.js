@@ -6,7 +6,7 @@ import { createRuntime } from './helpers.js'
 const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
 
 test('should start a REPL session for an application', async t => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo.json')
+  const configFile = join(fixturesDir, 'configs', 'monorepo', 'watt.config.mjs')
   const app = await createRuntime(configFile)
 
   await app.start()
@@ -49,7 +49,7 @@ test('should start a REPL session for an application', async t => {
 })
 
 test('should have access to app and platformatic in REPL context', async t => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo.json')
+  const configFile = join(fixturesDir, 'configs', 'monorepo', 'watt.config.mjs')
   const app = await createRuntime(configFile)
 
   await app.start()
@@ -88,7 +88,7 @@ test('should have access to app and platformatic in REPL context', async t => {
 })
 
 test('should throw error when starting REPL on non-existent service', async t => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo.json')
+  const configFile = join(fixturesDir, 'configs', 'monorepo', 'watt.config.mjs')
   const app = await createRuntime(configFile)
 
   await app.start()
@@ -108,7 +108,7 @@ test('should throw error when starting REPL on non-existent service', async t =>
 })
 
 test('REPL should handle .exit command', async t => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo.json')
+  const configFile = join(fixturesDir, 'configs', 'monorepo', 'watt.config.mjs')
   const app = await createRuntime(configFile)
 
   await app.start()
@@ -138,9 +138,9 @@ test('REPL should handle .exit command', async t => {
   ok(exitReceived, 'REPL should send exit message when .exit is entered')
 })
 
-// Tests for subprocess mode (useHttp: true)
-test('should start a REPL session for a subprocess application (useHttp: true)', async t => {
-  const configFile = join(fixturesDir, 'express', 'platformatic.runtime.json')
+// Tests for subprocess mode
+test('should start a REPL session for a subprocess application', async t => {
+  const configFile = join(fixturesDir, 'express', 'watt.config.mjs')
   const app = await createRuntime(configFile)
 
   await app.start()
@@ -149,7 +149,6 @@ test('should start a REPL session for a subprocess application (useHttp: true)',
     await app.close()
   })
 
-  // Service 'a' is configured with useHttp: true in express fixture
   const port = await app.startApplicationRepl('a')
 
   ok(port, 'startApplicationRepl should return a MessagePort for subprocess')
@@ -183,7 +182,7 @@ test('should start a REPL session for a subprocess application (useHttp: true)',
 })
 
 test('subprocess REPL should have access to platformatic globals', async t => {
-  const configFile = join(fixturesDir, 'express', 'platformatic.runtime.json')
+  const configFile = join(fixturesDir, 'express', 'watt.config.mjs')
   const app = await createRuntime(configFile)
 
   await app.start()
@@ -222,7 +221,7 @@ test('subprocess REPL should have access to platformatic globals', async t => {
 })
 
 test('subprocess REPL should handle .exit command', async t => {
-  const configFile = join(fixturesDir, 'express', 'platformatic.runtime.json')
+  const configFile = join(fixturesDir, 'express', 'watt.config.mjs')
   const app = await createRuntime(configFile)
 
   await app.start()
