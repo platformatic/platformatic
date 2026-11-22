@@ -280,8 +280,8 @@ importers:
         specifier: workspace:*
         version: link:../telemetry
       execa:
-        specifier: ^9.3.1
-        version: 9.6.1
+        specifier: ^10.0.0
+        version: 10.2.1
       fast-json-patch:
         specifier: ^3.1.1
         version: 3.1.1
@@ -428,8 +428,8 @@ importers:
         specifier: '10'
         version: 10.15.0(jiti@2.7.0)(supports-color@10.2.2)
       execa:
-        specifier: ^9.0.0
-        version: 9.6.1
+        specifier: ^10.0.0
+        version: 10.2.1
       neostandard:
         specifier: ^0.14.0
         version: 0.14.1(eslint@10.15.0(jiti@2.7.0)(supports-color@10.2.2))(supports-color@10.2.2)(typescript@6.0.3)
@@ -477,8 +477,8 @@ importers:
         specifier: ^1.6.0
         version: 1.6.0
       execa:
-        specifier: ^9.0.0
-        version: 9.6.1
+        specifier: ^10.0.0
+        version: 10.2.1
       inquirer:
         specifier: ^13.0.0
         version: 13.4.3(@types/node@22.20.5)
@@ -622,8 +622,8 @@ importers:
         specifier: ^8.0.0
         version: 8.0.2
       execa:
-        specifier: ^9.0.0
-        version: 9.6.1
+        specifier: ^10.0.0
+        version: 10.2.1
       fastify:
         specifier: ^5.0.0
         version: 5.12.8
@@ -965,8 +965,8 @@ importers:
         specifier: ^2.12.0
         version: 2.16.1
       execa:
-        specifier: ^9.0.0
-        version: 9.6.1
+        specifier: ^10.0.0
+        version: 10.2.1
       fast-deep-equal:
         specifier: ^3.1.3
         version: 3.1.3
@@ -1095,8 +1095,8 @@ importers:
         specifier: ^2.1.0
         version: 2.2.0
       execa:
-        specifier: ^9.6.0
-        version: 9.6.1
+        specifier: ^10.0.0
+        version: 10.2.1
       fastify:
         specifier: ^5.0.0
         version: 5.12.8
@@ -1353,8 +1353,8 @@ importers:
         specifier: '10'
         version: 10.15.0(jiti@2.7.0)(supports-color@10.2.2)
       execa:
-        specifier: ^9.5.1
-        version: 9.6.1
+        specifier: ^10.0.0
+        version: 10.2.1
       fastify:
         specifier: ^5.7.3
         version: 5.12.8
@@ -1887,8 +1887,8 @@ importers:
         specifier: '10'
         version: 10.15.0(jiti@2.7.0)(supports-color@10.2.2)
       execa:
-        specifier: ^9.0.0
-        version: 9.6.1
+        specifier: ^10.0.0
+        version: 10.2.1
       express:
         specifier: ^4.18.3
         version: 4.22.3(supports-color@10.2.2)
@@ -2013,8 +2013,8 @@ importers:
         specifier: ^8.0.0
         version: 8.0.2
       execa:
-        specifier: ^9.0.0
-        version: 9.6.1
+        specifier: ^10.0.0
+        version: 10.2.1
       fast-json-patch:
         specifier: ^3.1.1
         version: 3.1.1
@@ -2665,8 +2665,8 @@ importers:
         specifier: '10'
         version: 10.15.0(jiti@2.7.0)(supports-color@10.2.2)
       execa:
-        specifier: ^9.4.0
-        version: 9.6.1
+        specifier: ^10.0.0
+        version: 10.2.1
       fastify:
         specifier: ^5.0.0
         version: 5.12.8
@@ -2747,8 +2747,8 @@ importers:
         specifier: workspace:*
         version: link:../create-wattpm
       execa:
-        specifier: ^9.4.0
-        version: 9.6.1
+        specifier: ^10.0.0
+        version: 10.2.1
       fast-json-patch:
         specifier: ^3.1.1
         version: 3.1.1
@@ -7689,6 +7689,10 @@ packages:
     resolution: {integrity: sha512-mQw+2fkQbALzQ7V0MY0IqdnXNOeTtP4r0lN9z7AAawCXgqea7bDii20AYrIBrFd/Hx0M2Ocz6S111CaFkUcb0Q==}
     engines: {node: '>=0.8.x'}
 
+  execa@10.2.1:
+    resolution: {integrity: sha512-/Bofl3ZBh2Q4/PG0W63qFzP5vDAypi8Zc90UWTBzaDNIYiX7apPOd0N6L8hG8CojUdq4V51adu8BObP+iVsSTw==}
+    engines: {node: '>=22'}
+
   execa@5.1.1:
     resolution: {integrity: sha512-8uSpZZocAZRBAPIEINJj3Lo9HyGitllczc27Eh5YYojjMFMn8yHMDMaUHE2Jqfq05D/wucwI4JGURyXt1vchyg==}
     engines: {node: '>=10'}
@@ -7696,10 +7700,6 @@ packages:
   execa@8.0.1:
     resolution: {integrity: sha512-VyhnebXciFV2DESc+p6B+y0LjSm0krU4OgJN44qFAhBY0TJ+1V61tYD2+wHusZ6F9n5K+vl8k0sTy7PEfV4qpg==}
     engines: {node: '>=16.17'}
-
-  execa@9.6.1:
-    resolution: {integrity: sha512-9Be3ZoN4LmYR90tUoVu2te2BsbzHfhJyfEiAVfz7N5/zv+jduIfLrV2xdQXOHbaD6KgpGdO9PRPM1Y4Q9QkPkA==}
-    engines: {node: ^18.19.0 || >=20.5.0}
 
   exit-hook@2.2.1:
     resolution: {integrity: sha512-eNTPlAD67BmP31LDINZ3U7HSF8l57TxOY2PmBJ1shpCvpnxBF93mWCE8YHBnXs8qiUZJc9WDcWIeC3a2HIAMfw==}
@@ -12202,6 +12202,11 @@ packages:
 
   whatwg-url@5.0.0:
     resolution: {integrity: sha512-saE57nupxk6v3HY35+jzBwYa0rKSy0XR8JSxZPwgLr7ys0IBzhGviA1/TUGJLmSVqs8pb9AnvICXEuOHLprYTw==}
+
+  which-command@0.1.0:
+    resolution: {integrity: sha512-XZyoF5/5hZtXitIwzrU4NKK+Wtbb9aB9CezUEw2Q0wlYK8NUYQxC1rRXgNueYLtBAJwXIb+/tFVk4dozciNJMA==}
+    engines: {node: '>=22'}
+    hasBin: true
 
   which-typed-array@1.1.24:
     resolution: {integrity: sha512-wk4Mf4pR5mRP7eYuuTBCIQ9d0ud2Fv2jRLQpfgnRjbOxAFHmjKFValgTpitVKzJJS8ajnYQV2Du1SZ8j6b/EUQ==}
@@ -17994,6 +17999,21 @@ snapshots:
 
   events@3.3.0: {}
 
+  execa@10.2.1:
+    dependencies:
+      '@sindresorhus/merge-streams': 4.0.0
+      figures: 6.1.0
+      get-stream: 9.0.1
+      human-signals: 8.0.1
+      is-plain-obj: 4.1.0
+      is-stream: 4.0.1
+      npm-run-path: 6.0.0
+      pretty-ms: 9.3.1
+      signal-exit: 4.1.0
+      strip-final-newline: 4.0.0
+      which-command: 0.1.0
+      yoctocolors: 2.2.0
+
   execa@5.1.1:
     dependencies:
       cross-spawn: 7.0.6
@@ -18017,21 +18037,6 @@ snapshots:
       onetime: 6.0.0
       signal-exit: 4.1.0
       strip-final-newline: 3.0.0
-
-  execa@9.6.1:
-    dependencies:
-      '@sindresorhus/merge-streams': 4.0.0
-      cross-spawn: 7.0.6
-      figures: 6.1.0
-      get-stream: 9.0.1
-      human-signals: 8.0.1
-      is-plain-obj: 4.1.0
-      is-stream: 4.0.1
-      npm-run-path: 6.0.0
-      pretty-ms: 9.3.1
-      signal-exit: 4.1.0
-      strip-final-newline: 4.0.0
-      yoctocolors: 2.2.0
 
   exit-hook@2.2.1: {}
 
@@ -23520,6 +23525,8 @@ snapshots:
     dependencies:
       tr46: 0.0.3
       webidl-conversions: 3.0.1
+
+  which-command@0.1.0: {}
 
   which-typed-array@1.1.24:
     dependencies:
