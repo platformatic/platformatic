@@ -10,7 +10,7 @@ export const InvalidCustomHandlerError = createError(
 
 export const InvalidHeadersOverrideError = createError(
   `${ERROR_PREFIX}_INVALID_HEADERS_OVERRIDE`,
-  'getHeadersOverride must return request and response header objects with string or string-array values.',
+  'getHeadersOverride must return request and response header objects with string, string-array or null values.',
   500
 )
 

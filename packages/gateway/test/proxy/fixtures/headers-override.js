@@ -1,9 +1,15 @@
 export default function (options) {
   function getHeadersOverride (request) {
-    if (options.invalid) {
-      return { response: { 'x-invalid': 42 } }
+    if (options.invalid !== undefined) {
+      return { response: { 'x-invalid': options.invalid } }
     }
     const client = request.headers['x-client']
+    if (options.remove) {
+      return {
+        request: { Cookie: null, 'X-Forwarded-Host': 'hook.example.com' },
+        response: client === 'strip' ? { 'Set-Cookie': null, 'X-Client': null } : {}
+      }
+    }
     return {
       request: {
         'X-Override': request.headers['x-validated'],

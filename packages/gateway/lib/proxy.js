@@ -150,14 +150,9 @@ function headerChanges (changes) {
 }
 
 // Sets each header of `changes` (of headerChanges) on `headers`, or removes it when its
-// value is null, but leaves the headers of `overrides`, which a hook set for this request.
-// Returns `headers`, changed in place.
-function applyHeaders (headers, changes, overrides) {
+// value is null. Returns `headers`, changed in place.
+function applyHeaders (headers, changes) {
   for (const [name, value] of changes) {
-    if (overrides?.[name] !== undefined) {
-      continue
-    }
-
     if (value === null) {
       delete headers[name]
     } else {
@@ -522,7 +517,7 @@ async function proxyPlugin (app, opts) {
           }
 
           if (requestHeaders) {
-            applyHeaders(headers, requestHeaders, request[kHeadersOverride]?.request)
+            applyHeaders(headers, requestHeaders)
           }
 
           request.log.trace({ headers }, 'rewritten headers before proxying')

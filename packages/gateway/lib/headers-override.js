@@ -14,6 +14,11 @@ function normalizeHeaders (headers) {
   const normalized = Object.create(null)
   for (const [name, value] of Object.entries(headers)) {
     validateHeaderName(name)
+    // null removes the header.
+    if (value === null) {
+      normalized[name.toLowerCase()] = null
+      continue
+    }
     const values = Array.isArray(value) ? value : [value]
     if (!values.length || values.some(value => typeof value !== 'string')) {
       throw new InvalidHeadersOverrideError()
@@ -49,8 +54,22 @@ export function applyResponseHeadersOverride (request, reply) {
   for (const [name, value] of Object.entries(request[kHeadersOverride]?.response ?? {})) {
     // Fastify appends Set-Cookie by default; an override replaces the complete header value.
     reply.removeHeader(name)
-    reply.header(name, value)
+    if (value !== null) {
+      reply.header(name, value)
+    }
   }
+}
+
+// Sets the overrides on `headers`, or removes those that are null. Returns `headers`, changed in place.
+function applyRequestHeadersOverride (headers, overrides) {
+  for (const [name, value] of Object.entries(overrides)) {
+    if (value === null) {
+      delete headers[name]
+    } else {
+      headers[name] = value
+    }
+  }
+  return headers
 }
 
 export async function prepareHeadersOverride (getHeadersOverride, request, reply) {
@@ -69,7 +88,17 @@ export async function prepareHeadersOverride (getHeadersOverride, request, reply
   }
 
   // Resolve both maps before mutating the request. Wrappers and deduplication see the overrides.
-  request.headers = requestHeaders
+  // Fastify's setter merges the headers it is given over the raw ones, so a removed header
+  // is deleted from the raw ones, which reply-from also starts from.
+  const setHeaders = Object.create(null)
+  for (const [name, value] of Object.entries(requestHeaders)) {
+    if (value === null) {
+      delete request.raw.headers[name]
+    } else {
+      setHeaders[name] = value
+    }
+  }
+  request.headers = setHeaders
   request[kHeadersOverride] = { request: requestHeaders, response: responseHeaders }
 
   // Make response overrides available to handlers that send output before the upstream responds.
@@ -82,11 +111,10 @@ export function headersOverrideHandler (next, request, reply, destination, optio
     ...options,
     rewriteRequestHeaders (request, headers) {
       // reply-from starts from raw headers, whereas Fastify's setter keeps overrides separately.
-      const overridden = { ...headers, ...request[kHeadersOverride].request }
-      if (options.rewriteRequestHeaders) {
-        return options.rewriteRequestHeaders(request, overridden)
-      }
-      return overridden
+      // The overrides go last, so they also replace or remove the gateway's own headers
+      // (x-forwarded-*) and those of proxy.headers.
+      const rewritten = options.rewriteRequestHeaders ? options.rewriteRequestHeaders(request, headers) : headers
+      return applyRequestHeadersOverride(rewritten, request[kHeadersOverride].request)
     },
     rewriteHeaders (headers, request) {
       const rewritten = options.rewriteHeaders ? options.rewriteHeaders(headers, request) : headers
