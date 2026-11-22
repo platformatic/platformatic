@@ -73,7 +73,7 @@
     "execa": "^10.0.0",
     "fastify": "^5.0.0",
     "fastify-plugin": "^6.0.0",
-    "fastify-print-routes": "^5.0.0",
+    "fastify-print-routes": "^6.0.0",
     "graphql": "^16.8.1",
     "help-me": "^5.0.0",
     "minimist": "^1.2.8",
