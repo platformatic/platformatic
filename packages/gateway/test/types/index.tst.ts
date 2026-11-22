@@ -1,12 +1,13 @@
 import type { Configuration } from '@platformatic/foundation'
 import type { BaseCapability } from '@platformatic/basic'
-import type { FastifyError, FastifyInstance } from 'fastify'
+import type { FastifyError, FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import type { JSONSchemaType } from 'ajv'
 import { expect, test } from 'tstyche'
 import {
   type GatewayCommand,
   type GatewayCommandDefinition,
   type GatewayCapability,
+  type GetHeadersOverride,
   type PlatformaticGatewayConfig,
   type ServerInstance,
   create,
@@ -19,6 +20,35 @@ import {
   schemaComponents,
   skipTracingHooks
 } from '../../index.js'
+import { kGatewayProxyResponseHandler, type ProxyResponse, type ProxyResponseHandler, type WrappingHandler } from '../../index.js'
+
+test('Gateway wrapper and response handler types', () => {
+  const reply = {} as FastifyReply
+  const wrapper: WrappingHandler = ({ next, send }, request, reply, dest, options) => {
+    reply[kGatewayProxyResponseHandler] = {
+      onResponse (response) {
+        expect(response).type.toBe<ProxyResponse>()
+        send(request, reply, response.stream)
+      }
+    }
+    return next(request, reply, dest, options)
+  }
+  expect(wrapper).type.toBe<WrappingHandler>()
+  expect(reply[kGatewayProxyResponseHandler]).type.toBe<ProxyResponseHandler | undefined>()
+})
+
+test('Gateway header override callbacks support synchronous and asynchronous results', () => {
+  const sync: GetHeadersOverride = request => {
+    expect(request).type.toBe<FastifyRequest>()
+    return { request: { cookie: 'session=fresh' }, response: { 'set-cookie': ['session=fresh; HttpOnly'] } }
+  }
+  const async: GetHeadersOverride = async () => ({ response: { 'x-variant': 'shared' } })
+  const remove: GetHeadersOverride = () => ({ request: { cookie: null }, response: { 'x-powered-by': null } })
+  expect(sync).type.toBe<GetHeadersOverride>()
+  expect(async).type.toBe<GetHeadersOverride>()
+  expect(remove).type.toBe<GetHeadersOverride>()
+  expect(errors.InvalidHeadersOverrideError()).type.toBe<FastifyError>()
+})
 
 test('Gateway types', () => {
   const config = {} as PlatformaticGatewayConfig

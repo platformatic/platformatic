@@ -5,12 +5,65 @@ import {
   ServerInstance as ServiceServerInstance
 } from '@platformatic/service'
 import { JSONSchemaType } from 'ajv'
-import { FastifyError, FastifyInstance } from 'fastify'
+import { FastifyError, FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
+import type { FastifyReplyFromHooks } from '@fastify/reply-from'
+import type { OutgoingHttpHeaders } from 'node:http'
+import type { Readable } from 'node:stream'
 import type { PlatformaticGatewayConfig } from './config.d.ts'
 
 export interface GatewayCommand {
   usage: string
   description: string
+}
+
+export declare const kGatewayProxyResponseHandler: unique symbol
+
+export interface ProxyResponse {
+  statusCode: number
+  headers: OutgoingHttpHeaders
+  stream: Readable
+}
+
+/** A null value removes the header. */
+export type HeaderOverrides = Record<string, string | string[] | null>
+
+export interface HeadersOverride {
+  request?: HeaderOverrides
+  response?: HeaderOverrides
+}
+
+export type GetHeadersOverride = (request: FastifyRequest) => HeadersOverride | Promise<HeadersOverride>
+
+export interface ProxyResponseHandler {
+  /** Own the per-client stream. The gateway does not send it or await this callback. */
+  onResponse (response: ProxyResponse): void
+}
+
+export type ProxyHandler = (
+  request: FastifyRequest,
+  reply: FastifyReply,
+  destination: string,
+  options: FastifyReplyFromHooks
+) => unknown
+
+export type SendProxyResponse = (request: FastifyRequest, reply: FastifyReply, stream: Readable) => unknown
+export interface WrappingHandlerContext {
+  next: ProxyHandler
+  send: SendProxyResponse
+}
+
+export type WrappingHandler = (
+  context: WrappingHandlerContext,
+  request: FastifyRequest,
+  reply: FastifyReply,
+  destination: string,
+  options: FastifyReplyFromHooks
+) => unknown
+
+declare module 'fastify' {
+  interface FastifyReply {
+    [kGatewayProxyResponseHandler]?: ProxyResponseHandler
+  }
 }
 
 export interface GatewayCommandDefinition {
@@ -58,6 +111,8 @@ export declare const skipTracingHooks: boolean
 export declare const version: string
 
 export namespace errors {
+  export const InvalidCustomHandlerError: (name: string) => FastifyError
+  export const InvalidHeadersOverrideError: () => FastifyError
   export const FastifyInstanceIsAlreadyListeningError: () => FastifyError
   export const FailedToFetchOpenAPISchemaError: () => FastifyError
   export const ValidationErrors: () => FastifyError

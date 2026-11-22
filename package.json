@@ -26,7 +26,7 @@
     "generate-errors-doc": "node ./scripts/generate-errors-doc.js",
     "global-links": "cd packages/wattpm && pnpm add -g ."
   },
-  "packageManager": "pnpm@12.15.0",
+  "packageManager": "pnpm@12.21.0",
   "devDependencies": {
     "@fastify/pre-commit": "^2.1.0",
     "cookie": "^2.0.1",

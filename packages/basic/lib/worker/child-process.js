@@ -772,8 +772,9 @@ export class ChildProcess extends ITC {
     setGlobalDispatcher(globalDispatcher)
     const legacyDispatcher = globalThis[Symbol.for('undici.globalDispatcher.1')]
     const currentDispatcher = globalThis[Symbol.for('undici.globalDispatcher.2')]
-    const legacyWrapper = legacyDispatcher && legacyDispatcher !== currentDispatcher && legacyDispatcher.constructor?.name === 'Dispatcher1Wrapper'
-      ? new legacyDispatcher.constructor(globalDispatcher)
+    const LegacyWrapper = legacyDispatcher?.constructor
+    const legacyWrapper = legacyDispatcher && legacyDispatcher !== currentDispatcher && LegacyWrapper?.name === 'Dispatcher1Wrapper'
+      ? new LegacyWrapper(globalDispatcher)
       : globalDispatcher
     mirrorGlobalDispatcherForBuiltinFetch(globalDispatcher, legacyWrapper)
   }

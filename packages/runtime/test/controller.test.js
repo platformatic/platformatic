@@ -98,6 +98,24 @@ test('logs errors during startup', async t => {
   strictEqual(data.includes('Error: boom'), true)
 })
 
+test('fails to start an application that does not listen when it cannot get ready', async t => {
+  const appPath = join(fixturesDir, 'serviceAppThrowsOnReady')
+  const resolvedConfig = await resolvedConfigurationIn(appPath)
+  const config = {
+    id: 'serviceAppThrowsOnReady',
+    resolvedConfig,
+    module: resolvedConfig.module,
+    path: appPath,
+    watch: false,
+    dependencies: []
+  }
+  const app = new Controller({}, config)
+
+  await app.init()
+  t.after(() => app.stop(true))
+  await rejects(() => app.start(), /boom on ready/)
+})
+
 test('returns application statuses', async t => {
   const appPath = join(fixturesDir, 'service-app-no-logging')
   const resolvedConfig = await resolvedConfigurationIn(appPath)

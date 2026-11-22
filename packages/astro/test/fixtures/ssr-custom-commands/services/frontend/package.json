@@ -14,12 +14,12 @@
     "@platformatic/astro": "^3.49.1",
     "@platformatic/basic": ">=3.0.0",
     "@astrojs/node": "^11.1.7",
-    "@fastify/middie": "^8.3.2",
-    "@fastify/static": "^7.0.4",
+    "@fastify/middie": "^9.3.6",
+    "@fastify/static": "^10.1.9",
     "@platformatic/globals": ">=3.0.0",
     "astro": "^7.3.6",
     "fastify": "^5.7.0",
-    "vite": "^5.4.4"
+    "vite": "^8.3.3"
   },
   "devDependencies": {
     "@types/react": "^19.1.0",

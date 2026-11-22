@@ -6,7 +6,11 @@ import { createRequire } from 'node:module'
 import { resolve } from 'node:path'
 import { workerData } from 'node:worker_threads'
 import { getGlobalDispatcher } from 'undici'
+import { registerCompression, resolveCompression, sendCompressed } from './compression.js'
 import { createDeduplicationHandler } from './deduplication/index.js'
+import { InvalidCustomHandlerError } from './errors.js'
+import { headersOverrideHandler, kHeadersOverride, prepareHeadersOverride } from './headers-override.js'
+import { kGatewayProxyResponseHandler } from './symbols.js'
 import { initMetrics } from './metrics.js'
 
 const kProxyRoute = Symbol('plt.gateway.proxy.route')
@@ -22,6 +26,13 @@ function isLocalApplication (application) {
   return application.origin.endsWith('.plt.local')
 }
 
+function isMeshUpstream (upstream) {
+  try {
+    return new URL(upstream).hostname.endsWith('.plt.local')
+  } catch {
+    return false
+  }
+}
 async function resolveApplicationProxyParameters (application, root) {
   // Get meta information from the application, if any, to eventually hook up to a TCP port
   // Only fetch meta for local applications - remote applications won't be in the runtime
@@ -89,8 +100,62 @@ async function resolveApplicationProxyParameters (application, root) {
     needsRootTrailingSlash: meta.needsRootTrailingSlash,
     needsRefererBasedRedirect: meta.needsRefererBasedRedirect,
     upstream: application.proxy?.upstream,
-    ws: application.proxy?.ws
+    headers: application.proxy?.headers,
+    responseHeaders: application.proxy?.responseHeaders,
+    ws: application.proxy?.ws,
+    compression: application.proxy?.compression
   }
+}
+
+async function loadHandler (root, path) {
+  if (!path) {
+    return
+  }
+
+  const require = createRequire(import.meta.filename)
+  const custom = await loadModule(require, resolve(root, path))
+  if (typeof custom === 'function') {
+    return custom
+  }
+  if (typeof custom?.handler === 'function') {
+    return custom.handler
+  }
+  if (typeof custom?.default === 'function') {
+    return custom.default
+  }
+}
+
+function getCustomHandler (application, name) {
+  const handler = application.proxy?.custom?.[name]
+  if (handler !== undefined && typeof handler !== 'function') {
+    throw new InvalidCustomHandlerError(name)
+  }
+  return handler
+}
+
+function defaultProxyHandler (_request, reply, destination, options) {
+  return reply.from(destination, options)
+}
+
+// Returns the header changes of the configuration as [lower-case name, value] pairs, once
+// per application, or null when there are none, so that a request pays nothing for them.
+function headerChanges (changes) {
+  const entries = Object.entries(changes ?? {})
+  return entries.length > 0 ? entries.map(([name, value]) => [name.toLowerCase(), value]) : null
+}
+
+// Sets each header of `changes` (of headerChanges) on `headers`, or removes it when its
+// value is null. Returns `headers`, changed in place.
+function applyHeaders (headers, changes) {
+  for (const [name, value] of changes) {
+    if (value === null) {
+      delete headers[name]
+    } else {
+      headers[name] = value
+    }
+  }
+
+  return headers
 }
 
 let metrics
@@ -100,17 +165,13 @@ async function proxyPlugin (app, opts) {
   const hostnameLessProxies = []
   const root = opts.capability?.root ?? import.meta.dirname
 
-  let handler
-  if (opts.handler) {
-    const require = createRequire(import.meta.filename)
-    const custom = await loadModule(require, resolve(root, opts.handler))
-
-    if (typeof custom.handler === 'function') {
-      handler = custom.handler
-    } else if (typeof custom.default === 'function') {
-      handler = custom.default
-    }
+  const compression = resolveCompression(opts.compression, opts.context?.isProduction ? 'production' : 'development')
+  if (compression) {
+    await registerCompression(app, compression)
   }
+
+  const handler = await loadHandler(root, opts.handler)
+  const wrappingHandler = await loadHandler(root, opts.wrappingHandler)
 
   for (const application of opts.applications) {
     if (!application.proxy) {
@@ -135,6 +196,12 @@ async function proxyPlugin (app, opts) {
       needsRefererBasedRedirect,
       ws
     } = parameters
+    const requestHeaders = headerChanges(parameters.headers)
+    const responseHeaders = headerChanges(parameters.responseHeaders)
+    const compressResponses = compression !== null && parameters.compression !== false
+    const send = compressResponses
+      ? (request, reply, body) => sendCompressed(request, reply, body, compression)
+      : (_request, reply, body) => reply.send(body)
     meta.proxies[application.id] = parameters
 
     const basePath = `/${prefix ?? ''}`.replaceAll(/\/+/g, '/').replace(/\/$/, '')
@@ -209,9 +276,12 @@ async function proxyPlugin (app, opts) {
       metrics = initMetrics(prometheus)
     }
 
-    let getUpstream = application.proxy?.custom?.getUpstream
-    const customRewriteHeaders = application.proxy?.custom?.rewriteHeaders
-    const customOnError = application.proxy?.custom?.onError
+    let getUpstream = getCustomHandler(application, 'getUpstream')
+    const customRewriteHeaders = getCustomHandler(application, 'rewriteHeaders')
+    const customOnError = getCustomHandler(application, 'onError')
+    const getHeadersOverride = getCustomHandler(application, 'getHeadersOverride')
+    const customPreRewrite = getCustomHandler(application, 'preRewrite')
+    const customPreValidation = getCustomHandler(application, 'preValidation')
 
     // Record the destination getUpstream settles on. The span for the proxied
     // call is built in rewriteRequestHeaders, which @fastify/reply-from runs
@@ -228,6 +298,7 @@ async function proxyPlugin (app, opts) {
 
     // When getUpstream is provided, upstream must be undefined, otherwise the getUpstream will be ignored
     const upstream = getUpstream ? undefined : (application.proxy?.upstream ?? origin)
+    const meshUpstream = upstream ? isMeshUpstream(upstream) : undefined
 
     let proxyHandler = handler
     if (opts.deduplication?.enabled === true || application.proxy?.deduplication?.enabled === true) {
@@ -238,7 +309,8 @@ async function proxyPlugin (app, opts) {
         overrideConfig: application.proxy?.deduplication,
         handler,
         metrics,
-        root
+        root,
+        send: compressResponses ? send : undefined
       })
     }
 
@@ -254,6 +326,26 @@ async function proxyPlugin (app, opts) {
     // Child-process applications expose a real TCP listener; the mesh interceptor only handles HTTP dispatch.
     const wsOrigin = childProcess ? (url ?? origin) : origin
 
+    // Wrappers receive the complete proxy path, including deduplication and native output policy.
+    if (wrappingHandler) {
+      const next = proxyHandler ?? defaultProxyHandler
+      const context = { next, send }
+      proxyHandler = wrappingHandler.bind(null, context)
+    }
+
+    const preHandler = []
+
+    if (getHeadersOverride) {
+      if (!app.hasRequestDecorator(kHeadersOverride)) {
+        app.decorateRequest(kHeadersOverride, null)
+      }
+
+      preHandler.push(prepareHeadersOverride.bind(null, getHeadersOverride))
+
+      const next = proxyHandler ?? defaultProxyHandler
+      proxyHandler = headersOverrideHandler.bind(null, next)
+    }
+
     // Websocket links already counted in the activeWsConnections gauge.
     const wsConnections = new WeakSet()
 
@@ -262,8 +354,8 @@ async function proxyPlugin (app, opts) {
       rewritePrefix,
       upstream,
       handler: proxyHandler,
-      preRewrite: application.proxy?.custom?.preRewrite ?? preRewrite,
-      preValidation: application.proxy?.custom?.preValidation,
+      preRewrite: customPreRewrite ?? preRewrite,
+      preValidation: customPreValidation,
       wsClientOptions: upgradeAgent
         ? { agent: upgradeAgent }
         : undefined,
@@ -272,6 +364,7 @@ async function proxyPlugin (app, opts) {
       // Without this, supplying a preValidation hook that does nothing is the
       // only way to get them out of the way.
       proxyPayloads: application.proxy?.proxyPayloads,
+      preHandler,
 
       websocket: true,
       // When getUpstream is provided and no explicit WebSocket upstream is configured,
@@ -328,6 +421,10 @@ async function proxyPlugin (app, opts) {
             headers.location = location
           }
 
+          if (responseHeaders) {
+            applyHeaders(headers, responseHeaders)
+          }
+
           if (customRewriteHeaders) {
             headers = customRewriteHeaders(headers, request) ?? headers
           }
@@ -361,6 +458,17 @@ async function proxyPlugin (app, opts) {
             'x-forwarded-proto': request.protocol
           }
 
+          // An application in the runtime is asked for an uncompressed response: compressing it there
+          // would be wasted when the gateway compresses it anyway, and it would prevent the gateway from
+          // choosing the encoding (for instance, Next.js only offers gzip).
+          if (compressResponses && (meshUpstream ?? isMeshUpstream(request[kProxiedUpstream]))) {
+            headers['accept-encoding'] = 'identity'
+          }
+
+          if (requestHeaders) {
+            applyHeaders(headers, requestHeaders)
+          }
+
           request.log.trace({ headers }, 'rewritten headers before proxying')
 
           return headers
@@ -370,7 +478,14 @@ async function proxyPlugin (app, opts) {
             statusCode: reply.statusCode,
             headers: res.headers
           })
-          reply.send(res.stream)
+
+          // Response handlers own sending and disposal; tracing still completes once per upstream acquisition.
+          const responseHandler = reply[kGatewayProxyResponseHandler]
+          if (responseHandler) {
+            responseHandler.onResponse(res)
+            return
+          }
+          send(reply.request, reply, res.stream)
         },
         onError: (reply, { error }) => {
           app.log.error({ error: ensureLoggableError(error) }, 'Error while proxying request to another application')
@@ -379,6 +494,9 @@ async function proxyPlugin (app, opts) {
             return customOnError(reply, { error })
           }
 
+          if (reply[kGatewayProxyResponseHandler]) {
+            return
+          }
           return reply.send(error)
         },
         getUpstream

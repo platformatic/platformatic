@@ -34,12 +34,17 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
 - **`applications`** (`array`, default: `[]`) — is an array of objects that defines
   the applications managed by the gateway. Each application object supports the following settings:
   - **`id`** (**required**, `string`) - A unique identifier for the application. Use a Platformatic Runtime application id if the application is executing inside [Platformatic Runtime context](../runtime/overview.md#platformatic-runtime-context).
+  - **`enabled`** (`boolean`, `string`, or `object`) - If `false`, the gateway leaves the application out: it is not proxied or composed, and the gateway does not depend on it. Boolean strings and environment variable placeholders are supported. It can also be an object where each key is an environment name (`production` or `development`) and each value is a boolean; if the current environment does not match any key, the application is enabled. Default: `true`. It has the same shape as the runtime's [`enabled`](../runtime/configuration.md) of an application.
+
+    Inside [Platformatic Runtime context](../runtime/overview.md#platformatic-runtime-context), the gateway also leaves out an application that the runtime's [`enabled`](../runtime/configuration.md) disables. So a gateway can name an application that only runs in development. An application that does not exist in the runtime is still reported as a missing dependency.
   - **`origin`** (`string`) - A service origin. Skip this option if the service is executing inside [Platformatic Runtime context](../runtime/overview.md#platformatic-runtime-context). In this case, application `id` will be used instead of origin.
   - **`openapi`** (`object`) - The configuration file used to compose [OpenAPI](#openapi) specification.
   - **`proxy`** (`object` or `false`) - Service proxy configuration. If `false`, the application proxy is disabled. Supports the following options:
     - **`prefix`** (`string`) - Service proxy prefix. All application routes will be prefixed with this value.
     - **`rewritePrefix`** (`string`) - Rewrite the prefix to the specified string before sending to the upstream. The default is determined by the target capability.
     - **`rewriteLocationHeader`** (`boolean`) - Controls rewriting of relative `Location` response headers from the upstream. When enabled, the gateway rewrites redirects from `rewritePrefix` to `prefix`. Set to `false` to forward relative `Location` headers unchanged. The default is `true` unless overridden by the target capability.
+    - **`headers`** (`object`) - Headers to set on each request proxied to the application, by name, after the gateway's own (`x-forwarded-*`). A `null` value removes the header instead, such as `cookie`, so a session of the gateway's own is not sent on. A header that `custom.getHeadersOverride` returns for a request is left as the hook set it. Values can name environment variables, as `{PLT_UPSTREAM_TOKEN}`.
+    - **`responseHeaders`** (`object`) - Headers to set on each response proxied from the application, by name, after the `Location` rewrite and before the hooks of `custom`. A `null` value removes the header instead.
     - **`methods`** (`array of string`, default: `['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS']`) - HTTP methods handled by this proxy application. Useful when multiple applications share the same `prefix` and need method-based routing.
 
       :::note
@@ -48,6 +53,7 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
 
     - **`routes`** (`array of string`, default: `['/', '/*']`) - Route patterns handled by this proxy application. Useful when multiple applications share the same `prefix` and need path-based routing. Route patterns follow Fastify route syntax for parameters and wildcards (for example, `/users/:id` and `/public/*`). See the [Fastify route URL syntax documentation](https://fastify.dev/docs/latest/Reference/Routes/#url-building) for details.
     - **`hostname`** (`string`) - An additional domain name this application is reachable at. It will be matched against requests' `Host` header. When a hostname is specified, the service is accessible without the prefix when the Host header matches.
+    - **`compression`** (`boolean`) - Set to `false` to leave the responses of this application alone when [`compression`](#compression) is enabled: the gateway does not compress them and forwards the `Accept-Encoding` header of the client unchanged. Use it for an application which serves its own pre-compressed files, such as a Vite application with `vite.preCompressed`.
     - **`upstream`** (`string`) - The origin URL to proxy requests to. Required for external services. Not needed for Platformatic Runtime applications where the application `id` is used; will be ignored when using `custom.getUpstream`.
     - **`ws`** (`object`) - WebSocket proxy configuration. Supports the following options:
       - **`upstream`** (`string`, **required**) - The WebSocket upstream URL (e.g., `ws://localhost:3000`).
@@ -65,7 +71,8 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
       - **`path`** (**required**, `string`) - Path to a JavaScript/TypeScript file that exports the custom proxy hooks. The module can either export the hooks object directly (as the default export) or export a factory function `(options) => hooks` (synchronous or asynchronous) which receives the `options` value below and returns the hooks object.
       - **`options`** (`object`) - An arbitrary JSON object which is passed to the factory function exported by the module referenced in `path`. It is ignored when the module exports the hooks object directly.
 
-      The hooks object supports the following properties, all optional:
+      The hooks object supports the following properties, all optional. Each configured hook must be a function;
+      otherwise startup fails with `PLT_GATEWAY_INVALID_CUSTOM_HANDLER` and the hook name:
 
       - **`preRewrite`** (`function`) - A function `(url, params, prefix) => string` that can be used to modify the request URL. See [@fastify/http-proxy](https://github.com/fastify/fastify-http-proxy?tab=readme-ov-file#prerewrite).
       - **`preValidation`** (`function`) - A function that runs before proxying. Can be either:
@@ -81,6 +88,23 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
         - When no `ws.upstream` is configured, `getUpstream` also selects the upstream for WebSocket connections. It is invoked once per connection with the upgrade request at upgrade time.
       - **`rewriteHeaders`** (`function`) - A function `(headers, request) => headers` invoked with the response headers received from the upstream (after the gateway performed its internal `Location` header rewriting) and the original request. It must return the headers object to send back to the client. Use it, for example, to add a `Set-Cookie` header which pins a client to the upstream selected by `getUpstream`. Since both hooks receive the same request object, `getUpstream` can attach data to it (e.g. `request.selectedUpstream = ...`) and `rewriteHeaders` can read it back.
       - **`onError`** (`function`) - A function `(reply, { error }) => void` invoked when proxying a request fails. The gateway first logs the error, then invokes this hook instead of its default handler (which forwards the error to the client). Use `reply` to send a custom response. See [@fastify/fastify-reply-from](https://github.com/fastify/fastify-reply-from?tab=readme-ov-file#onerrorreply-error) for further information.
+      - **`getHeadersOverride`** (`function`) - A synchronous or asynchronous function `(request) => ({ request, response })`, called once after `preValidation` and before the proxy handler. Both returned maps are optional and contain string or string-array header values, or `null` to remove the header. Request overrides are applied before `wrappingHandler`, upstream selection and deduplication, so a removed `cookie` no longer makes deduplication skip the request. They are applied to the proxied request last, after the gateway's own headers (`x-forwarded-*`) and those of `headers` above, so they can replace or remove those too. Response overrides take precedence immediately after `rewriteHeaders`. They are also available on `reply` before a wrapping handler sends early output, and are applied separately for each deduplicated client without storing them in the shared response. Header names are case-insensitive. An override replaces the whole header, including the full `Set-Cookie` array; headers not returned are preserved. Invalid results fail with `PLT_GATEWAY_INVALID_HEADERS_OVERRIDE` before acquiring upstream.
+
+        For example, the module referenced by `custom.path` can export:
+
+        ```js
+        export default {
+          async getHeadersOverride (request) {
+            const session = await resolveSession(request)
+            return {
+              request: { cookie: `session=${session.id}` },
+              response: { 'set-cookie': [`session=${session.id}; Path=/; HttpOnly; Secure`] }
+            }
+          }
+        }
+        ```
+
+        `resolveSession` is application-provided. Cookie conversion, merging existing cookies and any header prefixing belong to this function; the gateway performs no implicit mapping between request and response headers. The application is responsible for keeping its response consistent with the overrides. Normal output processing, including compression, still applies.
 
     :::note
     If the prefix is not explicitly set, the gateway and the application will try to find the best prefix for the application.
@@ -443,6 +467,73 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
 
   Custom gateway handlers that override `onResponse` or `onError` can call `options.deduplicateResponse(request, reply, res)` and `options.deduplicateError(reply, error)` to keep duplicate requests coordinated. See [Request Deduplication](./deduplication.md#custom-gateway-handlers) for examples.
 
+- **`wrappingHandler`** (`string`) - Path to a module that wraps the complete proxy pipeline for each request. It is
+  configured independently from `handler`, and can be used with or without a custom inner handler. Relative paths are
+  resolved from the application root. The module exports either a named `handler` function or a default function;
+  the default function takes precedence when both are present.
+
+  ```json
+  {
+    "gateway": {
+      "handler": "./proxy-handler.js",
+      "wrappingHandler": "./proxy-wrapper.js"
+    }
+  }
+  ```
+
+  The wrapper receives `(context, request, reply, destination, options)`. `context.next` delegates to the existing
+  proxy pipeline with the same four arguments as a regular handler. Without a custom inner handler, forwarding uses
+  `reply.from`. The wrapper can return a promise.
+
+  ```js
+  export default function ({ next, send }, request, reply, destination, options) {
+    return next(request, reply, destination, options)
+  }
+  ```
+
+  `context.send(request, reply, stream)` uses the gateway's native output path, including compression configuration and the
+  application's compression opt-out. A wrapper that starts output before delegating can therefore use the same output
+  policy without importing private gateway modules.
+
+  Wrappers that own the response body can import `kGatewayProxyResponseHandler` from `@platformatic/gateway` and set
+  `reply[kGatewayProxyResponseHandler] = { onResponse(response) { /* consume response.stream */ } }` before delegating.
+  The response handler receives `{ statusCode, headers, stream }` for each client response. Its
+  metadata describes the upstream bytes, not an already-started client response. The gateway completes its original
+  tracing callback but does not send the body again or replace an already-started reply's status or headers.
+
+  The response handler owns consuming or destroying its per-client stream, including after cancellation. Its callback is not
+  awaited. A wrapper must preserve and invoke original `options.onResponse`/`options.onError` callbacks when overriding
+  them. With a response handler installed, the standard gateway error handler logs but does not send again: the wrapper must
+  terminate its own output on error. Custom application `onError` handlers still run and must honor the same ownership.
+  Merely installing a response handler does not send a response or copy headers; the wrapper owns that decision.
+
+- **`compression`** (`boolean`, `string` or `object`) - Compresses the responses of the proxied applications with brotli or gzip. It is off by default. It can be `true`, a string such as an environment placeholder (anything but `"false"` enables it), or an object with the following options:
+
+  - **`enabled`** (`boolean`, `string` or `object`) - Whether compression is enabled, with the same values as the `enabled` of a Runtime application, including booleans by environment such as `{ "development": false }`. Default: `true`.
+  - **`encodings`** (`array of string`) - The encodings to offer, in order of preference, among `br`, `gzip` and `deflate`. Default: `["br", "gzip"]`.
+  - **`brotli.quality`** (`number`) - The brotli quality, from `0` to `11`. Default: `4`, which compresses better than gzip at a lower CPU cost. Higher values save only a few more bytes for much more CPU.
+  - **`gzip.level`** (`number`) - The gzip and deflate level, from `-1` to `9`. Default: `6`.
+  - **`threshold`** (`number`) - Responses whose `Content-Length` is smaller than this number of bytes are sent uncompressed. Default: `1024`.
+  - **`exclude`** (`array of string`) - Paths whose responses are never compressed, for instance routes already compressed by a CDN. A `*` matches any sequence of characters, so `/assets/*` excludes everything under `/assets/`. The query string is not considered.
+
+  The compression runs in the gateway workers. The gateway asks the applications of the Runtime for uncompressed responses, by sending them `Accept-Encoding: identity`, so a response is compressed once, by the gateway, with the best encoding the client accepts. There is no need to disable the compression of the applications, for instance the `compress` option of Next.js. Applications outside the Runtime receive the `Accept-Encoding` of the client.
+
+  Streamed responses stay progressive: whenever the application pauses between two parts of a response, for instance between the shell and the Suspense chunks of a Next.js page, the gateway flushes what it has compressed so far, so each part reaches the client as soon as it is produced.
+
+  A response is not compressed when the client does not accept any of the configured encodings, when it is already encoded, when its `Cache-Control` contains `no-transform`, when its type is not compressible (for instance, images), when it is a partial (`206`) response, or when it is a response to a `HEAD` request. Responses which can be compressed carry `Vary: Accept-Encoding`, even when a client gets them uncompressed.
+
+  ```json
+  {
+    "gateway": {
+      "compression": {
+        "brotli": { "quality": 4 },
+        "exclude": ["/static/*"]
+      },
+      "applications": [{ "id": "frontend" }]
+    }
+  }
+  ```
+
 - **`passthroughContentTypes`** (`array`) - An array of content types that should be passed through without parsing to enable proxying. This is useful for handling multipart forms, binary data, or other content types that need to be forwarded to backend services without modification. Default is `['multipart/form-data', 'application/octet-stream']`.
 
   ```ts config
@@ -618,6 +709,30 @@ Gateway does not compose GraphQL schemas. To expose a GraphQL service through Ga
 If you need schema composition, implement it in a user-owned application or plugin. The application is responsible for selecting the GraphQL server and composition libraries, loading the subgraph schemas, and registering the resulting `/graphql` endpoint. Gateway can then proxy requests to that endpoint using the standard `proxy` configuration. See the [Reproduce GraphQL Composition](../../guides/reproduce-graphql-composition.md) guide for a complete example.
 
 Configurations using the removed Gateway composition options, including `graphql`, `composeEndpoint`, `entities`, `defaultArgsAdapter`, and `addEntitiesResolvers`, are rejected during validation.
+
+Composition of a GraphQL application from its schema file, along with a GraphQL application whose schema is fetched from the application:
+
+```json title="Example JSON object"
+{
+  "gateway": {
+    "applications": [
+      {
+        "id": "books",
+        "origin": "https://books-service.com",
+        "graphql": {
+          "graphqlEndpoint": "/graphql",
+          "file": "./schemas/books.graphql"
+        }
+      },
+      {
+        "id": "reviews",
+        "origin": "https://reviews-service.com",
+        "graphql": true
+      }
+    ]
+  }
+}
+```
 
 ## Configuration References
 

@@ -3,7 +3,7 @@ import { once } from 'node:events'
 import { test } from 'node:test'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { MessageChannel } from 'node:worker_threads'
-import { ITC } from '../lib/index.js'
+import { generateRequest, ITC, sanitize } from '../lib/index.js'
 import { generateItcRequest, generateItcResponse } from './helper.js'
 
 test('should send a request between threads', async t => {
@@ -174,8 +174,9 @@ test('should send a notification between threads', async t => {
   t.after(() => itc2.close())
   await itc2.listen()
 
+  const notification = once(itc2, notificationName)
   await itc1.notify(notificationName, testNotification)
-  const [receivedNotification] = await once(itc2, notificationName)
+  const [receivedNotification] = await notification
   deepStrictEqual(testNotification, receivedNotification)
 })
 
@@ -679,4 +680,129 @@ test('should preserve aggregate error entries across the transport', async t => 
     deepStrictEqual(error.handlerError.errors[1], null)
     return true
   })
+})
+
+test('should fail a request with a timeout error when no response arrives in time', async t => {
+  const { port1, port2 } = new MessageChannel()
+
+  const itc1 = new ITC({ port: port1, name: 'itc1' })
+  const itc2 = new ITC({ port: port2, name: 'itc2' })
+  const handlerRelease = Promise.withResolvers()
+
+  itc2.handle('slow-command', () => handlerRelease.promise)
+
+  itc1.listen()
+  itc2.listen()
+
+  t.after(() => itc1.close())
+  t.after(() => itc2.close())
+
+  await rejects(itc1.send('slow-command', null, { timeout: 50 }), error => {
+    deepStrictEqual(error.code, 'PLT_ITC_REQUEST_TIMEOUT')
+    deepStrictEqual(error.message, 'ITC request "slow-command" timed out after 50 milliseconds')
+    return true
+  })
+
+  handlerRelease.resolve('late-response')
+})
+
+test('should not time out a request answered in time', async t => {
+  const { port1, port2 } = new MessageChannel()
+
+  const itc1 = new ITC({ port: port1, name: 'itc1' })
+  const itc2 = new ITC({ port: port2, name: 'itc2' })
+
+  itc2.handle('test-command', () => 'test-response')
+
+  itc1.listen()
+  itc2.listen()
+
+  t.after(() => itc1.close())
+  t.after(() => itc2.close())
+
+  deepStrictEqual(await itc1.send('test-command', null, { timeout: 1000 }), 'test-response')
+})
+
+test('should fail every pending request when the port closes', async t => {
+  const { port1, port2 } = new MessageChannel()
+
+  const itc1 = new ITC({ port: port1, name: 'itc1' })
+  const itc2 = new ITC({ port: port2, name: 'itc2' })
+  const handlerStarted = Promise.withResolvers()
+  let started = 0
+
+  itc2.handle('test-command', () => {
+    if (++started === 3) {
+      handlerStarted.resolve()
+    }
+
+    return new Promise(() => {})
+  })
+
+  itc1.listen()
+  itc2.listen()
+
+  t.after(() => itc1.close())
+  t.after(() => itc2.close())
+
+  const responses = [itc1.send('test-command', 1), itc1.send('test-command', 2), itc1.send('test-command', 3)]
+
+  await handlerStarted.promise
+  port2.close()
+
+  for (const response of responses) {
+    await rejects(response, error => {
+      deepStrictEqual(error.code, 'PLT_ITC_MESSAGE_PORT_CLOSED')
+      return true
+    })
+  }
+})
+
+test('should use unique request ids', () => {
+  const ids = new Set()
+
+  for (let i = 0; i < 1000; i++) {
+    ids.add(generateRequest('test-command', null).reqId)
+  }
+
+  deepStrictEqual(ids.size, 1000)
+})
+
+test('should keep dates and typed arrays as they are when sanitizing', () => {
+  const date = new Date('2026-11-20T15:08:00.000Z')
+  const floats = new Float64Array([1.5, 2.5])
+  const view = new DataView(new ArrayBuffer(4))
+  const data = { date, floats, view, nested: [{ date }] }
+
+  const sanitized = sanitize(data)
+
+  deepStrictEqual(sanitized, data)
+  deepStrictEqual(sanitized.date === date, true)
+  deepStrictEqual(sanitized.floats === floats, true)
+  deepStrictEqual(sanitized.view === view, true)
+})
+
+test('should return the same object when nothing needs sanitizing', () => {
+  const data = { a: 1, b: 'two', c: [1, 2, { d: null }], e: { f: true } }
+
+  deepStrictEqual(sanitize(data) === data, true)
+  deepStrictEqual(sanitize(data, []) === data, true)
+})
+
+test('should drop functions and symbols at any depth while keeping property order', () => {
+  const transferred = new ArrayBuffer(8)
+  const data = {
+    first: 1,
+    second: { keep: 'yes', drop: () => {} },
+    third: Symbol('drop'),
+    fourth: [1, () => {}, { keep: true, drop: Symbol('drop') }],
+    fifth: transferred
+  }
+
+  const sanitized = sanitize(data, [transferred])
+
+  deepStrictEqual(Object.keys(sanitized), ['first', 'second', 'fourth', 'fifth'])
+  deepStrictEqual(sanitized.second, { keep: 'yes' })
+  deepStrictEqual(sanitized.fourth, [1, { keep: true }])
+  deepStrictEqual(sanitized.fifth === transferred, true)
 })

@@ -29,7 +29,7 @@ Each migration file should have a corresponding undo file to facilitate rollback
 
 ## Managing Migrations
 
-Postgrator maintains a table in your database schema to store and track which migrations have been applied. This ensures that only new or unapplied migrations run when the server starts or when manually triggered.
+Postgrator maintains a table in your database schema to store and track which migrations have been applied. When migrating forward, only the migrations above the highest applied version run, whether the server starts or the command is triggered manually. See [Out of order migrations](#out-of-order-migrations) for a migration that arrives below that version.
 
 ### Applying Migrations
 
@@ -47,6 +47,46 @@ To roll back a single migration, use the `-r` flag:
 $ npx wattpm db:migrations:apply -r
 ```
 
+### Out of order migrations
+
+When several branches add migrations in parallel, a migration can reach a database with a version below one that the database has already applied. Say a database has applied `001` and `003`, and `002.do.sql` arrives later from another branch. Only the versions above the highest applied one are selected, so `002.do.sql` would be skipped for as long as the database version stays above it.
+
+The `outOfOrder` option of the `migrations` configuration controls this case:
+
+- `error` (default): applying migrations forward, or to the version the database is already at, fails before any migration SQL runs, and the error lists the `do` files below the current database version that have no row in the versions table. A skipped migration becomes a failed deploy, whether the deploy applies migrations with the `db:migrations:apply` command or at startup with `autoApply`.
+- `ignore`: the migration is skipped and nothing reports it. This was the behaviour before the option existed.
+
+To go back to skipping such a migration:
+
+```json
+{
+  "migrations": {
+    "dir": "./migrations",
+    "outOfOrder": "ignore"
+  }
+}
+```
+
+Only one migration run per database should be active at a time, including runs from different workers of the same process, and the migrations directory should not change while it runs. The check takes no migration lock: another run applying migrations at the same moment can change the recorded versions between its reads or after it has finished.
+
+The error only reports the files. How to resolve it depends on the state of each database that shares them, so check on every one whether the reported version is recorded and whether the changes of the migration are present.
+
+Giving the migration a new version, by renaming its `do` and `undo` files to an unused version above the highest one recorded on any of those databases, is safe only when all of these hold:
+
+- the version is recorded on none of them
+- its changes are present on none of them
+- the whole sequence in its new order still gives the intended schema and data, for the moved migration and for every migration in between, on apply and on rollback, on each of those databases and on a new one
+
+The migration then runs as a pending one.
+
+In every other case keep the file and reconcile the databases by hand, their schema, their data and their versions table, before applying migrations again.
+
+The `db:seed` command also refuses to seed while a skipped `do` file remains, as it does for a pending migration. If the files on disk end below the database version, an apply without a target has nothing to run, undoes nothing and reports no out of order files: apply to the current database version, for example `--to 003`, to see them.
+
+Versions are compared as JavaScript numbers, as Postgrator compares them, so use positive safe integers. Postgrator reserves version zero for its seed row.
+
+A skipped `do` file is not reported during a rollback and never blocks one. A rollback still selects `undo` files by version, as it does without the option, including the `undo` file of a migration that has no row.
+
 ## Configuring and Running Migrations
 
 There are two ways to run migrations in Platformatic DB. They can be processed automatically when the server starts if the `autoApply` value is true, or you can just run the `db migrations apply` command.
@@ -57,7 +97,7 @@ In both cases you have to edit your config file to tell Platformatic DB where ar
 
 To run migrations when Platformatic DB starts,configure the `migrations` property in your project config file.
 
-There are two options in the `"migrations"` property
+This example uses two options of the `"migrations"` property
 
 - `dir` (_required_) the directory where the migration files are located. It will be relative to the config file path.
 - `autoApply` a boolean value that tells Platformatic DB to auto-apply migrations or not (default: `false`)

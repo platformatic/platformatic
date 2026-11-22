@@ -32,7 +32,7 @@
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "dependencies": {
     "@fastify/middie": "^9.0.0",
-    "@fastify/static": "^10.0.0",
+    "@fastify/static": "^10.1.9",
     "@platformatic/basic": "workspace:*",
     "@platformatic/foundation": "workspace:*",
     "@platformatic/globals": "workspace:*",
@@ -48,7 +48,7 @@
     "astro": "^7.0.0",
     "cleaner-spec-reporter": "^2.0.0",
     "cookie": "^2.0.1",
-    "eslint": "9",
+    "eslint": "10",
     "json-schema-to-typescript": "^16.0.0",
     "neostandard": "^0.14.0",
     "tstyche": "^7.0.0",

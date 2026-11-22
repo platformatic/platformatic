@@ -376,6 +376,10 @@ export interface PlatformaticDatabaseConfig {
      */
     validateChecksums?: boolean;
     /**
+     * What to do with a migration below the current database version that is not recorded as applied, for example one that arrives from a parallel branch after a higher numbered one already ran. "error" fails a forward or same version apply and lists the files, "ignore" skips it.
+     */
+    outOfOrder?: "error" | "ignore";
+    /**
      * Whether to automatically apply migrations when running the migrate command.
      */
     autoApply?: boolean | string;
@@ -961,6 +965,32 @@ export interface TelemetryOptions {
    * Enable the OpenTelemetry diagnostic logger. Diagnostic messages are forwarded to the Platformatic global logger using the current logger level.
    */
   diagLogger?: boolean | string;
+  /**
+   * How much to trace. Omitted, everything is recorded. Either a type out of the set OpenTelemetry defines for OTEL_TRACES_SAMPLER, or a package exporting a sampler.
+   */
+  sampler?:
+    | {
+        type:
+          | "always_on"
+          | "always_off"
+          | "traceidratio"
+          | "parentbased_always_on"
+          | "parentbased_always_off"
+          | "parentbased_traceidratio";
+        /**
+         * Options for the sampler, for instance { "ratio": 0.1 } for the ratio based ones.
+         */
+        options?: {
+          [k: string]: unknown;
+        };
+      }
+    | {
+        package: string;
+        exportName?: string;
+        options?: {
+          [k: string]: unknown;
+        };
+      };
 }
 export interface ExtensionEntry {
   path: string;
@@ -990,9 +1020,23 @@ export interface ApplicationHealthOptions {
   gracePeriod?: number | string;
   maxUnhealthyChecks?: number | string;
   maxELU?: number | string;
+  maxELULogLevel?: (
+    | ("fatal" | "error" | "warn" | "info" | "debug" | "trace" | "silent")
+    | {
+        [k: string]: unknown;
+      }
+  ) &
+    string;
   maxEventLoopDelay?: number | string;
   maxEventLoopDelayP99?: number | string;
   maxHeapUsed?: number | string;
+  maxHeapUsedLogLevel?: (
+    | ("fatal" | "error" | "warn" | "info" | "debug" | "trace" | "silent")
+    | {
+        [k: string]: unknown;
+      }
+  ) &
+    string;
   maxHeapTotal?: number | string;
   maxYoungGeneration?: number | string;
   codeRangeSize?: number | string;
@@ -1176,9 +1220,23 @@ export interface HealthOptions {
   gracePeriod?: number | string;
   maxUnhealthyChecks?: number | string;
   maxELU?: number | string;
+  maxELULogLevel?: (
+    | ("fatal" | "error" | "warn" | "info" | "debug" | "trace" | "silent")
+    | {
+        [k: string]: unknown;
+      }
+  ) &
+    string;
   maxEventLoopDelay?: number | string;
   maxEventLoopDelayP99?: number | string;
   maxHeapUsed?: number | string;
+  maxHeapUsedLogLevel?: (
+    | ("fatal" | "error" | "warn" | "info" | "debug" | "trace" | "silent")
+    | {
+        [k: string]: unknown;
+      }
+  ) &
+    string;
   maxHeapTotal?: number | string;
   maxYoungGeneration?: number | string;
   codeRangeSize?: number | string;
@@ -1308,6 +1366,10 @@ export interface MetricsOptions {
    * Enable outgoing HTTP client request duration metrics
    */
   httpClientMetrics?: boolean | string;
+  /**
+   * Merge the metrics of all the workers of each application into a single set of series without the workerId label. Summaries are still reported per worker. Defaults to false.
+   */
+  aggregateWorkers?: boolean | string;
   readiness?:
     | boolean
     | {
@@ -1535,6 +1597,32 @@ export interface TelemetryOptions1 {
    * Enable the OpenTelemetry diagnostic logger. Diagnostic messages are forwarded to the Platformatic global logger using the current logger level.
    */
   diagLogger?: boolean | string;
+  /**
+   * How much to trace. Omitted, everything is recorded. Either a type out of the set OpenTelemetry defines for OTEL_TRACES_SAMPLER, or a package exporting a sampler.
+   */
+  sampler?:
+    | {
+        type:
+          | "always_on"
+          | "always_off"
+          | "traceidratio"
+          | "parentbased_always_on"
+          | "parentbased_always_off"
+          | "parentbased_traceidratio";
+        /**
+         * Options for the sampler, for instance { "ratio": 0.1 } for the ratio based ones.
+         */
+        options?: {
+          [k: string]: unknown;
+        };
+      }
+    | {
+        package: string;
+        exportName?: string;
+        options?: {
+          [k: string]: unknown;
+        };
+      };
 }
 export interface CompileCacheOptions1 {
   /**
@@ -1564,9 +1652,23 @@ export interface ApplicationHealthOptions1 {
   gracePeriod?: number | string;
   maxUnhealthyChecks?: number | string;
   maxELU?: number | string;
+  maxELULogLevel?: (
+    | ("fatal" | "error" | "warn" | "info" | "debug" | "trace" | "silent")
+    | {
+        [k: string]: unknown;
+      }
+  ) &
+    string;
   maxEventLoopDelay?: number | string;
   maxEventLoopDelayP99?: number | string;
   maxHeapUsed?: number | string;
+  maxHeapUsedLogLevel?: (
+    | ("fatal" | "error" | "warn" | "info" | "debug" | "trace" | "silent")
+    | {
+        [k: string]: unknown;
+      }
+  ) &
+    string;
   maxHeapTotal?: number | string;
   maxYoungGeneration?: number | string;
   codeRangeSize?: number | string;

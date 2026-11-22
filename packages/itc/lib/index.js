@@ -1,4 +1,3 @@
-import { Unpromise } from '@watchable/unpromise'
 import { randomUUID } from 'node:crypto'
 import { EventEmitter, once } from 'node:events'
 import {
@@ -14,6 +13,7 @@ import {
   MissingResponseReqId,
   PortAlreadyListening,
   RequestNameIsNotString,
+  RequestTimeout,
   SendBeforeListen
 } from './errors.js'
 
@@ -22,6 +22,15 @@ const PLT_ITC_RESPONSE_TYPE = 'PLT_ITC_RESPONSE'
 const PLT_ITC_NOTIFICATION_TYPE = 'PLT_ITC_NOTIFICATION'
 const PLT_ITC_UNHANDLED_ERROR_TYPE = 'PLT_ITC_UNHANDLED_ERROR'
 const PLT_ITC_VERSION = '1.0.0'
+
+// Request IDs only need to be unique among the peers of a port (or, for ChildManager, of a server).
+// A random prefix chosen once per thread plus a counter keeps them unique without a randomUUID() per message.
+const requestIdPrefix = randomUUID() + '-'
+let requestIdCounter = 0
+
+function nextRequestId () {
+  return requestIdPrefix + ++requestIdCounter
+}
 
 export function parseRequest (request) {
   if (request.reqId === undefined) {
@@ -57,7 +66,7 @@ export function generateRequest (name, data, meta) {
   const request = {
     type: PLT_ITC_REQUEST_TYPE,
     version: PLT_ITC_VERSION,
-    reqId: randomUUID(),
+    reqId: nextRequestId(),
     name,
     data
   }
@@ -117,7 +126,7 @@ function sanitizeError (error, transferList) {
     }
 
     if (value && typeof value === 'object') {
-      const sanitized = sanitize(value, transferList)
+      const sanitized = sanitizeValue(value, transferList)
       if (sanitized !== value) {
         needsSanitization = true
         break
@@ -140,7 +149,7 @@ function sanitizeError (error, transferList) {
   if (error.stack) sanitized.stack = error.stack
   if (error.code) sanitized.code = error.code
   if (error.statusCode) sanitized.statusCode = error.statusCode
-  if (isAggregateError) sanitized.errors = sanitize(error.errors, transferList)
+  if (isAggregateError) sanitized.errors = sanitizeValue(error.errors, transferList)
 
   for (const [key, value] of Object.entries(error)) {
     if (key === 'message' || key === 'stack' || key === 'name' || key === 'code' || key === 'statusCode') continue
@@ -148,7 +157,7 @@ function sanitizeError (error, transferList) {
     if (valueType === 'function' || valueType === 'symbol') continue
 
     if (value && typeof value === 'object') {
-      sanitized[key] = sanitize(value, transferList)
+      sanitized[key] = sanitizeValue(value, transferList)
     } else {
       sanitized[key] = value
     }
@@ -157,8 +166,92 @@ function sanitizeError (error, transferList) {
   return sanitized
 }
 
-export function sanitize (data, transferList) {
-  if (!data || typeof data !== 'object' || transferList?.includes(data)) {
+function sanitizeArray (data, transferList) {
+  let sanitized = null
+
+  for (let i = 0; i < data.length; i++) {
+    const value = data[i]
+    const valueType = typeof value
+
+    if (valueType === 'function' || valueType === 'symbol') {
+      if (sanitized === null) {
+        sanitized = data.slice(0, i)
+      }
+      continue
+    }
+
+    let sanitizedValue = value
+    if (valueType === 'object' && value !== null) {
+      sanitizedValue = sanitizeValue(value, transferList)
+      if (sanitizedValue !== value && sanitized === null) {
+        sanitized = data.slice(0, i)
+      }
+    }
+
+    if (sanitized !== null) {
+      sanitized.push(sanitizedValue)
+    }
+  }
+
+  return sanitized ?? data
+}
+
+function copyProperties (data, keys, end) {
+  const copy = {}
+
+  for (let i = 0; i < end; i++) {
+    copy[keys[i]] = data[keys[i]]
+  }
+
+  return copy
+}
+
+function sanitizeObject (data, transferList) {
+  // Object.keys rather than Object.entries: the latter allocates a [key, value] pair per property.
+  const keys = Object.keys(data)
+  let sanitized = null
+
+  for (let i = 0; i < keys.length; i++) {
+    const key = keys[i]
+    const value = data[key]
+    const valueType = typeof value
+
+    if (valueType === 'function' || valueType === 'symbol') {
+      if (sanitized === null) {
+        sanitized = copyProperties(data, keys, i)
+      }
+      continue
+    }
+
+    let sanitizedValue = value
+    if (valueType === 'object' && value !== null) {
+      sanitizedValue = sanitizeValue(value, transferList)
+      if (sanitizedValue !== value && sanitized === null) {
+        sanitized = copyProperties(data, keys, i)
+      }
+    }
+
+    if (sanitized !== null) {
+      sanitized[key] = sanitizedValue
+    }
+  }
+
+  return sanitized ?? data
+}
+
+// transferList is either null or a non-empty array, so the common case skips the lookup.
+function sanitizeValue (data, transferList) {
+  if (!data || typeof data !== 'object' || (transferList !== null && transferList.includes(data))) {
+    return data
+  }
+
+  if (Array.isArray(data)) {
+    return sanitizeArray(data, transferList)
+  }
+
+  // Buffers, typed arrays and DataViews are cloned (or transferred) as they are, and so are dates:
+  // the structured clone algorithm ignores their own properties.
+  if (ArrayBuffer.isView(data) || data instanceof Date) {
     return data
   }
 
@@ -166,85 +259,11 @@ export function sanitize (data, transferList) {
     return sanitizeError(data, transferList)
   }
 
-  if (Buffer.isBuffer(data) || data instanceof Uint8Array) {
-    // This will convert as Uint8Array
-    return data
-  }
+  return sanitizeObject(data, transferList)
+}
 
-  if (Array.isArray(data)) {
-    let sanitized = null
-    let needsSanitization = false
-
-    for (let i = 0; i < data.length; i++) {
-      const value = data[i]
-      const valueType = typeof value
-
-      /* c8 ignore next 3 */
-      if (valueType === 'function' || valueType === 'symbol') {
-        if (!needsSanitization) {
-          sanitized = data.slice(0, i)
-          needsSanitization = true
-        }
-        continue
-      }
-
-      let sanitizedValue = value
-      if (value && typeof value === 'object') {
-        sanitizedValue = sanitize(value, transferList)
-        if (sanitizedValue !== value && !needsSanitization) {
-          sanitized = data.slice(0, i)
-          needsSanitization = true
-        }
-      }
-
-      if (needsSanitization) {
-        sanitized.push(sanitizedValue)
-      }
-    }
-
-    return needsSanitization ? sanitized : data
-  }
-
-  // Handle plain objects
-  let sanitized = null
-  let needsSanitization = false
-
-  for (const [key, value] of Object.entries(data)) {
-    const valueType = typeof value
-
-    if (valueType === 'function' || valueType === 'symbol') {
-      if (!needsSanitization) {
-        sanitized = {}
-        // Copy all previous properties
-        for (const [k] of Object.entries(data)) {
-          if (k === key) break
-          sanitized[k] = data[k]
-        }
-        needsSanitization = true
-      }
-      continue
-    }
-
-    let sanitizedValue = value
-    if (value && typeof value === 'object') {
-      sanitizedValue = sanitize(value, transferList)
-      if (sanitizedValue !== value && !needsSanitization) {
-        sanitized = {}
-        // Copy all previous properties
-        for (const [k] of Object.entries(data)) {
-          if (k === key) break
-          sanitized[k] = data[k]
-        }
-        needsSanitization = true
-      }
-    }
-
-    if (needsSanitization) {
-      sanitized[key] = sanitizedValue
-    }
-  }
-
-  return needsSanitization ? sanitized : data
+export function sanitize (data, transferList) {
+  return sanitizeValue(data, transferList?.length > 0 ? transferList : null)
 }
 
 export class ITC extends EventEmitter {
@@ -252,7 +271,7 @@ export class ITC extends EventEmitter {
   #handlers
   #listening
   #activeRequests
-  #closePromise
+  #closedResponse
   #closeAfterCurrentRequest
   #throwOnMissingHandler
   #keepAlive
@@ -311,43 +330,54 @@ export class ITC extends EventEmitter {
 
     let reqId
     let abortHandler
+    let timeoutHandle
     const signal = options?.signal
+    const timeout = options?.timeout
 
     try {
       this._enableKeepAlive()
       signal?.throwIfAborted()
 
       const request = generateRequest(name, message, options?.meta)
-      const promiseWithResolvers = Promise.withResolvers()
+      const pending = Promise.withResolvers()
       reqId = request.reqId
-      this.#waitingRequests.set(request.reqId, promiseWithResolvers)
+      this.#waitingRequests.set(reqId, pending)
 
-      const responses = [promiseWithResolvers.promise, this.#closePromise]
+      if (this.#closedResponse) {
+        pending.resolve(this.#closedResponse)
+      }
+
+      // The response, a close of the port, an abort and a timeout all settle the same promise:
+      // the first one wins and the others are no-ops. No race is needed.
       if (signal) {
-        const aborted = Promise.withResolvers()
         abortHandler = () => {
           const error = signal.reason ?? new DOMException('This operation was aborted', 'AbortError')
-          aborted.resolve({ error, data: null })
+          pending.resolve({ error, data: null })
         }
 
-        if (signal.aborted) {
-          abortHandler()
-        } else {
-          signal.addEventListener('abort', abortHandler, { once: true })
-        }
+        signal.addEventListener('abort', abortHandler, { once: true })
+      }
 
-        responses.push(aborted.promise)
+      if (timeout > 0) {
+        timeoutHandle = setTimeout(() => {
+          pending.resolve({ error: new RequestTimeout(name, timeout), data: null })
+        }, timeout)
+        timeoutHandle.unref()
       }
 
       this._send(request, options)
 
-      const { error, data } = await Unpromise.race(responses)
+      const { error, data } = await pending.promise
 
       if (error !== null) throw error
       return data
     } finally {
       if (abortHandler) {
         signal.removeEventListener('abort', abortHandler)
+      }
+
+      if (timeoutHandle) {
+        clearTimeout(timeoutHandle)
       }
 
       // Clean up the waiting requests map even if an error occurred
@@ -402,13 +432,18 @@ export class ITC extends EventEmitter {
       }
     })
 
-    this.#closePromise = this._createClosePromise().then(() => {
-      this.#listening = false
-      const error = new MessagePortClosed()
-      clearInterval(this.#keepAlive)
-      this.#keepAliveCount = -1000
-      return { error, data: null }
-    })
+    this.#closedResponse = null
+    this._createClosePromise().then(
+      () => {
+        this.#listening = false
+        clearInterval(this.#keepAlive)
+        this.#keepAliveCount = -1000
+        this.#settlePendingRequests({ error: new MessagePortClosed(), data: null })
+      },
+      error => {
+        this.#settlePendingRequests({ error, data: null })
+      }
+    )
   }
 
   close () {
@@ -488,6 +523,15 @@ export class ITC extends EventEmitter {
       }
     }
     return response
+  }
+
+  // Called once the port is closed: every request still waiting, and any sent later, gets this response.
+  #settlePendingRequests (response) {
+    this.#closedResponse = response
+
+    for (const pending of this.#waitingRequests.values()) {
+      pending.resolve(response)
+    }
   }
 
   #handleResponse (response, context) {

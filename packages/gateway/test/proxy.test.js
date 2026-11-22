@@ -1,5 +1,6 @@
 import { createDirectory, safeRemove } from '@platformatic/foundation'
 import { getEvents, getPrometheus, removeGlobals, updateGlobals } from '@platformatic/globals'
+import client from '@platformatic/prom-client'
 import assert from 'assert/strict'
 import { EventEmitter, once } from 'node:events'
 import { mkdtemp, symlink, writeFile } from 'node:fs/promises'
@@ -8,7 +9,6 @@ import { join, resolve } from 'node:path'
 import { test } from 'node:test'
 import { setTimeout as sleep } from 'node:timers/promises'
 import openAPISchemaValidator from 'openapi-schema-validator'
-import client from 'prom-client'
 import selfCert from 'self-cert'
 import { Agent, getGlobalDispatcher, request, setGlobalDispatcher } from 'undici'
 import { WebSocket } from 'ws'
@@ -1829,23 +1829,25 @@ test('should proxy to a websocket application with reconnect options', async t =
     t.after(() => removeGlobals(['events']))
   }
 
+  // Connection and message callbacks may arrive in the same event-loop turn.
+  const connected = once(getEvents(), 'onConnect')
+  const incoming = once(getEvents(), 'proxy:onIncomingMessage')
+  const outgoing = once(getEvents(), 'onOutgoingMessage')
   const client = new WebSocket(gatewayOrigin.replace('http://', 'ws://'))
   await once(client, 'open')
   client.send('hello')
 
-  await once(getEvents(), 'proxy:onIncomingMessage')
-
-  await once(getEvents(), 'onConnect')
-  await once(getEvents(), 'onOutgoingMessage')
+  await Promise.all([incoming, connected, outgoing])
 
   // close the target to cause reconnection
+  const reconnected = once(getEvents(), 'onReconnect')
+  const pong = once(getEvents(), 'onPong')
   await wsApplication.close()
   await wsServer.close()
 
   await createWebsocketApplication(t, {}, port)
 
-  await once(getEvents(), 'onReconnect')
-  await once(getEvents(), 'onPong')
+  await Promise.all([reconnected, pong])
 
   client.close()
 

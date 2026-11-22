@@ -42,7 +42,7 @@ export async function applyMigrations (logger, configuration, args, context) {
       to touch in any case, since it is handed the configuration as data.
     */
   } catch (err) {
-    if (err.code === 'PLT_DB_MIGRATE_ERROR') {
+    if (err?.code === 'PLT_DB_MIGRATE_ERROR' || err?.code === 'PLT_DB_OUT_OF_ORDER_MIGRATIONS_ERROR') {
       logFatalError(logger, err.message)
       return
     }

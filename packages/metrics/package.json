@@ -22,12 +22,12 @@
   "dependencies": {
     "@platformatic/globals": "workspace:*",
     "@platformatic/http-metrics": "^0.3.0",
-    "@platformatic/promotel": "^0.2.0",
+    "@platformatic/promotel": "^0.3.0",
     "@platformatic/prom-client": "^2.0.0"
   },
   "devDependencies": {
     "cleaner-spec-reporter": "^2.0.0",
-    "eslint": "9",
+    "eslint": "10",
     "neostandard": "^0.14.0"
   },
   "engines": {

@@ -397,6 +397,8 @@ export function collectEluMetric (registry) {
   const eluMetric = new Gauge({
     name: 'nodejs_eventloop_utilization',
     help: 'The event loop utilization as a fraction of the loop time. 1 is fully utilized, 0 is fully idle.',
+    // When the metrics of multiple workers are merged, report the mean utilization
+    aggregator: 'average',
     collect: () => {
       const endELU = performance.eventLoopUtilization()
       const result = performance.eventLoopUtilization(endELU, getBaseline()).utilization

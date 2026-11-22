@@ -72,6 +72,7 @@ import { startScheduler } from './scheduler.js'
 import { createSharedStore } from './shared-http-cache.js'
 import { topologicalLevels, topologicalSort } from './utils.js'
 import { version } from './version.js'
+import { WorkerMetricsAggregator } from './worker-metrics-aggregator.js'
 import { HealthSignalsQueue } from './worker/health-signals.js'
 import { sendMultipleViaITC, sendViaITC, waitEventFromITC } from './worker/itc.js'
 import { RoundRobinMap } from './worker/round-robin-map.js'
@@ -262,6 +263,8 @@ export class Runtime extends EventEmitter {
   #opentelemetryMetricsForwarder
   #inspectorServer
   #metricsLabelName
+  #workerMetricsAggregator
+  #pendingAggregatedWorkersMetrics
 
   #applicationsConfigsPatches
   #applications
@@ -1525,6 +1528,9 @@ export class Runtime extends EventEmitter {
         throw failure.reason
       }
 
+      // The workers have recreated their metrics, possibly with different labels: start over
+      this.#workerMetricsAggregator = null
+
       this.#metricsConfigUpdateFailed = false
       this.logger.info('Metrics configuration updated')
       return { success: true, config: structuredClone(metricsConfig) }
@@ -1956,11 +1962,13 @@ export class Runtime extends EventEmitter {
   }
 
   async getMetrics (format = 'json') {
+    return this.#getMetrics(format, this.#isWorkerMetricsAggregationEnabled())
+  }
+
+  async #getMetrics (format, aggregateWorkers) {
     if (this.#config.metrics === false || this.#config.metrics?.enabled === false) {
       throw new MetricsDisabledError()
     }
-
-    let metrics = null
 
     const applicationRestartMetrics = this.#getApplicationRestartMetricsJson()
 
@@ -1979,42 +1987,7 @@ export class Runtime extends EventEmitter {
       applicationRestartMetrics
     })
 
-    for (const worker of this.#workers.values()) {
-      try {
-        // The application might be temporarily unavailable
-        if (worker[kWorkerStatus] !== 'started') {
-          continue
-        }
-
-        // Get thread-specific metrics from worker. Always collect JSON so that
-        // the text format can be serialized once with a single HELP/TYPE block
-        // per metric family, as required by the Prometheus exposition format.
-        const applicationMetrics = await executeWithTimeout(
-          sendViaITC(worker, 'getMetrics', 'json'),
-          this.#config.metrics?.timeout ?? 10000
-        )
-
-        if (applicationMetrics && applicationMetrics !== kTimeout) {
-          metrics ??= []
-
-          // Add worker's thread-specific metrics
-          for (let i = 0; i < applicationMetrics.length; i++) {
-            metrics.push(applicationMetrics[i])
-          }
-        }
-      } catch (e) {
-        // The application exited while we were sending the ITC, skip it
-        if (
-          e.code === 'PLT_RUNTIME_APPLICATION_NOT_STARTED' ||
-          e.code === 'PLT_RUNTIME_APPLICATION_EXIT' ||
-          e.code === 'PLT_RUNTIME_APPLICATION_WORKER_EXIT'
-        ) {
-          continue
-        }
-
-        throw e
-      }
-    }
+    let metrics = aggregateWorkers ? await this.#getAggregatedWorkersMetrics() : await this.#getWorkersMetrics()
 
     // Extension metrics must not share a family name with any worker metric.
     if (metrics !== null && extensionMetrics.length > 0) {
@@ -2068,6 +2041,93 @@ export class Runtime extends EventEmitter {
     }
 
     return { metrics }
+  }
+
+  #isWorkerMetricsAggregationEnabled () {
+    const aggregateWorkers = this.#config.metrics?.aggregateWorkers
+    return aggregateWorkers === true || aggregateWorkers === 'true'
+  }
+
+  // Queries all the workers for their metrics. The result contains an entry for each worker,
+  // with metrics set to null when the worker is temporarily unavailable.
+  async #collectWorkersMetrics () {
+    const workers = []
+
+    for (const worker of this.#workers.values()) {
+      const entry = { key: worker, applicationId: worker[kApplicationId], metrics: null }
+      workers.push(entry)
+
+      try {
+        // The application might be temporarily unavailable
+        if (worker[kWorkerStatus] !== 'started') {
+          continue
+        }
+
+        // Get thread-specific metrics from worker. Always collect JSON so that
+        // the text format can be serialized once with a single HELP/TYPE block
+        // per metric family, as required by the Prometheus exposition format.
+        const applicationMetrics = await executeWithTimeout(
+          sendViaITC(worker, 'getMetrics', 'json'),
+          this.#config.metrics?.timeout ?? 10000
+        )
+
+        if (applicationMetrics && applicationMetrics !== kTimeout) {
+          entry.metrics = applicationMetrics
+        }
+      } catch (e) {
+        // The application exited while we were sending the ITC, skip it
+        if (
+          e.code === 'PLT_RUNTIME_APPLICATION_NOT_STARTED' ||
+          e.code === 'PLT_RUNTIME_APPLICATION_EXIT' ||
+          e.code === 'PLT_RUNTIME_APPLICATION_WORKER_EXIT'
+        ) {
+          continue
+        }
+
+        throw e
+      }
+    }
+
+    return workers
+  }
+
+  async #getWorkersMetrics () {
+    let metrics = null
+
+    for (const { metrics: workerMetrics } of await this.#collectWorkersMetrics()) {
+      if (workerMetrics) {
+        metrics ??= []
+
+        for (let i = 0; i < workerMetrics.length; i++) {
+          metrics.push(workerMetrics[i])
+        }
+      }
+    }
+
+    return metrics
+  }
+
+  // The aggregator compares the values of each worker with the previous ones to detect resets,
+  // so collections must not overlap: an older collection processed after a newer one would look
+  // like a reset and its values would be counted twice. Concurrent callers share the same result.
+  #getAggregatedWorkersMetrics () {
+    this.#pendingAggregatedWorkersMetrics ??= this.#collectAggregatedWorkersMetrics().finally(() => {
+      this.#pendingAggregatedWorkersMetrics = null
+    })
+
+    return this.#pendingAggregatedWorkersMetrics
+  }
+
+  async #collectAggregatedWorkersMetrics () {
+    const workers = await this.#collectWorkersMetrics()
+
+    // HTTP metrics are never reset on collection, so every metric is cumulative
+    this.#workerMetricsAggregator ??= new WorkerMetricsAggregator({ workerLabel: 'workerId' })
+
+    const metrics = this.#workerMetricsAggregator.aggregate(workers, new Set(this.#applications.keys()))
+
+    // As with the per-worker metrics, report nothing until a worker provides its metrics
+    return workers.some(worker => worker.metrics) ? metrics : null
   }
 
   async #getExtensionMetricsJson ({ processMetricsJson, applicationRestartMetrics }) {
@@ -2748,7 +2808,8 @@ export class Runtime extends EventEmitter {
     const errorLabel = this.#workerExtendedLabel(applicationId, index, workersCount)
     const health = deepmerge(config.health ?? {}, applicationConfig.health ?? {})
 
-    const execArgv = applicationConfig.execArgv ?? []
+    // A copy, since the options below are appended each time a worker of the application is set up
+    const execArgv = [...(applicationConfig.execArgv ?? [])]
 
     if (!applicationConfig.skipTracingHooks && config.tracing && config.tracing.enabled !== false) {
       const require = createRequire(import.meta.url)
@@ -3361,6 +3422,7 @@ export class Runtime extends EventEmitter {
     })
 
     const healthConfig = worker[kConfig].health
+    const { maxELULogLevel = 'error', maxHeapUsedLogLevel = 'error' } = healthConfig
 
     let { maxELU, maxHeapUsed, maxHeapTotal, maxUnhealthyChecks, interval, maxEventLoopDelay, maxEventLoopDelayP99 } =
       worker[kConfig].health
@@ -3494,14 +3556,14 @@ export class Runtime extends EventEmitter {
       })
 
       if (health.elu > maxELU) {
-        this.logger.error(
+        this.logger[maxELULogLevel](
           `The ${errorLabel} has an ELU of ${(health.elu * 100).toFixed(2)} %, ` +
             `above the maximum allowed usage of ${(maxELU * 100).toFixed(2)} %.`
         )
       }
 
       if (memoryUsage > maxHeapUsed) {
-        this.logger.error(
+        this.logger[maxHeapUsedLogLevel](
           `The ${errorLabel} is using ${(memoryUsage * 100).toFixed(2)} % of the memory, ` +
             `above the maximum allowed usage of ${(maxHeapUsed * 100).toFixed(2)} %.`
         )
@@ -3771,7 +3833,7 @@ export class Runtime extends EventEmitter {
     }
   }
 
-  async #stopWorker (workersCount, id, index, silent, worker, dependents) {
+  async #stopWorker (workersCount, id, index, silent, worker, dependents, tolerateWorkerError = false) {
     if (!worker) {
       worker = await this.#getWorkerByIdOrNext(id, index, false, false)
     }
@@ -3802,6 +3864,9 @@ export class Runtime extends EventEmitter {
 
     const exitTimeout = this.#config.gracefulShutdown.application
     const exitPromise = once(worker, 'exit')
+    // The promise is awaited after the stop request below: a worker that ends with an error in the
+    // meanwhile must not leave an unhandled rejection behind. The await still reports it.
+    exitPromise.catch(() => {})
 
     // Always send the stop message, it will shut down workers that only had ITC and interceptors setup
     try {
@@ -3832,7 +3897,23 @@ export class Runtime extends EventEmitter {
     }
 
     // Wait for the worker thread to finish, we're going to create a new one if the application is ever restarted
-    const res = await executeWithTimeout(exitPromise, exitTimeout)
+    let res
+
+    try {
+      res = await executeWithTimeout(exitPromise, exitTimeout)
+    } catch (error) {
+      // The exit promise is rejected when the worker emits an error before it exits
+      if (!tolerateWorkerError) {
+        throw error
+      }
+
+      this.logger.warn({ err: ensureLoggableError(error) }, `The ${label} ended with an error while it was being stopped.`)
+
+      // The exit can come later than the error: wait for it, as for the exit of a worker that stops
+      if (worker[kWorkerStatus] !== 'exited') {
+        res = await executeWithTimeout(new Promise(resolve => worker.once('exit', resolve)), exitTimeout)
+      }
+    }
 
     // If the worker didn't exit in time, kill it
     if (res === kTimeout) {
@@ -4171,11 +4252,37 @@ export class Runtime extends EventEmitter {
       this.logger.debug(`Preparing to stop the old version of ${label} ...`)
     }
 
-    // Remove the old worker and then kill it
-    await sendViaITC(worker, 'removeFromMesh')
+    // From now on the worker is going away: if it exits for any reason (including a forced termination
+    // after a mesh error) it must not be considered crashed and therefore restarted.
+    worker[kWorkerStatus] = 'stopping'
 
-    // Stop the old worker to free the port
-    await this.#stopWorker(workersCount, applicationId, index, false, worker, [])
+    // Remove the old worker from the mesh. A worker whose event loop is blocked neither answers
+    // nor exits, so it is not waited for longer than its stop below would be.
+    let unacknowledged = false
+
+    try {
+      const timeout = this.#config.gracefulShutdown.application
+      const res = await executeWithTimeout(sendViaITC(worker, 'removeFromMesh'), timeout)
+
+      if (res === kTimeout) {
+        unacknowledged = true
+        this.logger.warn(`The ${label} did not acknowledge its removal from the mesh in ${timeout}ms. Stopping it anyway ...`)
+      }
+    } catch (e) {
+      // This usually happens when another thread does not acknowledge the route removal in time
+      // (for instance because its event loop is blocked). The worker is being stopped anyway.
+      this.logger.warn({ err: ensureLoggableError(e) }, `Cannot remove the ${label} from the mesh. Stopping it anyway ...`)
+    }
+
+    // The worker exited while removing it from the mesh, there is nothing left to stop
+    if (worker[kWorkerStatus] === 'exited') {
+      return
+    }
+
+    // Stop the old worker to free the port. A worker that ends with an error while its removal from the
+    // mesh is still unanswered would have ended that wait, had the runtime kept waiting, and the
+    // replacement would have gone on: it goes on as well when the error arrives during the stop.
+    await this.#stopWorker(workersCount, applicationId, index, false, worker, [], unacknowledged)
   }
 
   async #getApplicationById (applicationId, ensureStarted = false, mustExist = true) {

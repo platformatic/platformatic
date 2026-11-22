@@ -4,7 +4,6 @@ import { once } from 'node:events'
 import { mkdir } from 'node:fs/promises'
 import { createServer } from 'node:http'
 import { test } from 'node:test'
-import { setTimeout } from 'node:timers/promises'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { Worker } from 'node:worker_threads'
 import { Agent, Client, setGlobalDispatcher } from 'undici'
@@ -21,15 +20,18 @@ function serverHandler (_, res) {
   res.end(JSON.stringify({ ok: true }))
 }
 
-async function getChildManager (capability) {
-  let manager = null
+function waitForChildEvent (t, capability, event) {
+  const { promise, resolve, reject } = Promise.withResolvers()
+  const spawn = capability.spawn
 
-  while (!manager) {
-    manager = capability.getChildManager()
-    await setTimeout(10)
-  }
+  // Subscribe before launching the child, which can send its first message immediately.
+  t.mock.method(capability, 'spawn', function (...args) {
+    const manager = capability.getChildManager()
+    once(manager, event, { signal: t.signal }).then(args => resolve([manager, ...args]), reject)
+    return spawn.apply(this, args)
+  })
 
-  return manager
+  return promise
 }
 
 test('ChildProcess - can load a script with additional loader and scripts', async t => {
@@ -48,9 +50,9 @@ test('ChildProcess - can load a script with additional loader and scripts', asyn
 test('ChildProcess - duplicate shutdown waits for cleanup and exits naturally', async t => {
   const capability = await create(t)
   const executablePath = fileURLToPath(new URL('../fixtures/shutdown-contract.js', import.meta.url))
+  const ready = waitForChildEvent(t, capability, 'ready')
   const execution = capability.buildWithCommand(['node', executablePath])
-  const manager = await getChildManager(capability)
-  const [, socket] = await once(manager, 'ready')
+  const [manager, , socket] = await ready
   const started = once(manager, 'cleanup:started')
   const finished = once(manager, 'finished')
   const first = manager.send(socket, 'close')
@@ -66,9 +68,9 @@ test('ChildProcess - duplicate shutdown waits for cleanup and exits naturally', 
 test('ChildProcess - close replies only after asynchronous SIGINT work drains', async t => {
   const capability = await create(t)
   const executablePath = fileURLToPath(new URL('../fixtures/shutdown-contract.js', import.meta.url))
+  const ready = waitForChildEvent(t, capability, 'ready')
   const execution = capability.buildWithCommand(['node', executablePath, '--delayed-signal'])
-  const manager = await getChildManager(capability)
-  const [, socket] = await once(manager, 'ready')
+  const [manager, , socket] = await ready
   const started = once(manager, 'cleanup:started')
   let finished = false
   manager.once('finished', order => {
@@ -86,10 +88,10 @@ test('ChildProcess - close replies only after asynchronous SIGINT work drains', 
 test('ChildProcess - duplicate failures return the aggregate error code and still run SIGINT', async t => {
   const capability = await create(t)
   const executablePath = fileURLToPath(new URL('../fixtures/shutdown-contract.js', import.meta.url))
+  const ready = waitForChildEvent(t, capability, 'ready')
   const execution = capability.buildWithCommand(['node', executablePath, '--fail'])
   const exited = rejects(execution, { code: 'PLT_BASIC_NON_ZERO_EXIT_CODE' })
-  const manager = await getChildManager(capability)
-  const [, socket] = await once(manager, 'ready')
+  const [manager, , socket] = await ready
   const started = once(manager, 'cleanup:started')
   const finished = once(manager, 'finished')
   const check = error => {
@@ -111,10 +113,9 @@ test('ChildProcess - the process will close upon request', async t => {
   const capability = await create(t)
 
   const executablePath = fileURLToPath(new URL('../fixtures/wait-for-close.js', import.meta.url))
+  const ready = waitForChildEvent(t, capability, 'ready')
   const promise = capability.buildWithCommand(['node', executablePath])
-  const childManager = await getChildManager(capability)
-
-  const [, socket] = await once(childManager, 'ready')
+  const [childManager, , socket] = await ready
   const processExit = rejects(() => promise, /Process exited with non zero exit code/)
   await rejects(() => childManager.send(socket, 'close'), {
     handlerErrorCode: 'PLT_BASIC_APPLICATION_SHUTDOWN'
@@ -126,10 +127,9 @@ test('ChildProcess - the process exits in case of invalid messages', async t => 
   const capability = await create(t)
 
   const executablePath = fileURLToPath(new URL('../fixtures/wait-for-close.js', import.meta.url))
+  const ready = waitForChildEvent(t, capability, 'ready')
   const promise = capability.buildWithCommand(['node', executablePath])
-  const childManager = await getChildManager(capability)
-
-  await once(childManager, 'ready')
+  const [childManager] = await ready
 
   childManager._send('INVALID', false)
   await rejects(() => promise, /Process exited with non zero exit code 21./)
@@ -147,10 +147,9 @@ test('ChildProcess - should not modify HTTP options for UNIX sockets', async t =
   const capability = await create(t)
 
   const executablePath = fileURLToPath(new URL('../fixtures/unix-socket-server.js', import.meta.url))
+  const listening = waitForChildEvent(t, capability, 'path')
   const promise = capability.buildWithCommand(['node', executablePath])
-  const childManager = await getChildManager(capability)
-
-  const [path] = await once(childManager, 'path')
+  const [, path] = await listening
 
   {
     const client = new Client(
@@ -235,10 +234,9 @@ test('ChildProcess - should intercept fetch calls', async t => {
   })
 
   const executablePath = fileURLToPath(new URL('../fixtures/fetch.js', import.meta.url))
+  const ready = waitForChildEvent(t, capability, 'ready')
   const promise = capability.buildWithCommand(['node', executablePath], null, { context: { interceptLogging: true } })
-  const manager = await getChildManager(capability)
-
-  await once(manager, 'ready')
+  const [manager] = await ready
 
   ok(await manager.send(Array.from(manager.getClients())[0], 'start', server.address().port))
 
@@ -319,10 +317,9 @@ test('ChildProcess - updateMetricsConfig should update metrics in subprocess', a
   const capability = await create(t, { metricsConfig: { enabled: true } })
 
   const executablePath = fileURLToPath(new URL('../fixtures/metrics-subprocess.js', import.meta.url))
+  const ready = waitForChildEvent(t, capability, 'ready')
   const promise = capability.buildWithCommand(['node', executablePath])
-  const childManager = await getChildManager(capability)
-
-  const [, socket] = await once(childManager, 'ready')
+  const [childManager, , socket] = await ready
 
   // Initialize metrics collection in the subprocess
   await childManager.send(socket, 'collectMetrics', {
@@ -366,10 +363,9 @@ test('ChildProcess - getHealth should return health metrics', async t => {
   const capability = await create(t, { metricsConfig: { enabled: true } })
 
   const executablePath = fileURLToPath(new URL('../fixtures/metrics-subprocess.js', import.meta.url))
+  const ready = waitForChildEvent(t, capability, 'ready')
   const promise = capability.buildWithCommand(['node', executablePath])
-  const childManager = await getChildManager(capability)
-
-  const [, socket] = await once(childManager, 'ready')
+  const [childManager, , socket] = await ready
 
   // Get health metrics from the subprocess
   const health = await childManager.send(socket, 'getHealth')
@@ -392,11 +388,11 @@ test('ChildProcess - sendHealthSignal should be available in subprocess', async 
   const capability = await create(t, { metricsConfig: { enabled: true } })
 
   const executablePath = fileURLToPath(new URL('../fixtures/health-signals-subprocess.js', import.meta.url))
+  const healthSignals = waitForChildEvent(t, capability, 'healthSignals')
   const promise = capability.buildWithCommand(['node', executablePath])
-  const childManager = await getChildManager(capability)
 
   // Wait for health signals notification
-  const [healthSignalsData] = await once(childManager, 'healthSignals')
+  const [, healthSignalsData] = await healthSignals
 
   // Verify health signals structure
   ok(healthSignalsData.signals, 'Expected signals array')

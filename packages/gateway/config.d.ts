@@ -154,6 +154,12 @@ export interface PlatformaticGatewayConfig {
   gateway?: {
     applications?: {
       id: string;
+      enabled?:
+        | boolean
+        | string
+        | {
+            [k: string]: boolean;
+          };
       origin?: string;
       openapi?: {
         [k: string]: unknown;
@@ -178,6 +184,12 @@ export interface PlatformaticGatewayConfig {
             rewriteLocationHeader?: boolean;
             hostname?: string;
             proxyPayloads?: boolean;
+            headers?: {
+              [k: string]: string | null;
+            };
+            responseHeaders?: {
+              [k: string]: string | null;
+            };
             custom?: {
               path: string;
               options?: {
@@ -211,6 +223,10 @@ export interface PlatformaticGatewayConfig {
               ttl?: number;
               lockTtl?: number;
             };
+            /**
+             * Set to false to leave the responses of this application alone: they are not compressed by the gateway and the Accept-Encoding header of the client is forwarded as it is.
+             */
+            compression?: boolean;
             ws?: {
               upstream?: string;
               reconnect?: {
@@ -230,6 +246,7 @@ export interface PlatformaticGatewayConfig {
           };
     }[];
     handler?: string;
+    wrappingHandler?: string;
     deduplication?: {
       enabled?: boolean | string;
       storage?:
@@ -257,6 +274,46 @@ export interface PlatformaticGatewayConfig {
       ttl?: number;
       lockTtl?: number;
     };
+    /**
+     * Compress the responses of the proxied applications. When enabled, the applications running in the runtime are asked for uncompressed responses, so that each response is only compressed once, by the gateway.
+     */
+    compression?:
+      | boolean
+      | string
+      | {
+          enabled?:
+            | boolean
+            | string
+            | {
+                [k: string]: boolean;
+              };
+          /**
+           * The encodings to offer, in order of preference. Defaults to ["br", "gzip"].
+           *
+           * @minItems 1
+           */
+          encodings?: ["br" | "gzip" | "deflate", ...("br" | "gzip" | "deflate")[]];
+          brotli?: {
+            /**
+             * The brotli quality. Defaults to 4.
+             */
+            quality?: number;
+          };
+          gzip?: {
+            /**
+             * The gzip and deflate level. Defaults to 6.
+             */
+            level?: number;
+          };
+          /**
+           * Responses whose Content-Length is smaller than this number of bytes are not compressed. Defaults to 1024.
+           */
+          threshold?: number;
+          /**
+           * Paths whose responses are never compressed, for instance routes compressed by a CDN. A "*" matches any sequence of characters, so "/assets/*" excludes everything under "/assets/".
+           */
+          exclude?: string[];
+        };
     openapi?: {
       info?: Info;
       jsonSchemaDialect?: string;
@@ -796,9 +853,23 @@ export interface ApplicationHealthOptions {
   gracePeriod?: number | string;
   maxUnhealthyChecks?: number | string;
   maxELU?: number | string;
+  maxELULogLevel?: (
+    | ("fatal" | "error" | "warn" | "info" | "debug" | "trace" | "silent")
+    | {
+        [k: string]: unknown;
+      }
+  ) &
+    string;
   maxEventLoopDelay?: number | string;
   maxEventLoopDelayP99?: number | string;
   maxHeapUsed?: number | string;
+  maxHeapUsedLogLevel?: (
+    | ("fatal" | "error" | "warn" | "info" | "debug" | "trace" | "silent")
+    | {
+        [k: string]: unknown;
+      }
+  ) &
+    string;
   maxHeapTotal?: number | string;
   maxYoungGeneration?: number | string;
   codeRangeSize?: number | string;
@@ -982,9 +1053,23 @@ export interface HealthOptions {
   gracePeriod?: number | string;
   maxUnhealthyChecks?: number | string;
   maxELU?: number | string;
+  maxELULogLevel?: (
+    | ("fatal" | "error" | "warn" | "info" | "debug" | "trace" | "silent")
+    | {
+        [k: string]: unknown;
+      }
+  ) &
+    string;
   maxEventLoopDelay?: number | string;
   maxEventLoopDelayP99?: number | string;
   maxHeapUsed?: number | string;
+  maxHeapUsedLogLevel?: (
+    | ("fatal" | "error" | "warn" | "info" | "debug" | "trace" | "silent")
+    | {
+        [k: string]: unknown;
+      }
+  ) &
+    string;
   maxHeapTotal?: number | string;
   maxYoungGeneration?: number | string;
   codeRangeSize?: number | string;
@@ -1114,6 +1199,10 @@ export interface MetricsOptions {
    * Enable outgoing HTTP client request duration metrics
    */
   httpClientMetrics?: boolean | string;
+  /**
+   * Merge the metrics of all the workers of each application into a single set of series without the workerId label. Summaries are still reported per worker. Defaults to false.
+   */
+  aggregateWorkers?: boolean | string;
   readiness?:
     | boolean
     | {
@@ -1341,6 +1430,32 @@ export interface TelemetryOptions {
    * Enable the OpenTelemetry diagnostic logger. Diagnostic messages are forwarded to the Platformatic global logger using the current logger level.
    */
   diagLogger?: boolean | string;
+  /**
+   * How much to trace. Omitted, everything is recorded. Either a type out of the set OpenTelemetry defines for OTEL_TRACES_SAMPLER, or a package exporting a sampler.
+   */
+  sampler?:
+    | {
+        type:
+          | "always_on"
+          | "always_off"
+          | "traceidratio"
+          | "parentbased_always_on"
+          | "parentbased_always_off"
+          | "parentbased_traceidratio";
+        /**
+         * Options for the sampler, for instance { "ratio": 0.1 } for the ratio based ones.
+         */
+        options?: {
+          [k: string]: unknown;
+        };
+      }
+    | {
+        package: string;
+        exportName?: string;
+        options?: {
+          [k: string]: unknown;
+        };
+      };
 }
 export interface CompileCacheOptions1 {
   /**
@@ -1370,9 +1485,23 @@ export interface ApplicationHealthOptions1 {
   gracePeriod?: number | string;
   maxUnhealthyChecks?: number | string;
   maxELU?: number | string;
+  maxELULogLevel?: (
+    | ("fatal" | "error" | "warn" | "info" | "debug" | "trace" | "silent")
+    | {
+        [k: string]: unknown;
+      }
+  ) &
+    string;
   maxEventLoopDelay?: number | string;
   maxEventLoopDelayP99?: number | string;
   maxHeapUsed?: number | string;
+  maxHeapUsedLogLevel?: (
+    | ("fatal" | "error" | "warn" | "info" | "debug" | "trace" | "silent")
+    | {
+        [k: string]: unknown;
+      }
+  ) &
+    string;
   maxHeapTotal?: number | string;
   maxYoungGeneration?: number | string;
   codeRangeSize?: number | string;
@@ -1511,6 +1640,32 @@ export interface TelemetryOptions1 {
    * Enable the OpenTelemetry diagnostic logger. Diagnostic messages are forwarded to the Platformatic global logger using the current logger level.
    */
   diagLogger?: boolean | string;
+  /**
+   * How much to trace. Omitted, everything is recorded. Either a type out of the set OpenTelemetry defines for OTEL_TRACES_SAMPLER, or a package exporting a sampler.
+   */
+  sampler?:
+    | {
+        type:
+          | "always_on"
+          | "always_off"
+          | "traceidratio"
+          | "parentbased_always_on"
+          | "parentbased_always_off"
+          | "parentbased_traceidratio";
+        /**
+         * Options for the sampler, for instance { "ratio": 0.1 } for the ratio based ones.
+         */
+        options?: {
+          [k: string]: unknown;
+        };
+      }
+    | {
+        package: string;
+        exportName?: string;
+        options?: {
+          [k: string]: unknown;
+        };
+      };
 }
 export interface WatchOptions {
   enabled?: boolean | string;

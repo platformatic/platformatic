@@ -1,5 +1,5 @@
 import { execa } from 'execa'
-import { on, once } from 'node:events'
+import { on } from 'node:events'
 import { readFile } from 'node:fs/promises'
 import os from 'node:os'
 import { resolve } from 'node:path'
@@ -60,11 +60,11 @@ export async function startRuntime (configPath, env = {}, additionalArgs = []) {
 }
 
 export async function kill (runtime, signal = 'SIGKILL') {
-  if (typeof runtime.exitCode === 'number') {
+  if (typeof runtime.nodeChildProcess.exitCode === 'number') {
     return
   }
   safeKill(runtime, signal)
-  await once(runtime, 'exit')
+  await runtime.catch(() => {})
 }
 
 export async function safeKill (child) {

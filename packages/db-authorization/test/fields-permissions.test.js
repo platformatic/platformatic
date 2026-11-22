@@ -616,6 +616,121 @@ test('users can insert only the authorized fields', async () => {
   }
 })
 
+test('save and insert without selected fields are checked against the rule fields', async t => {
+  const app = fastify()
+  app.register(core, {
+    ...connInfo,
+    async onDatabaseLoad (db, sql) {
+      await clear(db, sql)
+      await createBasicPages(db, sql)
+    }
+  })
+  app.register(auth, {
+    jwt: {
+      secret: 'supersecret'
+    },
+    roleKey: 'X-PLATFORMATIC-ROLE',
+    anonymousRole: 'anonymous',
+    rules: [
+      {
+        role: 'user',
+        entity: 'page',
+        delete: false,
+        defaults: {
+          userId: 'X-PLATFORMATIC-USER-ID'
+        },
+        find: {
+          checks: {
+            userId: 'X-PLATFORMATIC-USER-ID'
+          }
+        },
+        save: {
+          checks: {
+            userId: 'X-PLATFORMATIC-USER-ID'
+          },
+          fields: ['id', 'title', 'topic', 'reviewedBy']
+        }
+      }
+    ]
+  })
+
+  // insert is not exposed through REST, so it is called with the request context
+  app.post('/insert', async (request, reply) => {
+    return app.platformatic.entities.page.insert({
+      inputs: request.body,
+      fields: request.query.fields?.split(','),
+      ctx: { app, reply }
+    })
+  })
+
+  t.after(() => app.close())
+
+  await app.ready()
+
+  const token = await app.jwt.sign({
+    'X-PLATFORMATIC-USER-ID': 42,
+    'X-PLATFORMATIC-ROLE': 'user'
+  })
+
+  const request = (method, url, body) =>
+    app.inject({
+      method,
+      url,
+      headers: {
+        Authorization: `Bearer ${token}`
+      },
+      body
+    })
+
+  const page = { title: 'TITLE_1', topic: 'TOPIC_1', reviewedBy: 'TEST' }
+
+  // Without selected fields every column is returned, including the ones outside the rule
+  const forbidden = {
+    statusCode: 403,
+    error: 'Forbidden',
+    code: 'PLT_DB_AUTH_FIELD_UNAUTHORIZED',
+    message: 'field not allowed: author'
+  }
+
+  {
+    const res = await request('POST', '/pages', page)
+    equal(res.statusCode, 403, 'POST /pages without fields status code')
+    deepEqual(res.json(), forbidden, 'POST /pages without fields response')
+  }
+
+  {
+    const res = await request('POST', '/insert', [page])
+    equal(res.statusCode, 403, 'insert without fields status code')
+    deepEqual(res.json(), forbidden, 'insert without fields response')
+  }
+
+  deepEqual(await app.platformatic.entities.page.find({ fields: ['id'] }), [], 'no page was created')
+
+  {
+    const res = await request('POST', '/pages?fields=id,title', page)
+    equal(res.statusCode, 200, 'POST /pages with fields status code')
+    deepEqual(res.json(), { id: 1, title: 'TITLE_1' }, 'POST /pages with fields response')
+  }
+
+  {
+    const res = await request('POST', '/insert?fields=id,title', [{ ...page, title: 'TITLE_2' }])
+    equal(res.statusCode, 200, 'insert with fields status code')
+    deepEqual(res.json(), [{ id: 2, title: 'TITLE_2' }], 'insert with fields response')
+  }
+
+  {
+    const res = await request('PUT', '/pages/1', { ...page, title: 'TITLE_1_UPDATED' })
+    equal(res.statusCode, 403, 'PUT /pages/1 without fields status code')
+    deepEqual(res.json(), forbidden, 'PUT /pages/1 without fields response')
+  }
+
+  {
+    const res = await request('PUT', '/pages/1?fields=id,title', { ...page, title: 'TITLE_1_UPDATED' })
+    equal(res.statusCode, 200, 'PUT /pages/1 with fields status code')
+    deepEqual(res.json(), { id: 1, title: 'TITLE_1_UPDATED' }, 'PUT /pages/1 with fields response')
+  }
+})
+
 test('app should not start if there are not nullable and not allowed fields in save rule', async () => {
   const app = fastify()
   app.register(core, {
@@ -942,4 +1057,278 @@ test('users cannot filter or sort on fields they are not allowed to read', async
     equal(res.statusCode, 403, 'GET /pages totalCount where on a hidden field status code')
     deepEqual(res.json(), forbidden, 'GET /pages totalCount where on a hidden field response')
   }
+})
+
+async function setupUpdateAndDeleteApp (t) {
+  const app = fastify()
+  app.register(core, {
+    ...connInfo,
+    async onDatabaseLoad (db, sql) {
+      await clear(db, sql)
+      await createBasicPages(db, sql)
+    }
+  })
+  app.register(auth, {
+    jwt: {
+      secret: 'supersecret'
+    },
+    roleKey: 'X-PLATFORMATIC-ROLE',
+    anonymousRole: 'anonymous',
+    rules: [
+      {
+        role: 'user',
+        entity: 'page',
+        defaults: {
+          userId: 'X-PLATFORMATIC-USER-ID'
+        },
+        find: {
+          checks: {
+            userId: 'X-PLATFORMATIC-USER-ID'
+          },
+          fields: ['id', 'title', 'topic']
+        },
+        save: {
+          checks: {
+            userId: 'X-PLATFORMATIC-USER-ID'
+          }
+        },
+        updateMany: {
+          checks: {
+            userId: 'X-PLATFORMATIC-USER-ID'
+          },
+          fields: ['id', 'title', 'topic', 'reviewedBy']
+        },
+        delete: {
+          checks: {
+            userId: 'X-PLATFORMATIC-USER-ID'
+          },
+          fields: ['id', 'title']
+        }
+      },
+      {
+        role: 'anonymous',
+        entity: 'page',
+        find: false,
+        delete: false,
+        save: false
+      }
+    ]
+  })
+  t.after(() => app.close())
+
+  await app.ready()
+
+  const token = await app.jwt.sign({
+    'X-PLATFORMATIC-USER-ID': 42,
+    'X-PLATFORMATIC-ROLE': 'user'
+  })
+
+  // Seed without authorization so that the hidden fields hold known values
+  await app.platformatic.entities.page.insert({
+    inputs: [
+      { title: 'TITLE_1', author: 'SECRET_AUTHOR', topic: 'TOPIC_1', reviewedBy: 'TEST', userId: 42 },
+      { title: 'TITLE_2', author: 'SECRET_AUTHOR', topic: 'TOPIC_2', reviewedBy: 'TEST', userId: 42 }
+    ]
+  })
+
+  return { app, token }
+}
+
+const forbiddenField = field => ({
+  statusCode: 403,
+  error: 'Forbidden',
+  code: 'PLT_DB_AUTH_FIELD_UNAUTHORIZED',
+  message: `field not allowed: ${field}`
+})
+
+async function readAllPages (app) {
+  return app.platformatic.entities.page.find({
+    fields: ['id', 'title', 'author', 'userId'],
+    orderBy: [{ field: 'id', direction: 'asc' }]
+  })
+}
+
+test('users can updateMany only the authorized fields', async t => {
+  const { app, token } = await setupUpdateAndDeleteApp(t)
+
+  // The PUT body must contain all the not nullable fields
+  const put = (url, body) =>
+    app.inject({
+      method: 'PUT',
+      url,
+      headers: {
+        Authorization: `Bearer ${token}`
+      },
+      body: { title: 'TITLE_1', topic: 'TOPIC_1', reviewedBy: 'TEST', ...body }
+    })
+
+  {
+    // The rule's own check is on userId, which is not in the rule's fields.
+    const res = await put('/pages/?fields=id,title&where.title.eq=TITLE_1', { title: 'TITLE_1_UPDATED' })
+    equal(res.statusCode, 200, 'allowed updateMany status code')
+    deepEqual(res.json(), [{ id: 1, title: 'TITLE_1_UPDATED' }], 'allowed updateMany response')
+  }
+
+  {
+    const res = await put('/pages/?fields=id&where.id.eq=1', { author: 'PWNED' })
+    equal(res.statusCode, 403, 'input with a hidden field status code')
+    deepEqual(res.json(), forbiddenField('author'), 'input with a hidden field response')
+  }
+
+  {
+    const res = await put('/pages/?fields=id&where.id.eq=1', { userId: 7 })
+    equal(res.statusCode, 403, 'input reassigning the owner status code')
+    deepEqual(res.json(), forbiddenField('userId'), 'input reassigning the owner response')
+  }
+
+  {
+    const res = await put('/pages/?fields=id&where.author.like=SECRET%25', {})
+    equal(res.statusCode, 403, 'where on a hidden field status code')
+    deepEqual(res.json(), forbiddenField('author'), 'where on a hidden field response')
+  }
+
+  {
+    const res = await put('/pages/?fields=id,author&where.id.eq=1', {})
+    equal(res.statusCode, 403, 'selecting a hidden field status code')
+    deepEqual(res.json(), forbiddenField('author'), 'selecting a hidden field response')
+  }
+
+  {
+    // Without fields every column is returned, including the hidden ones
+    const res = await put('/pages/?where.id.eq=1', {})
+    equal(res.statusCode, 403, 'default fields status code')
+    deepEqual(res.json(), forbiddenField('author'), 'default fields response')
+  }
+
+  deepEqual(
+    await readAllPages(app),
+    [
+      { id: 1, title: 'TITLE_1_UPDATED', author: 'SECRET_AUTHOR', userId: 42 },
+      { id: 2, title: 'TITLE_2', author: 'SECRET_AUTHOR', userId: 42 }
+    ],
+    'rejected updates did not change the rows'
+  )
+})
+
+test('users can delete only with the authorized fields', async t => {
+  const { app, token } = await setupUpdateAndDeleteApp(t)
+
+  const inject = query =>
+    app.inject({
+      method: 'POST',
+      url: '/graphql',
+      headers: {
+        Authorization: `Bearer ${token}`
+      },
+      body: { query }
+    })
+
+  {
+    const res = await inject(`
+      mutation {
+        deletePages(where: { author: { eq: "SECRET_AUTHOR" } }) {
+          id
+        }
+      }
+    `)
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          deletePages: null
+        },
+        errors: [
+          {
+            message: 'field not allowed: author',
+            locations: [{ line: 3, column: 9 }],
+            path: ['deletePages']
+          }
+        ]
+      },
+      'where on a hidden field response'
+    )
+  }
+
+  {
+    const res = await inject(`
+      mutation {
+        deletePages(where: { title: { eq: "TITLE_1" } }) {
+          id
+          author
+        }
+      }
+    `)
+    deepEqual(
+      res.json(),
+      {
+        data: {
+          deletePages: null
+        },
+        errors: [
+          {
+            message: 'field not allowed: author',
+            locations: [{ line: 3, column: 9 }],
+            path: ['deletePages']
+          }
+        ]
+      },
+      'selecting a hidden field response'
+    )
+  }
+
+  {
+    const res = await app.inject({
+      method: 'DELETE',
+      url: '/pages/1?fields=id,author',
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
+    equal(res.statusCode, 403, 'DELETE /pages/1 selecting a hidden field status code')
+    deepEqual(res.json(), forbiddenField('author'), 'DELETE /pages/1 selecting a hidden field response')
+  }
+
+  {
+    const res = await app.inject({
+      method: 'DELETE',
+      url: '/pages/1',
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
+    equal(res.statusCode, 403, 'DELETE /pages/1 default fields status code')
+    deepEqual(res.json(), forbiddenField('author'), 'DELETE /pages/1 default fields response')
+  }
+
+  deepEqual(
+    (await readAllPages(app)).map(({ id }) => id),
+    [1, 2],
+    'rejected deletes did not remove any row'
+  )
+
+  {
+    const res = await inject(`
+      mutation {
+        deletePages(where: { title: { eq: "TITLE_1" } }) {
+          id
+          title
+        }
+      }
+    `)
+    deepEqual(res.json(), { data: { deletePages: [{ id: 1, title: 'TITLE_1' }] } }, 'allowed delete response')
+  }
+
+  {
+    const res = await app.inject({
+      method: 'DELETE',
+      url: '/pages/2?fields=id,title',
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
+    equal(res.statusCode, 200, 'DELETE /pages/2 allowed status code')
+    deepEqual(res.json(), { id: 2, title: 'TITLE_2' }, 'DELETE /pages/2 allowed response')
+  }
+
+  deepEqual(await readAllPages(app), [], 'allowed deletes removed the rows')
 })

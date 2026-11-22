@@ -138,9 +138,10 @@ test('should watch api only if it has a url', async t => {
     await testEntityRoutes(gatewayOrigin, ['/api1/users', '/api2/posts'])
   }
 
+  const notRestarted = assert.rejects(waitForRestart(runtime, gatewayOrigin))
   await api2.close()
 
-  await assert.rejects(() => waitForRestart(runtime, gatewayOrigin))
+  await notRestarted
 
   {
     const { statusCode, body } = await runtime.inject('composer', {
@@ -298,10 +299,11 @@ test('should not watch an api if refreshTimeout equals 0', async t => {
 
   await runtime.start()
 
+  const notRestarted = assert.rejects(waitForRestart(runtime))
   await api1.close()
   await api2.close()
 
-  await assert.rejects(() => waitForRestart(runtime))
+  await notRestarted
 })
 
 test('should not restart gateway if schema has been changed', async t => {

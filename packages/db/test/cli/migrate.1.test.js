@@ -160,15 +160,17 @@ test('do not run migrations by default', async t => {
 
   const splitter = split()
   const output = firstChild.stdout.pipe(splitter)
+  const messages = output[Symbol.asyncIterator]()
+  t.after(() => messages.return())
 
   {
-    const [out] = await once(output, 'data')
+    const { value: out } = await messages.next()
     const { msg } = JSON.parse(out)
     assert.equal(msg, 'Ignored table "versions" not found.')
   }
 
   {
-    const [out] = await once(output, 'data')
+    const { value: out } = await messages.next()
     const { msg } = JSON.parse(out)
     assert.equal(
       msg,

@@ -7,6 +7,7 @@ import { fastifyTextMapGetter, fastifyTextMapSetter } from './fastify-text-map.j
 import { setupDiagLogger } from './diag-logger.js'
 import { PlatformaticContext } from './platformatic-context.js'
 import { PlatformaticTracerProvider } from './platformatic-trace-provider.js'
+import { getSampler } from './samplers.js'
 import { getSpanProcessors } from './span-processors.js'
 
 import { name as moduleName, version as moduleVersion } from './version.js'
@@ -71,15 +72,18 @@ export const formatSpanAttributes = {
   }
 }
 
-const initTelemetry = (opts, logger) => {
+const initTelemetry = async (opts, logger) => {
   const { exporters, spanProcessors } = getSpanProcessors(opts, logger)
   const { applicationName, version } = opts
+  const sampler = await getSampler(opts)
 
   const provider = new PlatformaticTracerProvider({
     resource: resourceFromAttributes({
       [ATTR_SERVICE_NAME]: applicationName,
       [ATTR_SERVICE_VERSION]: version
-    })
+    }),
+    // Left out entirely when unconfigured, so the provider keeps its own default.
+    ...(sampler ? { sampler } : {})
   })
 
   provider.addSpanProcessor(spanProcessors)
@@ -89,10 +93,10 @@ const initTelemetry = (opts, logger) => {
   return { tracer, exporters, propagator, provider, spanProcessors }
 }
 
-export function setupTelemetry (opts, logger) {
+export async function setupTelemetry (opts, logger) {
   setupDiagLogger(opts, logger)
 
-  const openTelemetryAPIs = initTelemetry(opts, logger)
+  const openTelemetryAPIs = await initTelemetry(opts, logger)
   const { tracer, propagator, provider } = openTelemetryAPIs
   const skipOperations =
     opts?.skip?.map(skip => {

@@ -1,13 +1,13 @@
 import { createNoopMeter } from '@opentelemetry/api'
 import { CompositePropagator, merge, W3CTraceContextPropagator } from '@opentelemetry/core'
 import { emptyResource } from '@opentelemetry/resources'
-import { AlwaysOnSampler, RandomIdGenerator } from '@opentelemetry/sdk-trace'
-import { createRequire } from 'node:module'
+import { AlwaysOnSampler, RandomIdGenerator, TracerProvider } from '@opentelemetry/sdk-trace'
 import { MultiSpanProcessor } from './multispan-processor.js'
 
-const require = createRequire(import.meta.url)
-// We need to import the Tracer to write our own TracerProvider that does NOT extend the OpenTelemetry one.
-const { Tracer } = require('@opentelemetry/sdk-trace/build/src/Tracer')
+// We need the Tracer class to write our own TracerProvider that does NOT extend the OpenTelemetry one.
+// Since SDK 3.x the package has an `exports` map and does not export Tracer, so we take its
+// constructor from a tracer created by a throwaway provider.
+const Tracer = new TracerProvider({ resource: emptyResource }).getTracer('@platformatic/tracing').constructor
 
 const noopMeterProvider = {
   getMeter () {

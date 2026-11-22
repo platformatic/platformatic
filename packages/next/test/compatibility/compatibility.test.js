@@ -1,6 +1,6 @@
 import { createDirectory, safeRemove } from '@platformatic/foundation'
 import { execa } from 'execa'
-import { deepStrictEqual } from 'node:assert'
+import { deepStrictEqual, ok } from 'node:assert'
 import { existsSync } from 'node:fs'
 import { readFile, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
@@ -74,6 +74,7 @@ const reactVersions = {
   [NEXT_VERSION_16_1]: [REACT_VERSION_18, REACT_VERSION_19],
 }
 
+// Filter before preparing fixtures so each CI job installs only its selected versions.
 const compatibilityVersions = [
   NEXT_VERSION_14_0,
   NEXT_VERSION_14_1,
@@ -85,8 +86,10 @@ const compatibilityVersions = [
   NEXT_VERSION_15_4,
   NEXT_VERSION_15_5,
   NEXT_VERSION_16_0,
-  NEXT_VERSION_16_1,
-]
+  NEXT_VERSION_16_1
+].filter(version => !process.env.NEXT_TEST_VERSION || version.startsWith(`${process.env.NEXT_TEST_VERSION}.`))
+
+ok(compatibilityVersions.length > 0, `Unsupported Next.js test version: ${process.env.NEXT_TEST_VERSION}`)
 
 function websocketHMRHandler (message, resolveConnection, resolveReload) {
   // Type is used in Next.js 16.0+, action in earlier versions.

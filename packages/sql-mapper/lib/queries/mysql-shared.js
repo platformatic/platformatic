@@ -25,7 +25,7 @@ export async function listTables (db, sql, schemas) {
 
 export async function listColumns (db, sql, table, schema) {
   const query = sql`
-    SELECT column_name as column_name, data_type as udt_name, is_nullable as is_nullable, column_type as column_type, extra as is_generated
+    SELECT column_name as column_name, data_type as udt_name, is_nullable as is_nullable, column_type as column_type, extra as is_generated, column_default as column_default
     FROM information_schema.columns
     WHERE table_name = ${table}
     AND table_schema = ${schema}
@@ -79,19 +79,24 @@ export async function updateOne (db, sql, table, schema, input, primaryKeys, fie
     SET ${sql.join(pairs, sql`, `)}
     WHERE ${sql.join(where, sql` AND `)}
   `
-  await db.query(update)
+  return db.tx(async tx => {
+    // InnoDB's default REPEATABLE READ isolation locks the matching row (or
+    // primary-key gap) until commit. At READ COMMITTED, a missing-row insert
+    // can still race because InnoDB does not take gap locks.
+    await tx.query(update)
 
-  const select = sql`
-    SELECT ${sql.join(fieldsToRetrieve, sql`, `)}
-    FROM ${tableName(sql, table, schema)}
-    WHERE ${sql.join(where, sql` AND `)}
-  `
+    const select = sql`
+      SELECT ${sql.join(fieldsToRetrieve, sql`, `)}
+      FROM ${tableName(sql, table, schema)}
+      WHERE ${sql.join(where, sql` AND `)}
+    `
 
-  const res = await db.query(select)
-  return res[0]
+    const res = await tx.query(select)
+    return res[0]
+  })
 }
 
-export async function updateMany (db, sql, table, schema, criteria, input, fieldsToRetrieve) {
+export async function updateMany (db, sql, table, schema, criteria, input, primaryKeys, fieldsToRetrieve) {
   const pairs = Object.keys(input).map(key => {
     let value = input[key]
     /* istanbul ignore next */
@@ -102,12 +107,12 @@ export async function updateMany (db, sql, table, schema, criteria, input, field
   })
 
   const selectIds = sql`
-    SELECT id
+    SELECT ${sql.join([...primaryKeys].map(key => sql.ident(key)), sql`, `)}
     FROM ${tableName(sql, table, schema)}
     WHERE ${sql.join(criteria, sql` AND `)}
   `
+
   const resp = await db.query(selectIds)
-  const ids = resp.map(({ id }) => id)
 
   const update = sql`
     UPDATE ${tableName(sql, table, schema)}
@@ -117,11 +122,19 @@ export async function updateMany (db, sql, table, schema, criteria, input, field
 
   await db.query(update)
 
+  const conditions = resp.map(row => sql`(
+    ${sql.join(
+      [...primaryKeys].map(key => sql`${sql.ident(key)} = ${row[key]}`),
+      sql` AND `
+    )}
+  )`)
+
   const select = sql`
     SELECT ${sql.join(fieldsToRetrieve, sql`, `)}
     FROM ${tableName(sql, table, schema)}
-    WHERE id IN (${ids});
+    WHERE ${sql.join(conditions, sql` OR `)}
   `
+
   const res = await db.query(select)
   return res
 }

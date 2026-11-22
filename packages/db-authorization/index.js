@@ -171,6 +171,9 @@ async function auth (app, opts) {
 
       const kAuthorizedWrite = Symbol('authorizedWrite')
 
+      // Fields returned when the caller does not select any, as the names used in rules
+      const allFields = Object.keys(type.camelCasedFields)
+
       function useOriginal (skipAuth, ctx) {
         if (skipAuth === false && !ctx) {
           throw new Error('Cannot set skipAuth to `false` without ctx')
@@ -200,7 +203,7 @@ async function auth (app, opts) {
           authorizedWrite.ctx === ctx &&
           authorizedWrite.inputs === inputs
         ) {
-          checkFieldsFromRule(authorizedWrite.rule.save, fields)
+          checkFieldsFromRule(authorizedWrite.rule.save, fields || allFields)
           return authorizedWrite
         }
 
@@ -214,7 +217,7 @@ async function auth (app, opts) {
         const isArray = Array.isArray(inputs)
         let normalizedInputs = (isArray ? inputs : [inputs]).map(normalizeWriteInput)
 
-        checkFieldsFromRule(rule.save, fields)
+        checkFieldsFromRule(rule.save, fields || allFields)
         checkInputFromRuleFields(rule.save, isArray ? normalizedInputs : normalizedInputs[0])
 
         /* istanbul ignore else */
@@ -342,6 +345,10 @@ async function auth (app, opts) {
           const request = getRequestFromContext(ctx)
           const rule = await findRuleForRequestUser(ctx, rules, roleKey, anonymousRole, isRolePath, roleMergeStrategy)
 
+          // delete returns the deleted rows and accepts a where clause from the
+          // user, so the rule's fields restrict both, as they do for find.
+          checkFieldsFromRule(rule.delete, fields || allFields)
+          checkWhereFromRule(rule.delete, where)
           where = await fromRuleToWhere(ctx, rule.delete, where, request.user)
 
           return originalDelete({ where, ctx, fields, ...restOpts })
@@ -354,6 +361,16 @@ async function auth (app, opts) {
           const request = getRequestFromContext(ctx)
           const rule = await findRuleForRequestUser(ctx, rules, roleKey, anonymousRole, isRolePath, roleMergeStrategy)
 
+          if (!rule.updateMany) {
+            throw new Unauthorized()
+          }
+          // updateMany writes the input, filters with a where clause from the
+          // user and returns the updated rows: the rule's fields restrict all three.
+          checkFieldsFromRule(rule.updateMany, fields || allFields)
+          if (restOpts.input) {
+            checkInputFromRuleFields(rule.updateMany, restOpts.input)
+          }
+          checkWhereFromRule(rule.updateMany, where)
           where = await fromRuleToWhere(ctx, rule.updateMany, where, request.user)
 
           return originalUpdateMany({ ...restOpts, where, ctx, fields })

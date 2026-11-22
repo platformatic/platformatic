@@ -17,6 +17,7 @@ import { RoundRobinMap } from './round-robin-map.js'
 import { kWorkersBroadcast } from './symbols.js'
 
 const kPendingResponses = Symbol('plt.messaging.pendingResponses')
+const kRequestTimeoutCode = 'PLT_ITC_REQUEST_TIMEOUT'
 
 function serializeWorker ({ id, application, worker, thread }) {
   return { id, application, worker, thread }
@@ -183,29 +184,26 @@ export class MessagingITC extends ITC {
         this._setupChannel(channel)
       }
 
+      // The caller's signal, if any, is passed through to the ITC together with the response timeout.
       const context = { ...sendOptions }
       context.channel = worker.channel
       context.application = worker.application
       context.trackResponse = true
+      context.timeout = this.#timeout
 
       if (sendOptions.meta || telemetry?.meta) {
         context.meta = { ...sendOptions.meta, ...telemetry?.meta }
       }
 
-      const abortController = new AbortController()
-      const timeout = setTimeout(() => abortController.abort(), this.#timeout).unref()
-      context.signal = abortController.signal
-
       try {
         const send = () => super.send(name, message, context)
         return telemetry ? await telemetry.run(send) : await send()
       } catch (err) {
-        if (abortController.signal.aborted) {
+        // Compare the code rather than the class, in case two copies of @platformatic/itc are installed.
+        if (err?.code === kRequestTimeoutCode) {
           throw new MessagingError(application, 'Timeout while waiting for a response.')
         }
         throw err
-      } finally {
-        clearTimeout(timeout)
       }
     } catch (err) {
       error = err

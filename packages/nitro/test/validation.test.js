@@ -49,7 +49,7 @@ test('rejects server.http2 in application configuration', async () => {
   )
 })
 
-for (const property of ['ssr', 'notFoundHandler']) {
+for (const property of ['ssr', 'notFoundHandler', 'preCompressed']) {
   test(`rejects unsupported vite.${property} configuration`, async () => {
     await rejects(
       loadConfiguration(resolve(import.meta.dirname, '..'), { vite: { [property]: true } }),

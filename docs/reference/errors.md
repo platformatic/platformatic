@@ -2,6 +2,9 @@
 
 ## @platformatic/basic 
 
+### PLT_BASIC_APPLICATION_SHUTDOWN_TIMEOUT
+**Message:** Child process shutdown exceeded its deadline 
+
 ### PLT_BASIC_CAPABILITY_FACTORY_KEY_COLLISION
 **Message:** %s cannot flatten '%s' from the %s block: it already collides with %s. 
 
@@ -18,7 +21,7 @@
 **Message:** Scheduled task "%s" not found 
 
 ### PLT_BASIC_UNSUPPORTED_VERSION
-**Message:** %s version %s is not supported. Please use version %s. 
+**Message:** undefined version undefined is not supported. Please use version undefined. 
 
 ## @platformatic/db 
 
@@ -39,6 +42,9 @@
 
 ### PLT_DB_MISSING_SEED_FILE_ERROR
 **Message:** Missing seed file 
+
+### PLT_DB_OUT_OF_ORDER_MIGRATIONS_ERROR
+**Message:** Found migrations below the current database version %s that are not recorded as applied: %s. See the "migrations.outOfOrder" option. 
 
 ### PLT_DB_UNKNOWN_DATABASE_ERROR
 **Message:** Unknown database 
@@ -86,6 +92,9 @@
 ### PLT_SOURCE_MISSING
 **Message:** Source missing. 
 
+### PLT_UNSUPPORTED_NODE_VERSION
+**Message:** Your current Node.js version is %s, while the minimum supported version is v%s. Please upgrade Node.js and try again. 
+
 ## @platformatic/gateway 
 
 ### PLT_GATEWAY_COULD_NOT_READ_OPENAPI_CONFIG
@@ -97,6 +106,12 @@
 ### PLT_GATEWAY_FASTIFY_INSTANCE_IS_ALREADY_LISTENING
 **Message:** Fastify instance is already listening. Cannot call "addGatewayOnRouteHook"! 
 
+### PLT_GATEWAY_INVALID_CUSTOM_HANDLER
+**Message:** Custom proxy handler "%s" must be a function. 
+
+### PLT_GATEWAY_INVALID_HEADERS_OVERRIDE
+**Message:** getHeadersOverride must return request and response header objects with string, string-array or null values. 
+
 ### PLT_GATEWAY_INVALID_OPENAPI_SCHEMA
 **Message:** Failed to compose OpenAPI schemas: %s 
 
@@ -107,6 +122,12 @@
 **Message:** Validation errors: %s 
 
 ## @platformatic/globals 
+
+### PLT_GLOBALS_CLOSE_CALLBACK_REGISTRATION_CLOSED
+**Message:** Close callbacks cannot be registered after callback execution has started 
+
+### PLT_GLOBALS_INVALID_CLOSE_CALLBACK
+**Message:** The close callback must be a function or an object implementing Symbol.asyncDispose 
 
 ### PLT_GLOBALS_MISSING_FIELD
 **Message:** Global runtime API "%s" is not available 
@@ -148,6 +169,9 @@
 
 ### PLT_ITC_REQUEST_NAME_IS_NOT_STRING
 **Message:** ITC request name is not a string: "%s" 
+
+### PLT_ITC_REQUEST_TIMEOUT
+**Message:** ITC request "%s" timed out after %s milliseconds 
 
 ### PLT_ITC_SEND_BEFORE_LISTEN
 **Message:** ITC cannot send requests before listening 
@@ -249,6 +273,9 @@
 ### PLT_RUNTIME_FAILED_TO_UNLINK_MANAGEMENT_API_SOCKET
 **Message:** Failed to unlink management API socket "%s" 
 
+### PLT_RUNTIME_FAILED_TO_UPDATE_METRICS_CONFIG
+**Message:** Failed to update metrics configuration on worker "%s": %s 
+
 ### PLT_RUNTIME_HEALTH_SIGNAL_MUST_BE_OBJECT
 **Message:** Health signal must be an object 
 
@@ -270,6 +297,9 @@
 ### PLT_RUNTIME_INVALID_ARGUMENT
 **Message:** Invalid argument: "%s" 
 
+### PLT_RUNTIME_INVALID_EXTENSION_CONFIGURE
+**Message:** The extension "%s" must export configure as a function 
+
 ### PLT_RUNTIME_INVALID_EXTENSION
 **Message:** The extension "%s" must export a setup function as its default export or as a named "setup" export 
 
@@ -288,6 +318,9 @@
 ### PLT_RUNTIME_METRIC_FAMILY_COLLISION
 **Message:** Extension "%s" registered metric family "%s" which collides with %s 
 
+### PLT_RUNTIME_METRICS_DISABLED
+**Message:** Metrics are disabled. 
+
 ### PLT_RUNTIME_MISSING_DEPENDENCY
 **Message:** Missing dependency: "%s" 
 
@@ -302,6 +335,9 @@
 
 ### PLT_RUNTIME_NODE_INSPECTOR_FLAGS_NOT_SUPPORTED
 **Message:** The Node.js inspector flags are not supported. Please use 'wattpm start --inspect' instead. 
+
+### PLT_RUNTIME_PACKAGE_VERSION_MISMATCH
+**Message:** %s 
 
 ### PLT_RUNTIME_RESERVED_ITC_HANDLER_NAME
 **Message:** The ITC command name "%s" is reserved by the runtime 

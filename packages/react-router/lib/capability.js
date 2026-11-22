@@ -20,7 +20,7 @@ import { createRequestHandler } from 'react-router'
 import { satisfies } from 'semver'
 import { packageJson } from './schema.js'
 
-export const supportedVersions = '^7.0.0'
+export const supportedVersions = '^7.0.0 || ^8.0.0'
 
 export class ReactRouterCapability extends ViteCapability {
   #app

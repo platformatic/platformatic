@@ -1,11 +1,14 @@
 import { ensureLoggableError, loadModule } from '@platformatic/foundation'
 import { DynamicBuffer } from '@platformatic/dynamic-buffer'
+import { asReadable } from '@platformatic/dynamic-buffer/readable'
 import Router from 'find-my-way'
 import { randomUUID } from 'node:crypto'
 import { createRequire } from 'node:module'
 import { resolve } from 'node:path'
 import { PassThrough } from 'node:stream'
 import stringify from 'safe-stable-stringify'
+import { kGatewayProxyResponseHandler } from '../symbols.js'
+import { applyResponseHeadersOverride, sharedResponseHeaders } from '../headers-override.js'
 import { MemoryDeduplicationStorage } from './memory-storage.js'
 import { ValkeyDeduplicationStorage } from './valkey-storage.js'
 
@@ -28,7 +31,8 @@ export async function createDeduplicationHandler ({
   overrideConfig,
   handler,
   metrics,
-  root
+  root,
+  send
 }) {
   if (!baseConfig && !overrideConfig) {
     return handler
@@ -147,6 +151,12 @@ export async function createDeduplicationHandler ({
 
         async function deduplicateResponse (proxiedRequest, proxiedReply, res) {
           const body = new DynamicBuffer()
+          // The headers are captured before the response is sent, as sending it can change them
+          // (for instance, compressing it sets Content-Encoding) while the stored body is the upstream one.
+          const headers = sharedResponseHeaders(proxiedRequest, proxiedReply.getHeaders())
+          // A wrapper may already have sent transformed headers before the upstream responds.
+          // Keep metadata matching the retained bytes for response handlers, independently of ordinary replay headers.
+          const upstreamHeaders = structuredClone(res.headers)
 
           // The client receives the body as it arrives from the upstream, while
           // the same chunks accumulate for storage. Backpressure from the client
@@ -181,7 +191,8 @@ export async function createDeduplicationHandler ({
               responseId,
               {
                 statusCode: res.statusCode,
-                headers: proxiedReply.getHeaders(),
+                headers,
+                upstreamHeaders,
                 body: body.buffers
               },
               config.ttl
@@ -241,10 +252,23 @@ export async function createDeduplicationHandler ({
         continue
       }
 
+      metrics?.deduplicationReplay?.inc()
+      const body = asReadable(new DynamicBuffer(response.body))
+      applyResponseHeadersOverride(request, reply)
+      const responseHandler = reply[kGatewayProxyResponseHandler]
+      if (responseHandler) {
+        // Records written by older gateway workers have no upstream metadata; acquire a fresh response instead.
+        if (!response.upstreamHeaders) {
+          body.destroy()
+          return handler(request, reply, dest, options)
+        }
+        responseHandler.onResponse({ statusCode: response.statusCode, headers: response.upstreamHeaders, stream: body })
+        return reply
+      }
       reply.code(response.statusCode)
       reply.headers(response.headers)
-      metrics?.deduplicationReplay?.inc()
-      return reply.send(new DynamicBuffer(response.body).asReadable())
+      applyResponseHeadersOverride(request, reply)
+      return send ? send(request, reply, body) : reply.send(body)
     }
 
     metrics?.deduplicationFallback?.inc()

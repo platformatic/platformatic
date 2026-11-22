@@ -9,6 +9,10 @@ import SharedOverview from '../node/\_shared-overview.md';
 
 The Platformatic React Router allows to run a [React Router](https://reactrouter.com/) application as a Platformatic Runtime application with no modifications.
 
+## Supported versions
+
+Platformatic React Router supports [React Router](https://reactrouter.com/) 7 and 8.
+
 ## Getting Started
 
 Create or copy a React Router Start application inside the `applications`, `services` or `web` folder. If you are not using [`autoload`](../runtime/configuration.md#autoload), you also have to explictly add the new application.
@@ -68,9 +72,9 @@ export default defineConfig({
 
 ## Providing a custom entrypoint
 
-If you want provide a custom entrypoint which will be used in `@react-router/node`, you need to make three configuration changes:
+If you want provide a custom entrypoint which will be used in `@react-router/node`, you need to make two configuration changes:
 
-1. Modify your Vite configuration to properly handle SSR builds by making it dependent on the SSR flags:
+1. Point the Vite SSR build at your custom server entry. The following configuration works with React Router 7 and 8. For React Router 8, the Vite Environment API is always enabled and `build.rollupOptions.input` gated on `isSsrBuild` is ignored, so the input also has to be set under `environments.ssr.build.rollupOptions.input`. See [Migrating to React Router 8](#migrating-to-react-router-8).
 
    ```typescript source
    import { getBasePath } from '@platformatic/globals'
@@ -80,8 +84,19 @@ If you want provide a custom entrypoint which will be used in `@react-router/nod
 
    export default defineConfig(({ isSsrBuild }) => ({
      base: getBasePath({ throwOnMissing: false }) ?? '/',
+     // React Router 7
      build: {
        rollupOptions: isSsrBuild ? { input: './app/server.ts' } : undefined
+     },
+     // React Router 8
+     environments: {
+       ssr: {
+         build: {
+           rollupOptions: {
+             input: './app/server.ts'
+           }
+         }
+       }
      },
      plugins: [reactRouter(), tsconfigPaths()],
      server: {
@@ -100,6 +115,14 @@ If you want provide a custom entrypoint which will be used in `@react-router/nod
    ```
 
    This file serves as the SSR entrypoint for the server build and is referenced in the Vite configuration.
+
+## Migrating to React Router 8
+
+When upgrading an application to React Router 8, follow the official [React Router upgrade guide](https://reactrouter.com/upgrading/v7).
+
+React Router 8 requires Node.js 22.22 or later, React 19.2.7 or later, and Vite 7 or later. The `react-router-dom` package has been removed; import from `react-router` instead (use `react-router/dom` only for `RouterProvider` or `HydratedRouter`).
+
+If you use a custom server whose Vite SSR input is set with `build.rollupOptions.input` conditioned on `isSsrBuild`, move that input to `environments.ssr.build.rollupOptions.input`. In React Router 8 the Vite Environment API is always on, so the old `isSsrBuild` input is ignored and a production command such as `node build/server/index.js` will not start a server. Keep both forms if you still need to support React Router 7, as shown in [Providing a custom entrypoint](#providing-a-custom-entrypoint).
 
 ## Skew protection
 

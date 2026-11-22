@@ -1,6 +1,6 @@
 import { deepEqual, strictEqual } from 'node:assert'
 import test from 'node:test'
-import { fastifyServer, omitProperties, overridableValue, removeDefaults, server } from '../index.js'
+import { fastifyServer, isEnabled, omitProperties, overridableValue, removeDefaults, server } from '../index.js'
 
 test('overridableValue - should create schema with anyOf and default', () => {
   const spec = { type: 'number', minimum: 0 }
@@ -102,4 +102,34 @@ test('keepAliveTimeout preserves capability-specific defaults', () => {
   strictEqual(server.properties.keepAliveTimeout.minimum, 0)
   strictEqual(server.properties.keepAliveTimeout.default, undefined)
   deepEqual(fastifyServer.properties.keepAliveTimeout, { type: 'integer', default: 5000 })
+})
+
+test('isEnabled - should enable when no value is set', () => {
+  strictEqual(isEnabled(undefined, 'production'), true)
+  strictEqual(isEnabled(undefined, 'development'), true)
+})
+
+test('isEnabled - should return a boolean as is', () => {
+  strictEqual(isEnabled(true, 'production'), true)
+  strictEqual(isEnabled(false, 'production'), false)
+  strictEqual(isEnabled(false, 'development'), false)
+})
+
+test('isEnabled - should disable only for the "false" string', () => {
+  strictEqual(isEnabled('false', 'production'), false)
+  strictEqual(isEnabled('true', 'production'), true)
+  strictEqual(isEnabled('', 'production'), true)
+  strictEqual(isEnabled('anything', 'development'), true)
+})
+
+test('isEnabled - should resolve booleans by environment', () => {
+  const enabled = { production: false, development: true }
+
+  strictEqual(isEnabled(enabled, 'production'), false)
+  strictEqual(isEnabled(enabled, 'development'), true)
+})
+
+test('isEnabled - should enable for an environment the object does not name', () => {
+  strictEqual(isEnabled({ production: false }, 'development'), true)
+  strictEqual(isEnabled({}, 'production'), true)
 })

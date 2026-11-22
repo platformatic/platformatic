@@ -1,21 +1,31 @@
 import sqlMapper from '@platformatic/sql-mapper'
 import fastify from 'fastify'
 import { equal, ok as pass } from 'node:assert'
-import { createRequire } from 'node:module'
+import { registerHooks } from 'node:module'
 import { test } from 'node:test'
 import sqlOpenAPI from '../index.js'
 import { clear, connInfo, isMysql, isSQLite } from './helper.js'
 
 // The API reference UI is pulled in through a dynamic import, so whether it is
-// present in the module graph is the observable for "it was never loaded" -
+// resolved by the module graph is the observable for "it was never loaded" -
 // which is the point of the option, the 404 being only its side effect.
 // These tests live in their own file because the check is process-wide: any
 // application started with the default configuration loads the UI for good.
-const require = createRequire(import.meta.url)
+// We record resolved module URLs because @scalar/fastify-api-reference is ESM
+// and there is no public way to introspect the ESM cache; the dependency is
+// loaded lazily so the hook must be registered before the app is built.
+const resolvedUrls = []
+registerHooks({
+  resolve (specifier, context, next) {
+    const result = next(specifier, context)
+    resolvedUrls.push(result.url)
+    return result
+  }
+})
 
 function apiReferenceIsLoaded () {
-  // Normalise separators: on Windows the cache keys use backslashes.
-  return Object.keys(require.cache).some(key => key.replace(/\\/g, '/').includes('@scalar/fastify-api-reference'))
+  // Normalise separators: on Windows the resolved URLs use backslashes.
+  return resolvedUrls.some(url => url.replace(/\\/g, '/').includes('@scalar/fastify-api-reference'))
 }
 
 async function createBasicPages (db, sql) {

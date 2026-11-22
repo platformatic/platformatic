@@ -52,8 +52,8 @@
   "devDependencies": {
     "@platformatic/node": "workspace:*",
     "cleaner-spec-reporter": "^2.0.0",
-    "eslint": "9",
-    "execa": "^9.4.0",
+    "eslint": "10",
+    "execa": "^10.0.0",
     "fastify": "^5.0.0",
     "inspector-client": "^0.2.0",
     "json-schema-to-typescript": "^16.0.0",
