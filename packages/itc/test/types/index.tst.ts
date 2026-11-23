@@ -42,6 +42,8 @@ test('ITC', () => {
   expect(itc.send('message', { key: 'value' })).type.toBe<Promise<any>>()
   expect(itc.send('message', { key: 'value' }, { timeout: 1000 })).type.toBe<Promise<any>>()
   expect(itc.send('message', { key: 'value' }, { signal: new AbortController().signal })).type.toBe<Promise<any>>()
+  expect(itc.send('message', { key: 'value' }, { sanitize: false })).type.toBe<Promise<any>>()
+  expect(itc.send).type.not.toBeCallableWith('message', { key: 'value' }, { sanitize: 'no' })
   expect(itc.send).type.not.toBeCallableWith(123, { key: 'value' })
 
   expect(itc.notify('message', { key: 'value' })).type.toBe<void>()
@@ -54,6 +56,8 @@ test('ITC', () => {
 
   expect(itc.handle('message', () => ({ key: 'value' }))).type.toBe<void>()
   expect(itc.handle('message', async () => ({ key: 'value' }))).type.toBe<void>()
+  expect(itc.handle('message', () => ({ key: 'value' }), { sanitize: false })).type.toBe<void>()
+  expect(itc.handle).type.not.toBeCallableWith('message', () => ({ key: 'value' }), { sanitize: 'no' })
   expect(itc.handle).type.not.toBeCallableWith(123, () => ({ key: 'value' }))
 
   expect(itc.listen()).type.toBe<void>()

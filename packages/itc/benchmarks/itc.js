@@ -34,6 +34,7 @@ if (shouldRun('send')) {
 
   receiver.handle('query', () => ({ rows: [{ id: 1 }], rowCount: 1 }))
   receiver.handle('rows', () => ({ rows, rowCount: rows.length }))
+  receiver.handle('rows-unsanitized', () => ({ rows, rowCount: rows.length }), { sanitize: false })
   sender.listen()
   receiver.listen()
 
@@ -44,6 +45,9 @@ if (shouldRun('send')) {
   await measureAsync('send: small payload, with signal', 50_000, 1, () => sender.send('query', query, { signal }))
   await measureAsync('send: small payload, with timeout', 50_000, 1, () => sender.send('query', query, { timeout: 10_000 }))
   await measureAsync('send: response with 100 rows', 5_000, 1, () => sender.send('rows', query))
+  await measureAsync('send: response with 100 rows, sanitize: false', 5_000, 1, () =>
+    sender.send('rows-unsanitized', query, { sanitize: false })
+  )
 
   sender.close()
   receiver.close()
