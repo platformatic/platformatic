@@ -284,7 +284,7 @@ importers:
         version: 10.2.1
       fast-json-patch:
         specifier: ^3.1.1
-        version: 3.1.1
+        version: 3.1.2
       pino:
         specifier: ^10.1.0
         version: 10.4.0
@@ -851,7 +851,7 @@ importers:
         version: 4.4.3(supports-color@10.2.2)
       fast-json-patch:
         specifier: ^3.1.1
-        version: 3.1.1
+        version: 3.1.2
       json5:
         specifier: ^2.2.3
         version: 2.2.3
@@ -1837,7 +1837,7 @@ importers:
         version: 9.3.0
       '@fastify/express':
         specifier: ^4.0.0
-        version: 4.0.10(supports-color@10.2.2)
+        version: 4.0.11(supports-color@10.2.2)
       '@fastify/formbody':
         specifier: ^9.0.0
         version: 9.0.2
@@ -2017,7 +2017,7 @@ importers:
         version: 10.2.1
       fast-json-patch:
         specifier: ^3.1.1
-        version: 3.1.1
+        version: 3.1.2
       fastify:
         specifier: ^5.0.0
         version: 5.12.8
@@ -2352,7 +2352,7 @@ importers:
         version: 6.3.0
       fast-json-stringify:
         specifier: ^7.0.0
-        version: 7.3.7
+        version: 7.3.9
       fast-uri:
         specifier: ^4.0.0
         version: 4.2.3
@@ -2751,7 +2751,7 @@ importers:
         version: 10.2.1
       fast-json-patch:
         specifier: ^3.1.1
-        version: 3.1.1
+        version: 3.1.2
       semver:
         specifier: ^7.7.0
         version: 7.8.6
@@ -3529,8 +3529,8 @@ packages:
   '@fastify/error@4.3.0':
     resolution: {integrity: sha512-mtIdc4R7HnUMOuUDQgnJkEF+Omr2p3JrSSJ44+RME/eAQ5TqdDy5MvXAjze/RyVHhJckuJKkXnMhKfPmFMKqyA==}
 
-  '@fastify/express@4.0.10':
-    resolution: {integrity: sha512-JoCl5XkF+VbePul3VAf3cjZuTtIDJuiJAI44Fo2kF/OnZixSqyskDRV1/2mynw9N2DLobwHs62xql9Gge3oE/Q==}
+  '@fastify/express@4.0.11':
+    resolution: {integrity: sha512-lBixv3gunzelEMkATi+fbLntbac40Xz8D3GCuWEoXIV0BWf9A8JWfu5h5dP90TzYwqFP7hgYMUGxSNmw32kDTw==}
 
   '@fastify/fast-json-stringify-compiler@5.1.1':
     resolution: {integrity: sha512-pyxRKk7UpUnnrztP9pF4+ZYxusEQ4LifTyzRdiXmyql1QezNHxO02D25MVU2o4kMeAMYWAjG6RKRlojgkbiDAw==}
@@ -7745,14 +7745,14 @@ packages:
     resolution: {integrity: sha512-7MptL8U0cqcFdzIzwOTHoilX9x5BrNqye7Z/LuC7kCMRio1EMSyqRK3BEAUD7sXRq4iT4AzTVuZdhgQ2TCvYLg==}
     engines: {node: '>=8.6.0'}
 
-  fast-json-patch@3.1.1:
-    resolution: {integrity: sha512-vf6IHUX2SBcA+5/+4883dsIjpBTqmfBjmYiWK1savxQmFk4JfBMLa7ynTYOs1Rolp/T1betJxHiGD3g1Mn8lUQ==}
+  fast-json-patch@3.1.2:
+    resolution: {integrity: sha512-Dhr5mVii8hIvjkp0Xdrun9B3GlXe3j+L4Ymv8J0h3Di996xoBi8qSDQ/sqSNKZd1NEqx55ZfcseG1MphW7MkHg==}
 
   fast-json-stable-stringify@2.1.0:
     resolution: {integrity: sha512-lhd/wF+Lk98HZoTCtlVraHtfh5XYijIjalXck7saUtuanSDyLMxnHhSXEDJqHxD7msR8D0uCmqlkwjCV8xvwHw==}
 
-  fast-json-stringify@7.3.7:
-    resolution: {integrity: sha512-g68ZQ66cTLWiYtgOYDtz47ZRUBHFg8ZZWcY//WY5ZR/ByLGNgigps2TxcgJHUqymu/DFGwhI+JNP/IVye92fsQ==}
+  fast-json-stringify@7.3.9:
+    resolution: {integrity: sha512-5wxgeniisjX/pgaAeCN9tTizOhMEl5sZepJ+8N0YfFCRjc4X3BcDlswqgbBMFghbsRPVhnmFovdmdo0vpfIZ+g==}
 
   fast-jwt@6.3.7:
     resolution: {integrity: sha512-Z1yunvhXRD74kttxDTg5NAVq4XexFRVlv78/GzUlkEwt0BRwUCVju2uWJ8TAcy95VA7lXyX93R+AKgZCVPitnQ==}
@@ -13183,7 +13183,7 @@ snapshots:
 
   '@fastify/error@4.3.0': {}
 
-  '@fastify/express@4.0.10(supports-color@10.2.2)':
+  '@fastify/express@4.0.11(supports-color@10.2.2)':
     dependencies:
       express: 5.3.0(supports-color@10.2.2)
       fastify-plugin: 6.0.1
@@ -13194,7 +13194,7 @@ snapshots:
 
   '@fastify/fast-json-stringify-compiler@5.1.1':
     dependencies:
-      fast-json-stringify: 7.3.7
+      fast-json-stringify: 7.3.9
 
   '@fastify/formbody@9.0.2':
     dependencies:
@@ -18135,11 +18135,11 @@ snapshots:
       merge2: 1.4.1
       micromatch: 4.0.8
 
-  fast-json-patch@3.1.1: {}
+  fast-json-patch@3.1.2: {}
 
   fast-json-stable-stringify@2.1.0: {}
 
-  fast-json-stringify@7.3.7:
+  fast-json-stringify@7.3.9:
     dependencies:
       '@fastify/merge-json-schemas': 0.2.2
       ajv: 8.20.0
@@ -18220,7 +18220,7 @@ snapshots:
       '@fastify/proxy-addr': 5.1.2
       abstract-logging: 2.0.1
       avvio: 9.3.1
-      fast-json-stringify: 7.3.7
+      fast-json-stringify: 7.3.9
       find-my-way: 9.10.2
       light-my-request: 6.8.1
       pino: 10.4.0
@@ -18542,7 +18542,7 @@ snapshots:
   graphql-jit@0.8.10(graphql@16.15.0):
     dependencies:
       '@graphql-typed-document-node/core': 3.2.0(graphql@16.15.0)
-      fast-json-stringify: 7.3.7
+      fast-json-stringify: 7.3.9
       generate-function: 2.3.1
       graphql: 16.15.0
       lodash.memoize: 4.1.2
@@ -22335,7 +22335,7 @@ snapshots:
 
   solid-js@1.9.17:
     dependencies:
-      csstype: 3.2.3
+      csstype: 3.2.4
       seroval: 1.6.12
       seroval-plugins: 1.6.12(seroval@1.6.12)
 
