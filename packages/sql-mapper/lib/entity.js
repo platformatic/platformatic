@@ -256,8 +256,10 @@ function createMapper (
     }
     const criteria = computeCriteria(args)
 
+    // A transaction passed as `tx` has no connectionInfo
+    const { connectionInfo } = defaultDb
     let res = null
-    if (db.connectionInfo.isMySql || db.connectionInfo.isMariaDB) {
+    if (connectionInfo.isMySql || connectionInfo.isMariaDB) {
       res = await queries.updateMany(db, sql, table, schema, criteria, input, primaryKeys, fieldsToRetrieve)
     } else {
       res = await queries.updateMany(db, sql, table, schema, criteria, input, fieldsToRetrieve)
