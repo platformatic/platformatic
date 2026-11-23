@@ -2,7 +2,7 @@ import { type TracerProvider } from '@opentelemetry/api'
 import * as Client from '@platformatic/prom-client'
 import { AsyncLocalStorage } from 'node:async_hooks'
 import { type EventEmitter } from 'node:events'
-import { type TransferListItem } from 'node:worker_threads'
+import { type Transferable } from 'node:worker_threads'
 import { type Level, type Logger } from 'pino'
 
 export type Handler = (data: any, context?: Record<string, any>) => any | Promise<any>
@@ -61,7 +61,7 @@ export interface MessagingWorker {
 export interface MessagingSendOptions {
   /** Routes the message to the worker owning this key, instead of using round-robin. */
   affinity?: string
-  transferList?: TransferListItem[]
+  transferList?: Transferable[]
   [key: string]: any
 }
 
