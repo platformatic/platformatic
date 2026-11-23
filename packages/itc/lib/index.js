@@ -263,9 +263,29 @@ export function sanitize (data, transferList) {
   return sanitizeValue(data, transferList?.length > 0 ? transferList : null)
 }
 
+// Posts a message on a MessagePort or a BroadcastChannel, sanitizing it first.
+// With skipSanitize the message is posted as it is, which saves walking it. If it turns out to hold a value
+// that can't be cloned, postMessage throws before anything is sent or transferred, so the message is sanitized
+// and posted again.
+export function postMessage (port, message, transferList, skipSanitize) {
+  if (skipSanitize) {
+    try {
+      port.postMessage(message, transferList)
+      return
+    } catch (error) {
+      if (error?.name !== 'DataCloneError') {
+        throw error
+      }
+    }
+  }
+
+  port.postMessage(sanitize(message, transferList), transferList)
+}
+
 export class ITC extends EventEmitter {
   #waitingRequests
   #handlers
+  #unsanitizedResponses
   #listening
   #handling
   #closedResponse
@@ -287,6 +307,7 @@ export class ITC extends EventEmitter {
     this.port = port
     this.#waitingRequests = new Map()
     this.#handlers = new Map()
+    this.#unsanitizedResponses = new Set()
     this.#listening = false
     this.#handling = false
     this.#closeAfterCurrentRequest = false
@@ -399,8 +420,14 @@ export class ITC extends EventEmitter {
     return data
   }
 
-  handle (message, handler) {
+  handle (message, handler, options) {
     this.#handlers.set(message, handler)
+
+    if (options?.sanitize === false) {
+      this.#unsanitizedResponses.add(message)
+    } else {
+      this.#unsanitizedResponses.delete(message)
+    }
   }
 
   listen () {
@@ -457,8 +484,7 @@ export class ITC extends EventEmitter {
   }
 
   _send (request, options) {
-    const transferList = options?.transferList || []
-    this.port.postMessage(sanitize(request, transferList), transferList)
+    postMessage(this.port, request, options?.transferList || [], options?.sanitize === false)
   }
 
   _createClosePromise () {
@@ -473,7 +499,12 @@ export class ITC extends EventEmitter {
   async #handleRequest (raw, context) {
     const response = await this.#dispatchRequest(raw, context)
 
-    this._send(response, context)
+    // A handler registered with { sanitize: false } returns only cloneable data. Errors are always sanitized.
+    if (response.error === null && this.#unsanitizedResponses.has(response.name)) {
+      this._send(response, { ...context, sanitize: false })
+    } else {
+      this._send(response, context)
+    }
 
     if (this.#closeAfterCurrentRequest) {
       this.close()

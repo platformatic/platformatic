@@ -158,8 +158,8 @@ The messaging API contains the following functions:
 
 | Function | Description |
 | --- | --- |
-| `handle(message, handler)` | Registers a handler for the specified message. |
-| `handle(handlers)` | Registers multiple handlers from an object where each key is the message name. |
+| `handle(message, handler, options?)` | Registers a handler for the specified message. |
+| `handle(handlers, options?)` | Registers multiple handlers from an object where each key is the message name. |
 | `send(application, message, data?, options?)` | Sends a message to one worker of an application and waits for the handler response. Workers are selected using a round-robin algorithm, unless `options.affinity` is set. |
 | `notify(application, message, data?, options?)` | Notifies all workers of an application and does not wait for a response. |
 | `getWorkers(application?)` | Returns the started workers of an application, or an object with the workers of every application when called without arguments. |
@@ -179,6 +179,29 @@ const { port1 } = new MessageChannel()
 
 await messaging.send('service', 'connect', { port: port1 }, { transferList: [port1] })
 ```
+
+#### Skipping sanitization
+
+Before posting a message, Watt walks the data to remove the values that can't be cloned. For large payloads, such as rows returned by a database, this walk is a measurable part of the cost of a message.
+
+When the data contains only cloneable values, set the `sanitize` option to `false` to post it as it is:
+
+- in the `send()` and `notify()` options, for the data being sent;
+- in the `handle()` options, for the values the handlers return. Errors thrown by the handlers are always sanitized.
+
+```js
+import { getMessaging } from '@platformatic/globals'
+
+const messaging = getMessaging()
+
+messaging.handle('query', async ({ sql }) => runQuery(sql), { sanitize: false })
+
+const rows = await messaging.send('database', 'query', { sql: 'SELECT 1' }, { sanitize: false })
+```
+
+If the data turns out to contain a value that can't be cloned, Watt sanitizes it and posts it again, so the message is still delivered.
+
+There is one difference for errors inside the data. When an `Error` has a function or symbol property, sanitizing turns it into a plain object that keeps its other properties, such as `code`. Posted as it is, the same error is cloned as an `Error`, which drops them. Leave sanitizing on for data that carries such errors.
 
 #### Worker affinity
 

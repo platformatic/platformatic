@@ -48,6 +48,7 @@ const query = {
 
 const loopback = setupLoopbackMessaging('benchmark', { runtimeConfig: { messagingTimeout: 30_000 } })
 loopback.handle('query', () => ({ rows: [{ id: 1 }], rowCount: 1 }))
+loopback.handle('query-unsanitized', () => ({ rows: [{ id: 1 }], rowCount: 1 }), { sanitize: false })
 
 const messaging = getMessaging()
 const signal = new AbortController().signal
@@ -55,5 +56,8 @@ const signal = new AbortController().signal
 await measure('messaging.send', 50_000, 1, () => messaging.send('benchmark', 'query', query))
 await measure('messaging.send, 32 in flight', 100_000, 32, () => messaging.send('benchmark', 'query', query))
 await measure('messaging.send, with signal', 50_000, 1, () => messaging.send('benchmark', 'query', query, { signal }))
+await measure('messaging.send, sanitize: false', 50_000, 1, () =>
+  messaging.send('benchmark', 'query-unsanitized', query, { sanitize: false })
+)
 
 loopback.unmount()

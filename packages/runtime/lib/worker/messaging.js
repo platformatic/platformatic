@@ -5,7 +5,7 @@ import {
   generateResponse,
   ITC,
   parseRequest,
-  sanitize,
+  postMessage,
   startOutgoingMessagingSpan,
   startOutgoingMessagingSpanSync,
   traceIncomingMessagingHandler
@@ -72,13 +72,14 @@ export class MessagingITC extends ITC {
     this.#listener = listener
   }
 
-  handle (message, handler) {
+  // handle(message, handler, options) or handle(handlers, options)
+  handle (message, handler, options) {
     if (typeof message === 'object') {
       for (const [name, fn] of Object.entries(message)) {
-        super.handle(name, this.#wrapHandler(name, fn))
+        super.handle(name, this.#wrapHandler(name, fn), handler)
       }
     } else {
-      super.handle(message, this.#wrapHandler(message, handler))
+      super.handle(message, this.#wrapHandler(message, handler), options)
     }
   }
 
@@ -200,11 +201,11 @@ export class MessagingITC extends ITC {
         this.#notificationsChannels.set(application, channel)
       }
 
-      const postMessage = () => channel.postMessage(sanitize(request))
+      const post = () => postMessage(channel, request, undefined, options?.sanitize === false)
       if (telemetry) {
-        telemetry.run(postMessage)
+        telemetry.run(post)
       } else {
-        postMessage()
+        post()
       }
     } catch (err) {
       error = err
@@ -235,7 +236,7 @@ export class MessagingITC extends ITC {
       channel[kPendingResponses].set(request.reqId, { application, request })
     }
 
-    channel.postMessage(sanitize(request, transferList), transferList)
+    postMessage(channel, request, transferList, context.sanitize === false)
   }
 
   _onRequestSettled (reqId, context) {
