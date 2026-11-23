@@ -85,26 +85,33 @@ minimumReleaseAgeExclude:
   # Renovate security update: graphql-scalars@2.0.1
   - graphql-scalars@2.0.1
 nodeLinker: hoisted
-# With the hoisted linker, a tree containing several esbuild versions can end up with the
+# Overrides, with the dependency chain that requires each one.
+#
+# esbuild: with the hoisted linker, a tree containing several esbuild versions can end up with the
 # `esbuild` package and the hoisted `@esbuild/<platform>` binary at different versions, which
 # makes esbuild refuse to start ("Host version ... does not match binary version ...").
-# Keeping a single version avoids the mismatch.
+# Keeping a single version avoids the mismatch. Ranges requested in the tree: @remix-run/dev
+# (0.17), @vanilla-extract/integration (0.17-0.19), vite@6 (0.25), vite@8 (0.27-0.28), tsx and
+# nitropack (0.28). Probably removable together with the Remix 2 group below (untested).
 overrides:
   esbuild: 0.28.2
-  # Dev-only tooling pulled in by @remix-run/dev@2 (the last Remix 2 release, still needed by the
-  # remix tests) and nitro@3.0.1-alpha.2. These pin vulnerable ranges that cannot be updated
-  # upstream. Remove when dropping Remix 2.
-  #   @remix-run/react pins react-router@6.30.4 exactly
+  # Remix 2: @remix-run/dev@2.17.5 is the last Remix 2 release and is still needed by the remix
+  # tests. It pins vulnerable ranges that cannot be updated upstream. Remove when dropping Remix 2.
+  #   @platformatic/remix (dev) > @remix-run/react@2.17.5 pins react-router-dom@6.30.4 and
+  #   react-router@6.30.4 exactly
   'react-router@<6.30.6': 6.30.6
   'react-router-dom@<6.30.6': 6.30.6
-  #   @vanilla-extract/integration wants vite@^5, which is EOL
+  #   @platformatic/remix (dev) > @remix-run/dev@2.17.5 > @vanilla-extract/integration@6.5.0
+  #   > vite-node@1.6.1 > vite@^5, which is EOL
   'vite@<6.4.4': 6.4.4
-  #   remark-mdx-frontmatter@1 wants toml@^3 and estree-util-value-to-estree@^1
+  #   @platformatic/remix (dev) > @remix-run/dev@2.17.5 > remark-mdx-frontmatter@1.1.1
+  #   wants toml@^3 and estree-util-value-to-estree@^1
   toml: 5.0.1
   estree-util-value-to-estree: 3.3.3
-  #   cacache@17 wants tar@^6
+  #   @platformatic/remix (dev) > @remix-run/dev@2.17.5 > cacache@17.1.4 > tar@^6
   'cacache@17>tar': 7.5.22
-  # micromark-extension-math@3.1.0 (via markdownlint-cli2) wants katex@^0.16 and has no newer release.
+  # katex: platformatic (dev) > markdownlint-cli2@0.24.0 > markdownlint@0.42.0
+  # > micromark-extension-math@3.1.0 wants katex@^0.16, which is vulnerable, and has no newer release.
   'katex@<0.18.2': 0.18.2
 packageImportMethod: copy
 preferSymlinkedExecutables: true
