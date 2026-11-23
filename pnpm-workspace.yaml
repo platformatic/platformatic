@@ -110,7 +110,7 @@ overrides:
   estree-util-value-to-estree: 3.3.3
   #   @platformatic/remix (dev) > @remix-run/dev@2.17.5 > cacache@17.1.4 > tar@^6
   'cacache@17>tar': 7.5.22
-  # katex: platformatic (dev) > markdownlint-cli2@0.24.0 > markdownlint@0.42.0
+  # katex: platformatic (dev) > markdownlint-cli2@0.24.2 > markdownlint@0.42.2
   # > micromark-extension-math@3.1.0 wants katex@^0.16, which is vulnerable, and has no newer release.
   'katex@<0.18.2': 0.18.2
 packageImportMethod: copy
