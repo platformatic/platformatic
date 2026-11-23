@@ -77,7 +77,7 @@
     "json-schema-traverse": "^1.0.0",
     "mercurius": "^16.0.0",
     "minimist": "^1.2.8",
-    "msgpackr": "^1.11.2",
+    "msgpackr": "^2.0.0",
     "my-ua-parser": "^2.0.2",
     "nunjucks": "^3.2.4",
     "ora": "^6.3.1",
