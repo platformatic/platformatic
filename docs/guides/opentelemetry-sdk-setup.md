@@ -176,9 +176,43 @@ The module loading order is critical:
 
 Without the hook, OpenTelemetry cannot intercept imports and instrumentation will not work.
 
+## Using the SDK Together with the Built-in Telemetry
+
+Watt never replaces an OpenTelemetry `TracerProvider` registered by somebody else. This applies to the SDK you set up manually and to the observability products that register an OpenTelemetry provider.
+
+The flags in `execArgv` are processed before Watt loads its own telemetry, so your provider is already registered at that point. When Watt detects it:
+
+- it does not register its own `TracerProvider`, propagator or context manager;
+- it ignores the `exporter` and `sampler` of the `tracing` configuration, since your provider owns the pipeline;
+- it does not register the HTTP and undici instrumentations, which are left to your SDK;
+- it keeps creating the spans that only Watt can create, through the OpenTelemetry API, so they reach your provider:
+  - the `SERVER` spans of the requests received from other applications of the runtime, via [`@platformatic/instrumentation-light-my-request`](https://www.npmjs.com/package/@platformatic/instrumentation-light-my-request);
+  - the `CLIENT` spans of the requests sent to other applications of the runtime, via [`@platformatic/instrumentation-thread-interceptor`](https://www.npmjs.com/package/@platformatic/instrumentation-thread-interceptor);
+  - the spans of the [messaging API](../reference/runtime/globals.md);
+  - the spans of the instrumentations listed in `tracing.instrumentations`;
+  - for `@platformatic/service`, `@platformatic/db` and `@platformatic/gateway`, the spans of the incoming requests (created by [`@fastify/otel`](https://github.com/fastify/otel)), of the proxied requests and of the database queries.
+
+Both instrumentation packages are regular OpenTelemetry instrumentations, so you can also register them in your own SDK when the built-in telemetry is disabled.
+
+### Avoiding Duplicated Client Spans
+
+The requests between applications are also visible to `@opentelemetry/instrumentation-undici`. If your SDK registers it, exclude the internal domain so that these requests are traced only once:
+
+```javascript
+import { UndiciInstrumentation } from '@opentelemetry/instrumentation-undici'
+
+new UndiciInstrumentation({
+  ignoreRequestHook: request => request.origin.endsWith('.plt.local')
+})
+```
+
+### Providers Registered by the Application Code
+
+The detection only works when the provider is registered before Watt telemetry is loaded, which is what `execArgv` guarantees. A provider registered later, for instance by the application code, cannot be detected: disable the built-in telemetry in that case.
+
 ### Disabling Built-in Telemetry
 
-When using manual SDK setup, you should disable Watt's built-in telemetry to avoid conflicts (duplicate spans, multiple exporters, etc.):
+If you do not want any span from Watt, disable the built-in telemetry of the application:
 
 ```json
 {

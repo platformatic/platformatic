@@ -1,6 +1,6 @@
-import { SpanKind, SpanStatusCode } from '@opentelemetry/api'
+import { SpanKind, SpanStatusCode, trace } from '@opentelemetry/api'
 import fastify from 'fastify'
-import { deepEqual, equal, ok } from 'node:assert'
+import { deepEqual, equal, ok, strictEqual } from 'node:assert'
 import { test } from 'node:test'
 import telemetryPlugin from '../lib/telemetry.js'
 
@@ -55,7 +55,7 @@ test('should trace a request not failing', async () => {
   const span = finishedSpans[0]
   equal(span.kind, SpanKind.SERVER)
   equal(span.name, 'GET /test')
-  equal(span.status.code, SpanStatusCode.OK)
+  equal(span.status.code, SpanStatusCode.UNSET)
   equal(span.attributes['http.request.method'], 'GET')
   equal(span.attributes['http.route'], '/test')
   equal(span.attributes['url.path'], '/test')
@@ -100,7 +100,7 @@ test('should not put query in `url.path', async () => {
   const span = finishedSpans[0]
   equal(span.kind, SpanKind.SERVER)
   equal(span.name, 'GET /test')
-  equal(span.status.code, SpanStatusCode.OK)
+  equal(span.status.code, SpanStatusCode.UNSET)
   equal(span.attributes['http.request.method'], 'GET')
   equal(span.attributes['url.full'], 'http://test/test?foo=bar')
   equal(span.attributes['url.path'], '/test')
@@ -138,7 +138,7 @@ test('request should add attribute to a span', async () => {
   equal(finishedSpans.length, 1)
   const span = finishedSpans[0]
   equal(span.name, 'GET /test')
-  equal(span.status.code, SpanStatusCode.OK)
+  equal(span.status.code, SpanStatusCode.UNSET)
   equal(span.attributes['http.request.method'], 'GET')
   equal(span.attributes['url.path'], '/test')
   equal(span.attributes['http.response.status_code'], 200)
@@ -151,9 +151,8 @@ test('request should add attribute to a span', async () => {
 
 test('should be able to set the W3C trace context', async () => {
   const handler = async (request, reply) => {
-    const context = request.openTelemetry().span.context
-    const newContext = context.setValue('foo', 'bar')
-    request.openTelemetry().span.context = newContext
+    const { span, context } = request.opentelemetry()
+    strictEqual(trace.getSpan(context), span)
     return { foo: 'bar' }
   }
 
@@ -201,7 +200,9 @@ test('should trace a request that fails', async () => {
   equal(span.attributes['http.request.method'], 'GET')
   equal(span.attributes['url.path'], '/test')
   equal(span.attributes['http.response.status_code'], 500)
-  equal(span.attributes['error.message'], 'booooom!!!')
+  equal(span.status.message, 'booooom!!!')
+  equal(span.events[0].name, 'exception')
+  equal(span.events[0].attributes['exception.message'], 'booooom!!!')
   const resource = span.resource
   equal(resource.attributes['service.name'], 'test-application')
   equal(resource.attributes['service.version'], '1.0.0')
@@ -424,7 +425,7 @@ test('should send a span for a route with a parametric path', async () => {
   const span = finishedSpans[0]
   equal(span.kind, SpanKind.SERVER)
   equal(span.name, 'GET /test/{id}')
-  equal(span.status.code, SpanStatusCode.OK)
+  equal(span.status.code, SpanStatusCode.UNSET)
   equal(span.attributes['http.request.method'], 'GET')
   equal(span.attributes['url.full'], 'http://test/test/123')
   equal(span.attributes['url.path'], '/test/123')
@@ -535,13 +536,13 @@ test('should use multiple exporters and sent traces to all the exporters', async
   equal(finishedSpans0.length, 1)
   const span0 = finishedSpans0[0]
   equal(span0.name, 'GET /test')
-  equal(span0.status.code, SpanStatusCode.OK)
+  equal(span0.status.code, SpanStatusCode.UNSET)
 
   const finishedSpans1 = exporters[1].getFinishedSpans()
   equal(finishedSpans1.length, 1)
   const span1 = finishedSpans1[0]
   equal(span1.name, 'GET /test')
-  equal(span1.status.code, SpanStatusCode.OK)
+  equal(span1.status.code, SpanStatusCode.UNSET)
 })
 
 test('telemetry can be disabled', async () => {

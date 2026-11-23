@@ -437,7 +437,7 @@ async function proxyPlugin (app, opts) {
           // in both cases makes a trace of a split deployment report a host the
           // request never reached.
           const targetUrl = `${request[kProxiedUpstream] ?? origin}${request.url}`
-          const context = request.span?.context
+          const context = app.openTelemetry?.getRequestContext?.(request)
           const { span, telemetryHeaders } = app.openTelemetry?.startHTTPSpanClient(
             targetUrl,
             request.method,

@@ -257,9 +257,11 @@ test('configure telemetry correctly with a gateway + next', async t => {
   await sleep(500)
   const spans = await getSpans(spansPath)
 
-  // Check that all the spans are part of the same trace
-  const traceId = spans[0].traceId
-  for (const span of spans) {
+  // Check that all the spans are part of the same trace. The provider is global, so Next.js reports
+  // its own spans too, some of them outside of the request trace.
+  const ownSpans = spans.filter(span => span.instrumentationScope.name !== 'next.js')
+  const traceId = ownSpans[0].traceId
+  for (const span of ownSpans) {
     equal(span.traceId, traceId)
   }
 

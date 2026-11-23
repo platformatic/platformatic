@@ -1,5 +1,5 @@
 export function wrapQuery (app, db, request) {
-  const { startSpan, endSpan, SpanKind } = app.openTelemetry
+  const { startSpan, endSpan, getRequestContext, SpanKind } = app.openTelemetry
   // Bind the query method to preserve the correct 'this' context for private class fields
   const originalQuery = db.query.bind(db)
   async function wrappedQuery () {
@@ -27,7 +27,7 @@ export function wrapQuery (app, db, request) {
     const name = queryText.substring(0, 20)
     const spanName = `${namePrefix}${name.replace(/\n|\r/g, ' ')}`
 
-    const ctx = request.span?.context
+    const ctx = getRequestContext?.(request)
 
     const { database, host, port, user, dbSystem } = connectionInfo
     const telemetryAttributes = {

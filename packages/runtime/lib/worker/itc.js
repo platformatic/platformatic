@@ -362,21 +362,17 @@ export async function setupITC (controller, application, dispatcher, sharedConte
           await new Promise(() => {})
         }
 
-        const serverTarget = dispatcher.serverHooks?.run
-          ? wrapDispatchTarget(dispatchTarget, dispatcher.serverHooks.run)
-          : dispatchTarget
-
+        // The requests are delivered through light-my-request, whose instrumentation creates the server spans.
         dispatcher.server = createServer({
           meshId: workerData.meshId,
           serverId: workerData.worker.id,
           domain: `${application.id}.plt.local`,
-          server: serverTarget,
+          server: dispatchTarget,
           bootstrapTimeout: workerData.config.applicationTimeout,
           metadata: {
             applicationId: application.id,
             workerId: workerData.worker.id
-          },
-          ...dispatcher.serverHooks
+          }
         })
         await dispatcher.server.ready
 
@@ -666,21 +662,4 @@ export async function setupITC (controller, application, dispatcher, sharedConte
 
   itc.listen()
   return itc
-}
-
-function wrapDispatchTarget (target, run) {
-  if (typeof target.inject === 'function') {
-    return {
-      inject: (req, callback) => run(req, () => target.inject(req, callback)),
-      server: target.server,
-      emit: target.emit?.bind(target),
-      listenerCount: target.listenerCount?.bind(target)
-    }
-  }
-
-  if (typeof target.emit === 'function') {
-    return target
-  }
-
-  return target
 }

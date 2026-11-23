@@ -217,7 +217,7 @@ async function registerOpenApiGlue (app, openApiGlue, apiByApiRoutes) {
           }
           const rewriteRequestHeaders = (request, headers) => {
             const targetUrl = `${origin}${request.url}`
-            const context = request.span?.context
+            const context = app.openTelemetry?.getRequestContext?.(request)
             const { span, telemetryHeaders } = app.openTelemetry?.startHTTPSpanClient(
               targetUrl,
               request.method,

@@ -135,7 +135,7 @@ test('should trace a request getting DB from the request and running the query m
     const span = finishedSpans[1]
     equal(span.kind, SpanKind.SERVER)
     equal(span.name, 'GET /custom-pages')
-    equal(span.status.code, SpanStatusCode.OK)
+    equal(span.status.code, SpanStatusCode.UNSET)
     equal(span.attributes['http.request.method'], 'GET')
     equal(span.attributes['http.route'], '/custom-pages')
     equal(span.attributes['url.path'], '/custom-pages')
@@ -269,7 +269,7 @@ test('should trace entity operations within a transaction with connectionInfo', 
   const httpSpan = finishedSpans.find(span => span.kind === SpanKind.SERVER)
   ok(httpSpan, 'Should have HTTP request span')
   equal(httpSpan.name, 'POST /pages-in-transaction')
-  equal(httpSpan.status.code, SpanStatusCode.OK)
+  equal(httpSpan.status.code, SpanStatusCode.UNSET)
   equal(httpSpan.attributes['http.request.method'], 'POST')
   equal(httpSpan.attributes['http.route'], '/pages-in-transaction')
   equal(httpSpan.attributes['url.path'], '/pages-in-transaction')

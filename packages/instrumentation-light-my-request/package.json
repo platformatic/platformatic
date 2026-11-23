@@ -1,0 +1,56 @@
+{
+  "name": "@platformatic/instrumentation-light-my-request",
+  "version": "4.0.0-alpha.3",
+  "description": "OpenTelemetry instrumentation for light-my-request",
+  "type": "module",
+  "main": "./lib/index.js",
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "import": "./lib/index.js",
+      "require": "./lib/index.js"
+    }
+  },
+  "types": "./lib/index.d.ts",
+  "scripts": {
+    "test": "node --test --test-reporter=cleaner-spec-reporter --test-concurrency=1 --test-timeout=2000000 test/*.test.js",
+    "lint": "eslint",
+    "lint:fix": "eslint --fix"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/platformatic/platformatic.git"
+  },
+  "author": "Platformatic Inc. <oss@platformatic.dev> (https://platformatic.dev)",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/platformatic/platformatic/issues"
+  },
+  "homepage": "https://github.com/platformatic/platformatic#readme",
+  "keywords": [
+    "platformatic",
+    "watt",
+    "opentelemetry",
+    "instrumentation",
+    "light-my-request",
+    "fastify"
+  ],
+  "devDependencies": {
+    "@opentelemetry/context-async-hooks": "3.1.1",
+    "@opentelemetry/sdk-trace": "3.1.1",
+    "cleaner-spec-reporter": "^2.0.0",
+    "eslint": "10",
+    "fastify": "^5.0.0",
+    "light-my-request": "^6.6.0",
+    "neostandard": "^0.14.0",
+    "typescript": "~6.0.3"
+  },
+  "dependencies": {
+    "@opentelemetry/api": "^1.10.0",
+    "@opentelemetry/core": "3.1.1",
+    "@opentelemetry/instrumentation": "0.301.2"
+  },
+  "engines": {
+    "node": ">=24.20.0"
+  }
+}

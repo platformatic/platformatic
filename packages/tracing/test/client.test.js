@@ -1,9 +1,7 @@
-import { SpanKind, SpanStatusCode } from '@opentelemetry/api'
+import { ROOT_CONTEXT, SpanKind, SpanStatusCode } from '@opentelemetry/api'
 import fastify from 'fastify'
 import { deepEqual, equal, ok } from 'node:assert'
 import { test } from 'node:test'
-import { fastifyTextMapGetter } from '../lib/fastify-text-map.js'
-import { PlatformaticContext } from '../lib/platformatic-context.js'
 import telemetryPlugin from '../lib/telemetry.js'
 
 async function setupApp (pluginOpts, routeHandler, teardown) {
@@ -80,7 +78,7 @@ test('should add the propagation headers correctly, with propagation already sta
     traceparent
   }
   const { propagator } = app.openTelemetry
-  const context = propagator.extract(new PlatformaticContext(), { headers: incomingHeaders }, fastifyTextMapGetter)
+  const context = propagator.extract(ROOT_CONTEXT, incomingHeaders)
 
   const { span, telemetryHeaders } = startHTTPSpanClient(url, 'GET', context)
 
@@ -118,7 +116,7 @@ test('should trace a client request', async () => {
   const url = 'http://localhost:3000/test'
 
   const { propagator } = app.openTelemetry
-  const context = propagator.extract(new PlatformaticContext(), { headers: {} }, fastifyTextMapGetter)
+  const context = propagator.extract(ROOT_CONTEXT, {})
 
   const { span, telemetryHeaders } = startHTTPSpanClient(url, 'GET', context)
   const args = {
@@ -140,7 +138,7 @@ test('should trace a client request', async () => {
   const spanServer = finishedSpans[0]
   equal(spanServer.name, 'GET /test')
   equal(spanServer.kind, SpanKind.SERVER)
-  equal(spanServer.status.code, SpanStatusCode.OK)
+  equal(spanServer.status.code, SpanStatusCode.UNSET)
   equal(spanServer.attributes['http.request.method'], 'GET')
   equal(spanServer.attributes['url.path'], '/test')
   equal(spanServer.attributes['http.response.status_code'], 200)
@@ -180,7 +178,7 @@ test('should trace a client request failing', async () => {
   const { startHTTPSpanClient, endHTTPSpanClient } = app.openTelemetry
 
   const { propagator } = app.openTelemetry
-  const context = propagator.extract(new PlatformaticContext(), { headers: {} }, fastifyTextMapGetter)
+  const context = propagator.extract(ROOT_CONTEXT, {})
 
   const url = 'http://localhost/test'
   const { span, telemetryHeaders } = startHTTPSpanClient(url, 'GET', context)
@@ -201,7 +199,7 @@ test('should trace a client request failing', async () => {
   const spanServer = finishedSpans[0]
   equal(spanServer.name, 'GET /wrong')
   equal(spanServer.kind, SpanKind.SERVER)
-  equal(spanServer.status.code, SpanStatusCode.ERROR)
+  equal(spanServer.status.code, SpanStatusCode.UNSET)
   equal(spanServer.attributes['http.request.method'], 'GET')
   equal(spanServer.attributes['url.path'], '/wrong')
   equal(spanServer.attributes['http.response.status_code'], 404)

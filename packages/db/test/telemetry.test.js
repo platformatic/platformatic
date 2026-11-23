@@ -248,7 +248,7 @@ test('should trace a request in a platformatic DB app', async t => {
     const span = finishedSpans[1]
     assert.equal(span.kind, SpanKind.SERVER)
     assert.equal(span.name, 'GET /pages')
-    assert.equal(span.status.code, SpanStatusCode.OK)
+    assert.equal(span.status.code, SpanStatusCode.UNSET)
     assert.equal(span.attributes['http.request.method'], 'GET')
     assert.equal(span.attributes['url.path'], '/pages')
     assert.equal(span.attributes['http.response.status_code'], 200)
@@ -322,7 +322,7 @@ test('should trace a request getting DB from the request and running the query m
     const span = finishedSpans[1]
     assert.equal(span.kind, SpanKind.SERVER)
     assert.equal(span.name, 'GET /custom-pages')
-    assert.equal(span.status.code, SpanStatusCode.OK)
+    assert.equal(span.status.code, SpanStatusCode.UNSET)
     assert.equal(span.attributes['http.request.method'], 'GET')
     assert.equal(span.attributes['url.path'], '/custom-pages')
     assert.equal(span.attributes['http.response.status_code'], 200)
