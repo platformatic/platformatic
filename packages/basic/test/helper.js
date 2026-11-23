@@ -30,6 +30,11 @@ export const LOGS_TIMEOUT = 100
 export const HMR_TIMEOUT = process.env.CI ? 20000 : 10000
 export const HMR_CONNECTION_TIMEOUT = 5000
 export const DEFAULT_PAUSE_TIMEOUT = 300000
+// After runtime.start() returns, the first HTTP request can still hit ECONNRESET
+// on Windows (and occasionally ECONNREFUSED) if the listening socket is not yet
+// fully accepting connections. Retry only those transient network errors.
+export const TRANSIENT_HTTP_CODES = new Set(['ECONNRESET', 'ECONNREFUSED', 'EPIPE', 'UND_ERR_SOCKET'])
+export const TRANSIENT_HTTP_RETRY_TIMEOUT = process.env.CI ? 15_000 : 5_000
 
 export let fixturesDir
 export const isWindows = platform() === 'win32'
@@ -481,20 +486,41 @@ export async function getLogsFromFile (root) {
   return (await readFile(resolve(root, 'logs.txt'), 'utf-8')).split('\n').filter(Boolean).map(JSON.parse)
 }
 
+export async function requestWithTransientRetry (url, options) {
+  const deadline = Date.now() + TRANSIENT_HTTP_RETRY_TIMEOUT
+
+  while (true) {
+    try {
+      return await request(url, options)
+    } catch (error) {
+      if (!TRANSIENT_HTTP_CODES.has(error.code) || Date.now() >= deadline) {
+        throw error
+      }
+
+      await sleep(200)
+    }
+  }
+}
+
 export async function verifyJSONViaHTTP (baseUrl, path, expectedCode, expectedContent) {
   const dispatcher = new Agent().compose(interceptors.redirect({ maxRedirections: 1 }))
-  const { statusCode, body } = await request(baseUrl + path, { dispatcher })
-  strictEqual(statusCode, expectedCode)
 
-  if (typeof expectedContent === 'function') {
-    return expectedContent(await body.json())
+  try {
+    const { statusCode, body } = await requestWithTransientRetry(baseUrl + path, { dispatcher })
+    strictEqual(statusCode, expectedCode)
+
+    if (typeof expectedContent === 'function') {
+      return expectedContent(await body.json())
+    }
+
+    deepStrictEqual(await body.json(), expectedContent)
+  } finally {
+    await dispatcher.close()
   }
-
-  deepStrictEqual(await body.json(), expectedContent)
 }
 
 export async function verifyJSONViaHTTPS (baseUrl, path, expectedCode, expectedContent, dispatcher) {
-  const { statusCode, body } = await request(baseUrl + path, { dispatcher })
+  const { statusCode, body } = await requestWithTransientRetry(baseUrl + path, { dispatcher })
   strictEqual(statusCode, expectedCode)
 
   if (typeof expectedContent === 'function') {
@@ -517,26 +543,31 @@ export async function verifyJSONViaInject (app, applicationId, method, url, expe
 
 export async function verifyHTMLViaHTTP (baseUrl, path, contents) {
   const dispatcher = new Agent().compose(interceptors.redirect({ maxRedirections: 1 }))
-  const { statusCode, headers, body } = await request(baseUrl + path, { dispatcher })
-  const html = await body.text()
 
-  deepStrictEqual(statusCode, 200)
-  ok(headers['content-type']?.startsWith('text/html'))
+  try {
+    const { statusCode, headers, body } = await requestWithTransientRetry(baseUrl + path, { dispatcher })
+    const html = await body.text()
 
-  if (typeof contents === 'function') {
-    return contents(html)
-  }
+    deepStrictEqual(statusCode, 200)
+    ok(headers['content-type']?.startsWith('text/html'))
 
-  for (const content of contents) {
-    ok(
-      content instanceof RegExp ? content.test(html) : html.includes(content),
-      `Pattern: ${content.toString()}, Actual: ${html}`
-    )
+    if (typeof contents === 'function') {
+      return contents(html)
+    }
+
+    for (const content of contents) {
+      ok(
+        content instanceof RegExp ? content.test(html) : html.includes(content),
+        `Pattern: ${content.toString()}, Actual: ${html}`
+      )
+    }
+  } finally {
+    await dispatcher.close()
   }
 }
 
 export async function verifyHTMLViaHTTPS (baseUrl, path, contents, dispatcher) {
-  const { statusCode, headers, body } = await request(baseUrl + path, { dispatcher })
+  const { statusCode, headers, body } = await requestWithTransientRetry(baseUrl + path, { dispatcher })
   const html = await body.text()
 
   deepStrictEqual(statusCode, 200)
@@ -1007,7 +1038,7 @@ export async function verifyReusePort (t, configuration, integrityCheck, additio
 
   // The round robin may take a few attempts to use all workers
   while (usedWorkers.size > 0 && attempts++ < workers * 5) {
-    const res = await request(url + '/', requestOptions)
+    const res = await requestWithTransientRetry(url + '/', requestOptions)
     await integrityCheck?.(res)
 
     const worker = res.headers['x-plt-worker-id']

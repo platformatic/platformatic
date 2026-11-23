@@ -23,7 +23,7 @@
   },
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "devDependencies": {
-    "@types/node": "^22.5.0",
+    "@types/node": "^26.0.0",
     "cleaner-spec-reporter": "^2.0.0",
     "eslint": "10",
     "neostandard": "^0.14.0",

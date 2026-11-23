@@ -29,7 +29,7 @@
   "devDependencies": {
     "@platformatic/foundation": "workspace:*",
     "@platformatic/service": "workspace:*",
-    "@types/node": "^22.0.0",
+    "@types/node": "^26.0.0",
     "atomic-sleep": "^1.0.0",
     "eslint": "10",
     "neostandard": "^0.14.0",
