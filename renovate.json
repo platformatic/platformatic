@@ -36,6 +36,12 @@
       "minimumReleaseAge": null
     },
     {
+      // graphql 17 is blocked until @mercuriusjs/federation and @mercuriusjs/gateway support it
+      // (mercurius-js/mercurius-federation#267). Keep allowing 16.x updates.
+      "matchPackageNames": ["graphql"],
+      "allowedVersions": "<17"
+    },
+    {
       "matchUpdateTypes": [
         "minor",
         "patch",
