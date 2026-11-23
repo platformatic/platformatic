@@ -756,3 +756,166 @@ test('should drop functions and symbols at any depth while keeping property orde
   deepStrictEqual(sanitized.fourth, [1, { keep: true }])
   deepStrictEqual(sanitized.fifth === transferred, true)
 })
+
+// Sanitizing reads every property once and posting reads it again,
+// so the number of reads of a getter tells whether a message was sanitized.
+function trackReads () {
+  const tracker = { reads: 0 }
+
+  tracker.data = {
+    get value () {
+      tracker.reads++
+      return 'value'
+    }
+  }
+
+  return tracker
+}
+
+function setupPair (t) {
+  const { port1, port2 } = new MessageChannel()
+
+  const itc1 = new ITC({ port: port1, name: 'itc1' })
+  const itc2 = new ITC({ port: port2, name: 'itc2' })
+
+  itc1.listen()
+  itc2.listen()
+
+  t.after(() => itc1.close())
+  t.after(() => itc2.close())
+
+  return { itc1, itc2 }
+}
+
+test('should post the results of a handler registered with sanitize: false as they are', async t => {
+  const { itc1, itc2 } = setupPair(t)
+  const sanitized = trackReads()
+  const unsanitized = trackReads()
+
+  itc2.handle('sanitized', () => sanitized.data)
+  itc2.handle('unsanitized', () => unsanitized.data, { sanitize: false })
+
+  deepStrictEqual(await itc1.send('sanitized'), { value: 'value' })
+  deepStrictEqual(await itc1.send('unsanitized'), { value: 'value' })
+  deepStrictEqual(sanitized.reads, 2)
+  deepStrictEqual(unsanitized.reads, 1)
+})
+
+test('should sanitize the results of a handler registered again without sanitize: false', async t => {
+  const { itc1, itc2 } = setupPair(t)
+  const tracker = trackReads()
+
+  itc2.handle('test-command', () => tracker.data, { sanitize: false })
+  itc2.handle('test-command', () => tracker.data)
+
+  deepStrictEqual(await itc1.send('test-command'), { value: 'value' })
+  deepStrictEqual(tracker.reads, 2)
+})
+
+test('should post a result with the option of the handler that returned it', async t => {
+  const { itc1, itc2 } = setupPair(t)
+
+  for (const [first, second, reads] of [
+    [undefined, { sanitize: false }, 2],
+    [{ sanitize: false }, undefined, 1]
+  ]) {
+    const tracker = trackReads()
+    const started = Promise.withResolvers()
+    const release = Promise.withResolvers()
+
+    itc2.handle(
+      'test-command',
+      async () => {
+        started.resolve()
+        await release.promise
+        return tracker.data
+      },
+      first
+    )
+
+    const response = itc1.send('test-command')
+    await started.promise
+
+    itc2.handle('test-command', () => null, second)
+    release.resolve()
+
+    deepStrictEqual(await response, { value: 'value' })
+    deepStrictEqual(tracker.reads, reads)
+  }
+})
+
+test('should post a request sent with sanitize: false as it is', async t => {
+  const { itc1, itc2 } = setupPair(t)
+  const sanitized = trackReads()
+  const unsanitized = trackReads()
+
+  const requests = []
+  itc2.handle('test-command', request => {
+    requests.push(request)
+    return null
+  })
+
+  await itc1.send('test-command', sanitized.data)
+  await itc1.send('test-command', unsanitized.data, { sanitize: false })
+
+  deepStrictEqual(requests, [{ value: 'value' }, { value: 'value' }])
+  deepStrictEqual(sanitized.reads, 2)
+  deepStrictEqual(unsanitized.reads, 1)
+})
+
+test('should sanitize a message with sanitize: false that cannot be cloned', async t => {
+  const { itc1, itc2 } = setupPair(t)
+
+  const requests = []
+  itc2.handle(
+    'test-command',
+    request => {
+      requests.push(request)
+      return { keep: 'response', drop () {} }
+    },
+    { sanitize: false }
+  )
+
+  const response = await itc1.send('test-command', { keep: 'request', drop: Symbol('drop') }, { sanitize: false })
+
+  deepStrictEqual(response, { keep: 'response' })
+  deepStrictEqual(requests, [{ keep: 'request' }])
+})
+
+test('should transfer the transfer list when posting a message with sanitize: false again', async t => {
+  const { itc1, itc2 } = setupPair(t)
+  const buffer = new ArrayBuffer(8)
+
+  itc2.handle('test-command', request => request.buffer.byteLength)
+
+  const response = await itc1.send(
+    'test-command',
+    { buffer, drop () {} },
+    { transferList: [buffer], sanitize: false }
+  )
+
+  deepStrictEqual(response, 8)
+  deepStrictEqual(buffer.byteLength, 0)
+})
+
+test('should sanitize the errors of a handler registered with sanitize: false', async t => {
+  const { itc1, itc2 } = setupPair(t)
+
+  itc2.handle(
+    'test-command',
+    () => {
+      const error = new Error('Plugin did not start in time')
+      error.code = 'AVV_ERR_PLUGIN_EXEC_TIMEOUT'
+      error.fn = async function myPlugin () {}
+      throw error
+    },
+    { sanitize: false }
+  )
+
+  await rejects(itc1.send('test-command'), error => {
+    deepStrictEqual(error.code, 'PLT_ITC_HANDLER_FAILED')
+    deepStrictEqual(error.handlerError.code, 'AVV_ERR_PLUGIN_EXEC_TIMEOUT')
+    deepStrictEqual(error.handlerError.fn, undefined)
+    return true
+  })
+})

@@ -15,6 +15,16 @@ export interface ITCSendOptions extends Record<string, any> {
   signal?: AbortSignal
   /** Milliseconds to wait for the response before failing with a PLT_ITC_REQUEST_TIMEOUT error. */
   timeout?: number
+  /** Set to `false` when the message is only cloneable values, to post it without sanitizing it. */
+  sanitize?: boolean
+}
+
+export interface ITCHandlerOptions {
+  /**
+   * Set to `false` when the handler returns only cloneable data, to post its results without sanitizing them.
+   * Errors are always sanitized.
+   */
+  sanitize?: boolean
 }
 
 export interface OutgoingMessagingSpanOptions {
@@ -39,7 +49,7 @@ export class ITC extends EventEmitter {
   send (name: string, message: any, options?: ITCSendOptions): Promise<any>
   notify (name: string, message: any, options?: Record<string, any>): void
   process (name: string, message: any, context?: Record<string, any>): Promise<any>
-  handle (message: string, handler: Handler): void
+  handle (message: string, handler: Handler, options?: ITCHandlerOptions): void
   getHandler (message: string): Handler | undefined
   listen (): void
   close (): void

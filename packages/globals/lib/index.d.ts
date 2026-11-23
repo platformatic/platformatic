@@ -43,10 +43,18 @@ export interface ITC {
   send (message: string, data: any, options?: Record<string, any>): Promise<any>
   notify (message: string, data: any, options?: Record<string, any>): void
   process (message: string, data: any, context?: Record<string, any>): Promise<any>
-  handle (message: string, handler: Handler): void
+  handle (message: string, handler: Handler, options?: HandlerOptions): void
   getHandler (message: string): Handler | undefined
   listen (): void
   close (): void
+}
+
+export interface HandlerOptions {
+  /**
+   * Set to `false` when the handler returns only cloneable data, to post its results without sanitizing them.
+   * Errors are always sanitized.
+   */
+  sanitize?: boolean
 }
 
 export interface MessagingWorker {
@@ -62,14 +70,22 @@ export interface MessagingSendOptions {
   /** Routes the message to the worker owning this key, instead of using round-robin. */
   affinity?: string
   transferList?: Transferable[]
+  /** Set to `false` when the data is only cloneable values, to post it without sanitizing it. */
+  sanitize?: boolean
+  [key: string]: any
+}
+
+export interface MessagingNotifyOptions {
+  /** Set to `false` when the data is only cloneable values, to post it without sanitizing it. */
+  sanitize?: boolean
   [key: string]: any
 }
 
 export interface MessagingApi {
   send (name: string, message: string, data?: any, options?: MessagingSendOptions): Promise<any>
-  notify (name: string, message: string, data?: any, options?: Record<string, any>): void
-  handle (message: string, handler: Handler): void
-  handle (handlers: Record<string, Handler>): void
+  notify (name: string, message: string, data?: any, options?: MessagingNotifyOptions): void
+  handle (message: string, handler: Handler, options?: HandlerOptions): void
+  handle (handlers: Record<string, Handler>, options?: HandlerOptions): void
   getWorkers (): Record<string, MessagingWorker[]>
   getWorkers (application: string): MessagingWorker[]
   getWorkerForAffinity (application: string, affinity: string): MessagingWorker | null
