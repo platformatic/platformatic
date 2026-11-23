@@ -239,8 +239,15 @@ export class Controller extends EventEmitter {
     this.#updateCapabilityStatus('starting')
     this.emit('starting')
 
+    // Resolve the watch config before start so a failure still aborts startup,
+    // but do not start the watcher yet. File activity during start (custom
+    // commands, compilers, delayed fs events on Windows from files just
+    // copied into the application folder) would otherwise emit a spurious
+    // "changed" event. For entrypoints that bind listen(0), the reload
+    // picks a new port and the URL returned by runtime.start() goes stale.
+    let watchConfig = null
     if (this.#watch) {
-      const watchConfig = await this.capability.getWatchConfig()
+      watchConfig = await this.capability.getWatchConfig()
 
       if (watchConfig.enabled !== false) {
         /* c8 ignore next 4 */
@@ -248,8 +255,6 @@ export class Controller extends EventEmitter {
           this.capability.log({ message: 'files changed', level: 'debug' })
           this.emit('changed')
         }, 100) // debounce restart for 100ms
-
-        this.#startFileWatching(watchConfig)
       }
     }
 
@@ -275,6 +280,11 @@ export class Controller extends EventEmitter {
     this.#starting = false
 
     this.#updateCapabilityStatus('started')
+
+    if (watchConfig && watchConfig.enabled !== false) {
+      this.#startFileWatching(watchConfig)
+    }
+
     this.emit('started')
   }
 
