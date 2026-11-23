@@ -38,7 +38,7 @@
     "messaging"
   ],
   "devDependencies": {
-    "@types/node": "^22.10.6",
+    "@types/node": "^26.0.0",
     "cleaner-spec-reporter": "^2.0.0",
     "eslint": "10",
     "neostandard": "^0.14.0",
