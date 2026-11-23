@@ -48,7 +48,7 @@
     "@platformatic/foundation": "workspace:*",
     "camelcase": "^6.3.0",
     "fastify-plugin": "^6.0.0",
-    "graphql": "^16.8.1",
+    "graphql": "^17.0.0",
     "graphql-scalars": "^2.0.1",
     "graphql-type-json": "^0.3.2",
     "inflected": "^2.1.0",

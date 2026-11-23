@@ -634,8 +634,8 @@ importers:
         specifier: ^6.0.0
         version: 6.0.1
       graphql:
-        specifier: ^16.8.1
-        version: 16.15.0
+        specifier: ^17.0.0
+        version: 17.1.0
       help-me:
         specifier: ^5.0.0
         version: 5.0.0
@@ -693,7 +693,7 @@ importers:
         version: 16.0.0
       mercurius:
         specifier: ^16.0.0
-        version: 16.12.2(graphql@16.15.0)
+        version: 16.12.2(graphql@17.1.0)
       neostandard:
         specifier: ^0.14.0
         version: 0.14.1(eslint@10.15.0(jiti@2.7.0)(supports-color@10.2.2))(supports-color@10.2.2)(typescript@6.0.3)
@@ -980,8 +980,8 @@ importers:
         specifier: ^9.0.0
         version: 9.10.2
       graphql:
-        specifier: ^16.8.1
-        version: 16.15.0
+        specifier: ^17.0.0
+        version: 17.1.0
       help-me:
         specifier: ^5.0.0
         version: 5.0.0
@@ -993,7 +993,7 @@ importers:
         version: 1.0.0
       mercurius:
         specifier: ^16.0.0
-        version: 16.12.2(graphql@16.15.0)
+        version: 16.12.2(graphql@17.1.0)
       minimist:
         specifier: ^1.2.8
         version: 1.2.8
@@ -1796,8 +1796,8 @@ importers:
         specifier: ^5.7.0
         version: 5.12.8
       graphql:
-        specifier: ^16.8.1
-        version: 16.15.0
+        specifier: ^17.0.0
+        version: 17.1.0
       help-me:
         specifier: ^5.0.0
         version: 5.0.0
@@ -2025,14 +2025,14 @@ importers:
         specifier: ^6.0.0
         version: 6.0.1
       graphql:
-        specifier: ^16.9.0
-        version: 16.15.0
+        specifier: ^17.0.0
+        version: 17.1.0
       help-me:
         specifier: ^5.0.0
         version: 5.0.0
       mercurius:
         specifier: ^16.0.0
-        version: 16.12.2(graphql@16.15.0)
+        version: 16.12.2(graphql@17.1.0)
       minimist:
         specifier: ^1.2.8
         version: 1.2.8
@@ -2165,20 +2165,20 @@ importers:
         specifier: ^6.0.0
         version: 6.0.1
       graphql:
-        specifier: ^16.8.1
-        version: 16.15.0
+        specifier: ^17.0.0
+        version: 17.1.0
       graphql-scalars:
         specifier: ^2.0.1
-        version: 2.0.1(graphql@16.15.0)
+        version: 2.0.1(graphql@17.1.0)
       graphql-type-json:
         specifier: ^0.3.2
-        version: 0.3.2(graphql@16.15.0)
+        version: 0.3.2(graphql@17.1.0)
       inflected:
         specifier: ^2.1.0
         version: 2.1.0
       mercurius:
         specifier: ^16.0.0
-        version: 16.12.2(graphql@16.15.0)
+        version: 16.12.2(graphql@17.1.0)
     devDependencies:
       '@matteo.collina/snap':
         specifier: ^1.0.0
@@ -8142,6 +8142,10 @@ packages:
     resolution: {integrity: sha512-32kz9FecohDiC/tgcViwnRXM7HFBVTPiW7pHO+DikKOI5KjhU/jNULOReXsrFqt2WAYbE9xFXsTffJw6iTO8qw==}
     engines: {node: ^12.22.0 || ^14.16.0 || ^16.0.0 || >=17.0.0}
 
+  graphql@17.1.0:
+    resolution: {integrity: sha512-JKCOa7rSQNrket/JFhuua86hljUO+IIpyUHfKxlKD6FEfbrLX8jc1FDrA0KPKI+s8OspBCF/5npYccAICHXPpQ==}
+    engines: {node: ^22.0.0 || ^24.0.0 || >=26.0.0}
+
   gunzip-maybe@1.4.2:
     resolution: {integrity: sha512-4haO1M4mLO91PW57BMsDFf75UmwoRX0GkdD+Faw+Lr+r/OZrOCS0pIBwOL1xCKQqnQzbNFGgK2V2CpBUPeFNTw==}
     hasBin: true
@@ -13327,6 +13331,10 @@ snapshots:
     dependencies:
       graphql: 16.15.0
 
+  '@graphql-typed-document-node/core@3.2.0(graphql@17.1.0)':
+    dependencies:
+      graphql: 17.1.0
+
   '@grpc/grpc-js@1.14.6':
     dependencies:
       '@grpc/proto-loader': 0.8.1
@@ -14986,8 +14994,8 @@ snapshots:
     dependencies:
       abstract-logger: 0.2.5
       fastify: 5.12.8
-      graphql: 16.15.0
-      mercurius: 16.12.2(graphql@16.15.0)
+      graphql: 17.1.0
+      mercurius: 16.12.2(graphql@17.1.0)
       metaline: 1.1.0
       pino: 10.4.0
       undici: 7.30.2
@@ -18550,14 +18558,24 @@ snapshots:
       lodash.merge: 4.6.2
       lodash.mergewith: 4.6.2
 
-  graphql-scalars@2.0.1(graphql@16.15.0):
+  graphql-jit@0.8.10(graphql@17.1.0):
     dependencies:
-      graphql: 16.15.0
+      '@graphql-typed-document-node/core': 3.2.0(graphql@17.1.0)
+      fast-json-stringify: 7.3.9
+      generate-function: 2.3.1
+      graphql: 17.1.0
+      lodash.memoize: 4.1.2
+      lodash.merge: 4.6.2
+      lodash.mergewith: 4.6.2
+
+  graphql-scalars@2.0.1(graphql@17.1.0):
+    dependencies:
+      graphql: 17.1.0
       tslib: 2.9.1
 
-  graphql-type-json@0.3.2(graphql@16.15.0):
+  graphql-type-json@0.3.2(graphql@17.1.0):
     dependencies:
-      graphql: 16.15.0
+      graphql: 17.1.0
 
   graphql-ws@6.4.1(@fastify/websocket@11.3.7)(crossws@0.4.15(srvx@1.0.6))(graphql@16.15.0)(ws@8.23.0):
     dependencies:
@@ -18568,6 +18586,8 @@ snapshots:
       ws: 8.23.0
 
   graphql@16.15.0: {}
+
+  graphql@17.1.0: {}
 
   gunzip-maybe@1.4.2:
     dependencies:
@@ -19698,6 +19718,25 @@ snapshots:
       fastify-plugin: 6.0.1
       graphql: 16.15.0
       graphql-jit: 0.8.10(graphql@16.15.0)
+      mqemitter: 7.1.0
+      readable-stream: 4.8.0
+      safe-stable-stringify: 3.0.0
+      secure-json-parse: 4.1.1
+      single-user-cache: 2.1.0
+      tiny-lru: 13.1.1
+      ws: 8.23.0
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
+
+  mercurius@16.12.2(graphql@17.1.0):
+    dependencies:
+      '@fastify/error': 4.3.0
+      '@fastify/static': 10.1.12
+      '@fastify/websocket': 11.3.7
+      fastify-plugin: 6.0.1
+      graphql: 17.1.0
+      graphql-jit: 0.8.10(graphql@17.1.0)
       mqemitter: 7.1.0
       readable-stream: 4.8.0
       safe-stable-stringify: 3.0.0
