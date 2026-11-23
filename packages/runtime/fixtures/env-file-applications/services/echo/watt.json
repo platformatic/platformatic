@@ -1,0 +1,13 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/service/3.0.0.json",
+  "plugins": {
+    "paths": [
+      {
+        "path": "plugin.js",
+        "options": {
+          "value": "{PLT_ENV_FILE_VALUE}"
+        }
+      }
+    ]
+  }
+}

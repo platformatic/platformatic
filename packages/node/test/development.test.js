@@ -1,11 +1,13 @@
 import { kMetadata } from '@platformatic/foundation'
 import { deepStrictEqual, ok } from 'node:assert'
 import { resolve } from 'node:path'
+import { test } from 'node:test'
 import {
   createRuntime,
   getLogsFromFile,
   prepareRuntimeWithApplications,
   setFixturesDir,
+  sleep,
   updateFile,
   verifyDevelopmentMode,
   verifyJSONViaHTTP,
@@ -432,3 +434,17 @@ const configurations = [
 ]
 
 verifyDevelopmentMode(configurations)
+
+test('should not reload a watched standalone application immediately after start', async t => {
+  const { root, url } = await createRuntime(t, 'node-no-build-standalone')
+
+  // Give delayed filesystem events from startup enough time to surface.
+  await sleep(2000)
+
+  const logs = await getLogsFromFile(root)
+  const reloaded = logs.some(
+    log => log.msg === 'files changed' || (typeof log.msg === 'string' && log.msg.includes('successfully reloaded'))
+  )
+  ok(!reloaded, 'the application should not reload immediately after start')
+  await verifyJSONViaHTTP(url, '/', 200, { production: false })
+})

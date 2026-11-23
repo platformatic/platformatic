@@ -711,6 +711,24 @@ test('loadEnv - should mark as fallback the keys provided by a custom env file',
   deepEqual(result[kEnvFileFallbackKeys], ['PLT_FILE_ONLY_TEST'])
 })
 
+test('loadEnv - should not look for a .env file when the custom env file is false', async t => {
+  const tmpDir = await mkdtemp(join(os.tmpdir(), 'plt-utils-test-'))
+  const root = join(tmpDir, 'application')
+
+  t.after(async () => {
+    await safeRemove(tmpDir)
+  })
+
+  await mkdir(root)
+  await writeFile(join(root, '.env'), 'PLT_FILE_ONLY_TEST=from-application')
+  await writeFile(join(tmpDir, '.env'), 'PLT_FILE_ONLY_TEST=from-parent')
+
+  // Without the variables of the process, any value could only come from one of the two files
+  const result = await loadEnv(root, true, {}, false)
+  deepStrictEqual({ ...result }, {})
+  deepEqual(result[kEnvFileFallbackKeys], [])
+})
+
 test('loadEnv - should return process.env when no .env file exists', async t => {
   const tmpDir = await mkdtemp(join(os.tmpdir(), 'plt-utils-test-'))
 
@@ -933,6 +951,27 @@ test('loadConfiguration - should handle environment variable replacement', async
 
   const result = await loadConfiguration(configFile, schema)
   deepEqual(result, { host: 'localhost', port: 3000 })
+})
+
+test('loadConfiguration - should record the env file it was given in the metadata', async t => {
+  const tmpDir = await mkdtemp(join(os.tmpdir(), 'plt-utils-test-'))
+
+  t.after(async () => {
+    await safeRemove(tmpDir)
+  })
+
+  await writeFile(join(tmpDir, 'custom.env'), 'PLT_CUSTOM_TEST=value')
+  await writeFile(join(tmpDir, '.env'), 'PLT_DISCOVERED_TEST=value')
+
+  const given = await loadConfiguration({}, null, { root: tmpDir, envFile: 'custom.env' })
+  equal(given[kMetadata].envFile, join(tmpDir, 'custom.env'))
+
+  // A .env file found by the search is not one the caller asked for
+  const discovered = await loadConfiguration({}, null, { root: tmpDir })
+  equal(discovered[kMetadata].envFile, null)
+
+  const none = await loadConfiguration({}, null, { root: tmpDir, envFile: false })
+  equal(none[kMetadata].envFile, null)
 })
 
 test('loadConfiguration - should skip validation when validate=false', async t => {

@@ -93,7 +93,7 @@ export async function loadConfiguration (configOrRoot, sourceOrConfig, context) 
 
 // Applications without the config property are resolved as when the runtime starts: by their configuration file in
 // their folder, or else by detecting their type. The configuration file found is returned, since the commands load it.
-async function loadApplicationCapability (application) {
+async function loadApplicationCapability (application, hasEnvFile = false) {
   let configFile = application.config
 
   if (!configFile) {
@@ -106,11 +106,12 @@ async function loadApplicationCapability (application) {
     return { pkg: capability, configFile: null }
   }
 
-  const applicationConfig = await utilsLoadConfiguration(configFile)
+  // As in the workers, when the runtime has an env file, the application must not search for a .env one
+  const applicationConfig = await utilsLoadConfiguration(configFile, null, hasEnvFile ? { envFile: false } : {})
   return { pkg: await loadConfigurationModule(application.path, applicationConfig), configFile }
 }
 
-export async function loadApplicationsCommands (executableName = '', configurationFile = null) {
+export async function loadApplicationsCommands (executableName = '', configurationFile = null, envFile) {
   const applications = {}
   const commands = {}
   const help = {}
@@ -132,7 +133,7 @@ export async function loadApplicationsCommands (executableName = '', configurati
       throw new Error('No runtime configuration file found.')
     }
 
-    config = await loadConfiguration(file)
+    config = await loadConfiguration(file, undefined, envFile === undefined ? undefined : { envFile })
 
     /* c8 ignore next 3 - Hard to test */
     if (!config) {
@@ -144,7 +145,10 @@ export async function loadApplicationsCommands (executableName = '', configurati
 
   for (const application of config.applications) {
     try {
-      const { pkg, configFile } = await loadApplicationCapability(application)
+      const { pkg, configFile } = await loadApplicationCapability(
+        application,
+        !!(config[kMetadata].envFile || envFile)
+      )
 
       if (pkg.createCommands) {
         const definition = await pkg.createCommands(application.id)

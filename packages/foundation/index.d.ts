@@ -102,6 +102,8 @@ export type ConfigurationOptions<T = {}> = Partial<{
   logger: Logger
   root: string
   skipMetadata: boolean
+  // The env file to read, resolved against the root; false reads none and skips the search for a .env file.
+  envFile: string | false
 }> &
   RawConfiguration
 
@@ -116,6 +118,8 @@ export type Configuration<Config = {}> = Config & {
     path: string | null
     env: Record<string, string>
     module: { module: string; version: string } | null
+    // The resolved path of the env file passed as the envFile option, null when there was none.
+    envFile?: string | null
   }
 }
 
@@ -165,7 +169,12 @@ export declare function createValidator (
   validationOptions?: object,
   context?: ConfigurationOptions
 ): (data: any) => boolean
-export declare function loadEnv (root: string): Promise<Record<string, string>>
+export declare function loadEnv (
+  root: string,
+  ignoreProcessEnv?: boolean,
+  additionalEnv?: Record<string, string>,
+  customEnvFile?: string | false | null
+): Promise<Record<string, string>>
 export declare function replaceEnv (
   config: RawConfiguration,
   env: Record<string, string>,

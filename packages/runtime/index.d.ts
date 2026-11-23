@@ -513,7 +513,11 @@ export declare function transform (
   context?: ConfigurationOptions
 ): Promise<RuntimeConfiguration>
 
-export declare function loadApplicationsCommands (): Promise<ApplicationsCommands>
+export declare function loadApplicationsCommands (
+  executableName?: string,
+  configurationFile?: string | null,
+  envFile?: string | false
+): Promise<ApplicationsCommands>
 
 export declare function setupLoopbackMessaging (
   targetId: string,
