@@ -497,10 +497,13 @@ export class ITC extends EventEmitter {
   }
 
   async #handleRequest (raw, context) {
+    // A handler registered with { sanitize: false } returns only cloneable data. Errors are always sanitized.
+    // This is read in the same tick #dispatchRequest picks the handler, so registering the message again while
+    // the handler runs doesn't change how its result is posted.
+    const skipSanitize = this.#unsanitizedResponses.has(raw.name)
     const response = await this.#dispatchRequest(raw, context)
 
-    // A handler registered with { sanitize: false } returns only cloneable data. Errors are always sanitized.
-    if (response.error === null && this.#unsanitizedResponses.has(response.name)) {
+    if (skipSanitize && response.error === null) {
       this._send(response, { ...context, sanitize: false })
     } else {
       this._send(response, context)

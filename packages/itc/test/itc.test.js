@@ -812,6 +812,38 @@ test('should sanitize the results of a handler registered again without sanitize
   deepStrictEqual(tracker.reads, 2)
 })
 
+test('should post a result with the option of the handler that returned it', async t => {
+  const { itc1, itc2 } = setupPair(t)
+
+  for (const [first, second, reads] of [
+    [undefined, { sanitize: false }, 2],
+    [{ sanitize: false }, undefined, 1]
+  ]) {
+    const tracker = trackReads()
+    const started = Promise.withResolvers()
+    const release = Promise.withResolvers()
+
+    itc2.handle(
+      'test-command',
+      async () => {
+        started.resolve()
+        await release.promise
+        return tracker.data
+      },
+      first
+    )
+
+    const response = itc1.send('test-command')
+    await started.promise
+
+    itc2.handle('test-command', () => null, second)
+    release.resolve()
+
+    deepStrictEqual(await response, { value: 'value' })
+    deepStrictEqual(tracker.reads, reads)
+  }
+})
+
 test('should post a request sent with sanitize: false as it is', async t => {
   const { itc1, itc2 } = setupPair(t)
   const sanitized = trackReads()
