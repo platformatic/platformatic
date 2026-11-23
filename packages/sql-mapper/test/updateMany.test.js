@@ -475,3 +475,42 @@ test('updateMany on table with non-default PK name', async () => {
   deepEqual(result.length, 1)
   deepEqual(result[0].title, 'updated')
 })
+
+test('updateMany in a transaction', async () => {
+  const mapper = await connect({
+    ...connInfo,
+    log: fakeLogger,
+    async onDatabaseLoad (db, sql) {
+      test.after(async () => {
+        await clear(db, sql)
+        db.dispose()
+      })
+      await clear(db, sql)
+
+      if (isSQLite) {
+        await db.query(sql`CREATE TABLE posts (
+          id INTEGER PRIMARY KEY,
+          title VARCHAR(42)
+        );`)
+      } else {
+        await db.query(sql`CREATE TABLE posts (
+          id SERIAL PRIMARY KEY,
+          title VARCHAR(42)
+        );`)
+      }
+
+      await db.query(sql`INSERT INTO posts (title) VALUES ('foo')`)
+    }
+  })
+
+  const entity = mapper.entities.post
+
+  const result = await mapper.db.tx(tx => entity.updateMany({
+    where: { title: { eq: 'foo' } },
+    input: { title: 'updated' },
+    fields: ['title'],
+    tx
+  }))
+
+  deepEqual(result, [{ title: 'updated' }])
+})
