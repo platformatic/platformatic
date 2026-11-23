@@ -414,7 +414,8 @@ graph TD
 - Traces automatically span across application boundaries
 - Context propagation happens via HTTP headers
 - Multiple exporter types supported (OTLP, Jaeger, Zipkin)
-- Custom spans can be created using `app.openTelemetry.startSpan()`
+- Custom spans can be created using `app.openTelemetry.startSpan()` or the OpenTelemetry API (`trace.getTracer()`)
+- A `TracerProvider` registered by an observability product is never replaced: in that case the spans are sent to it and the configured exporters are ignored
 
 ### Metrics Collection Flow
 

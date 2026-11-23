@@ -27,6 +27,7 @@
     "typescript": "~6.0.3"
   },
   "dependencies": {
+    "@fastify/otel": "^1.0.1",
     "@fastify/swagger": "^9.5.1",
     "@opentelemetry/api": "1.10.0",
     "@opentelemetry/context-async-hooks": "3.1.1",
@@ -43,6 +44,8 @@
     "@opentelemetry/semantic-conventions": "1.45.0",
     "@platformatic/foundation": "workspace:*",
     "@platformatic/globals": "workspace:*",
+    "@platformatic/instrumentation-light-my-request": "workspace:*",
+    "@platformatic/instrumentation-thread-interceptor": "workspace:*",
     "fast-uri": "^4.0.0",
     "fastify-plugin": "^5.0.1"
   },

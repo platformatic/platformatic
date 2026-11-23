@@ -73,6 +73,9 @@ overrides:
   '@nestjs/platform-fastify>fastify': 5.12.8
   'undici@7.29.0': ^8.5.0
   'undici-oidc-interceptor>undici': ^8.5.0
+  # @fastify/otel@1.0.1 requires @opentelemetry/instrumentation@^0.300.0, which would install a second copy
+  # next to the one used by @platformatic/tracing. Remove when @fastify/otel widens its range.
+  '@fastify/otel>@opentelemetry/instrumentation': 0.301.2
 packageImportMethod: copy
 preferSymlinkedExecutables: true
 resolutionMode: highest

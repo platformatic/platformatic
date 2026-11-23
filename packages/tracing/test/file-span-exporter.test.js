@@ -68,7 +68,7 @@ test('should trace a request with file exporter', async () => {
     const span = finishedSpans[0]
     equal(span.kind, SpanKind.SERVER)
     equal(span.name, 'GET /test')
-    equal(span.status.code, SpanStatusCode.OK)
+    equal(span.status.code, SpanStatusCode.UNSET)
     equal(span.attributes['http.request.method'], 'GET')
     equal(span.attributes['url.path'], '/test')
     equal(span.attributes['http.response.status_code'], 200)

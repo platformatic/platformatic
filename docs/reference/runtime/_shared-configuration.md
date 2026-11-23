@@ -679,6 +679,11 @@ export default createWattConfig({
 
 [Open Telemetry](https://opentelemetry.io/) is optionally supported with these settings:
 
+:::note
+The `TracerProvider` is registered globally, so the tracers obtained through the OpenTelemetry API (`trace.getTracer()`) export their spans with these settings.
+If another `TracerProvider` is already registered, for instance by an observability product, it is never replaced: the `exporter` and `sampler` settings are ignored and the spans are sent to that provider. See [Using the SDK Together with the Built-in Telemetry](../../guides/opentelemetry-sdk-setup.md#using-the-sdk-together-with-the-built-in-telemetry).
+:::
+
 - **`applicationName`** (**required**, `string`) — Name of the application as will be reported in open telemetry. In the `runtime` case, the name of the applications as reported in traces is `${applicationName}-${applicationId}`, where `applicationId` is the id of the application in the runtime.
 - **`version`** (`string`) — Optional version (free form)
 - **`skip`** (`array`). Optional list of operations to skip when exporting telemetry defined `object` with properties:

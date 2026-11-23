@@ -68,12 +68,13 @@ function getTracer () {
     return tracer
   }
 
-  const tracerProvider = getTracerProvider({ throwOnMissing: false })
-  if (!tracerProvider) {
+  // The provider in the globals only tells that the telemetry is active in this thread. The tracer is
+  // obtained through the OpenTelemetry API, so that it works with whatever provider is registered.
+  if (!getTracerProvider({ throwOnMissing: false })) {
     return null
   }
 
-  tracer = tracerProvider.getTracer('@platformatic/itc')
+  tracer = trace.getTracer('@platformatic/itc')
   return tracer
 }
 

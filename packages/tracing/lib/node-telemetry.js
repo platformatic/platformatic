@@ -1,13 +1,10 @@
-import { context, propagation } from '@opentelemetry/api'
-import { AsyncLocalStorageContextManager } from '@opentelemetry/context-async-hooks'
 import { registerInstrumentations } from '@opentelemetry/instrumentation'
 import { HttpInstrumentation } from '@opentelemetry/instrumentation-http'
 import { UndiciInstrumentation } from '@opentelemetry/instrumentation-undici'
-import { W3CTraceContextPropagator } from '@opentelemetry/core'
-import { TracerProvider } from '@opentelemetry/sdk-trace'
 import { resourceFromAttributes } from '@opentelemetry/resources'
 import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions'
-import { updateGlobals } from '@platformatic/globals'
+import { getLogger, updateGlobals } from '@platformatic/globals'
+import { LightMyRequestInstrumentation } from '@platformatic/instrumentation-light-my-request'
 import { AsyncLocalStorage } from 'node:async_hooks'
 import { readFileSync, statSync } from 'node:fs'
 import { tmpdir } from 'node:os'
@@ -17,6 +14,7 @@ import process from 'node:process'
 import util from 'node:util'
 import { workerData } from 'node:worker_threads'
 import { getInstrumentations } from './pluggable-instrumentations.js'
+import { getExternalTracerProvider, registerPropagation, registerTracerProvider } from './provider.js'
 import { getSampler } from './samplers.js'
 import { getSpanProcessors } from './span-processors.js'
 
@@ -27,15 +25,20 @@ const debuglog = util.debuglog('@platformatic/tracing')
 // https://github.com/open-telemetry/opentelemetry-js/issues/5103
 process.env.OTEL_SEMCONV_STABILITY_OPT_IN = 'http/dup'
 
-// Set up global propagator EARLY for trace context propagation via HTTP headers
-// This must be set before any HTTP operations occur
-propagation.setGlobalPropagator(new W3CTraceContextPropagator())
+// A provider registered before this module is loaded (by an OpenTelemetry SDK set up by the user or by an
+// observability product) owns the telemetry pipeline. In that case Platformatic only contributes its own
+// instrumentations and never registers a provider, a propagator or a context manager.
+const externalTracerProvider = getExternalTracerProvider()
 
-// Set up global context manager for async context propagation
-// Context manager MUST be global for instrumentations to work
-const contextManager = new AsyncLocalStorageContextManager()
-contextManager.enable()
-context.setGlobalContextManager(contextManager)
+// The propagator and the context manager must be registered EARLY, before any HTTP operation occurs and
+// before any instrumentation is enabled, otherwise the trace context is not propagated.
+if (!externalTracerProvider) {
+  registerPropagation()
+}
+
+// This instrumentation only uses the OpenTelemetry API, so it works with whatever provider is (or will be)
+// registered. It is registered synchronously because it must patch light-my-request before it is loaded.
+registerInstrumentations({ instrumentations: [new LightMyRequestInstrumentation()] })
 
 // The calls between applications are traced by the thread interceptor hooks. Since it publishes
 // the undici diagnostics events too, the undici instrumentation would create a second client span.
@@ -49,6 +52,25 @@ const setupNodeHTTPTelemetry = async (opts, applicationDir, usesPlatformaticDisp
   const { applicationName, instrumentations = [] } = opts
   const additionalInstrumentations = await getInstrumentations(instrumentations, applicationDir)
 
+  if (externalTracerProvider) {
+    // This is the expected setup when an observability product is in use, so it must not be reported on
+    // the standard error, which the runtime logs as an error.
+    const message =
+      'An OpenTelemetry TracerProvider is already registered, the exporters configured in the Platformatic tracing are ignored.'
+    const logger = getLogger({ throwOnMissing: false })
+    if (opts.exporter && logger) {
+      logger.warn(message)
+    } else {
+      debuglog(message)
+    }
+
+    // The HTTP and undici instrumentations are left to the owner of the provider: registering them here
+    // as well would duplicate every span. The ones explicitly listed in the configuration are honored.
+    updateGlobals({ tracerProvider: externalTracerProvider })
+    registerInstrumentations({ instrumentations: additionalInstrumentations })
+    return
+  }
+
   const { spanProcessors } = getSpanProcessors(opts)
   // The node capability builds its own provider, so the sampler has to be
   // applied here too or the option would only work for the other capabilities.
@@ -56,7 +78,7 @@ const setupNodeHTTPTelemetry = async (opts, applicationDir, usesPlatformaticDisp
 
   const clientSpansAls = new AsyncLocalStorage()
 
-  const tracerProvider = new TracerProvider({
+  const { provider: tracerProvider } = registerTracerProvider({
     spanProcessors, // https://github.com/open-telemetry/opentelemetry-js/issues/4881#issuecomment-2358059714
     resource: resourceFromAttributes({
       [ATTR_SERVICE_NAME]: applicationName

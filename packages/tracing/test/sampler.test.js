@@ -41,6 +41,9 @@ test('sampler type traceidratio honours its ratio option', async () => {
   )
   equal((await callTimes(none, 3)).getFinishedSpans().length, 0)
 
+  // The provider is global, so the first application has to release it before the second one starts.
+  await none.close()
+
   const all = await setupApp(
     {
       applicationName: 'test-application',

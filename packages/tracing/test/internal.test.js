@@ -1,8 +1,6 @@
-import { SpanKind, SpanStatusCode } from '@opentelemetry/api'
+import { ROOT_CONTEXT, SpanKind, SpanStatusCode } from '@opentelemetry/api'
 import { deepEqual, equal } from 'node:assert'
 import { test } from 'node:test'
-import { fastifyTextMapGetter } from '../lib/fastify-text-map.js'
-import { PlatformaticContext } from '../lib/platformatic-context.js'
 import { setupApp } from './helper.js'
 
 test('start and ends an internal span', async () => {
@@ -33,7 +31,7 @@ test('start and ends an internal span', async () => {
     traceparent
   }
   const { propagator } = app.openTelemetry
-  const context = propagator.extract(new PlatformaticContext(), { headers: incomingHeaders }, fastifyTextMapGetter)
+  const context = propagator.extract(ROOT_CONTEXT, incomingHeaders)
 
   const attributes = {
     'test-attribute': 'test-value'
@@ -118,7 +116,7 @@ test('start and ends an internal span with error', async () => {
     traceparent
   }
   const { propagator } = app.openTelemetry
-  const context = propagator.extract(new PlatformaticContext(), { headers: incomingHeaders }, fastifyTextMapGetter)
+  const context = propagator.extract(ROOT_CONTEXT, incomingHeaders)
 
   const attributes = {
     'test-attribute': 'test-value'

@@ -1,6 +1,6 @@
 function telemetryWrapper (app, fn, operationType, operationName) {
   return async function (...args) {
-    const { startSpan, endSpan } = app.openTelemetry
+    const { startSpan, endSpan, getRequestContext } = app.openTelemetry
     const context = args[2]
     const request = context?.reply?.request
     const document = JSON.stringify(request?.body)
@@ -12,7 +12,7 @@ function telemetryWrapper (app, fn, operationType, operationName) {
       'graphql.operation.type': operationType
     }
     const spanName = `${operationType} ${operationName}`
-    const ctx = request.span?.context
+    const ctx = getRequestContext?.(request)
 
     const span = startSpan(spanName, ctx, telemetryAttributes)
     try {

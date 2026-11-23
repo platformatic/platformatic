@@ -43,7 +43,10 @@ export function refreshGlobalDispatcher () {
 }
 
 export async function setDispatcher (runtimeConfig) {
-  const tracingHooks = runtimeConfig.tracing ? createTelemetryThreadInterceptorHooks() : {}
+  // Capabilities that skip the tracing hooks (like @platformatic/service) trace their outgoing calls
+  // on their own, so adding the hooks there as well would duplicate the client spans.
+  const hasTracingHooks = runtimeConfig.tracing && !workerData.applicationConfig?.skipTracingHooks
+  const tracingHooks = hasTracingHooks ? createTelemetryThreadInterceptorHooks() : {}
   const threadDispatcher = createThreadInterceptor(runtimeConfig, tracingHooks)
   const threadInterceptor = threadDispatcher
 
@@ -78,8 +81,7 @@ export async function setDispatcher (runtimeConfig) {
   return {
     threadDispatcher: {
       interceptor: threadDispatcher,
-      server: null,
-      serverHooks: tracingHooks.serverHooks
+      server: null
     }
   }
 }

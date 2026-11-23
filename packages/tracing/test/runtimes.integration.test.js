@@ -147,7 +147,7 @@ test('configure telemetry correctly with a gateway + next - integration test', a
   await sleep(1000)
 
   const allSpans = received
-    .map(r => r.spans)
+    .map(r => r.spans.map(span => ({ ...span, scopeName: r.scope.name })))
     .flat()
     .map(s => {
       const spanId = s.spanId.toString('hex')
@@ -165,10 +165,12 @@ test('configure telemetry correctly with a gateway + next - integration test', a
     })
 
   const allSpanIds = allSpans.map(s => s.spanId.toString())
-  const traceId = allSpans[0].traceId
+  // The provider is global, so Next.js reports its own spans too, some of them outside of the request trace
+  const ownSpans = allSpans.filter(span => span.scopeName !== 'next.js')
+  const traceId = ownSpans[0].traceId
 
   // All spans should be part of the same trace
-  for (const span of allSpans) {
+  for (const span of ownSpans) {
     equal(span.traceId, traceId)
   }
 

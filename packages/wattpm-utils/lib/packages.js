@@ -9,6 +9,8 @@ export const packages = [
   '@platformatic/foundation',
   '@platformatic/gateway',
   '@platformatic/globals',
+  '@platformatic/instrumentation-light-my-request',
+  '@platformatic/instrumentation-thread-interceptor',
   '@platformatic/itc',
   '@platformatic/metrics',
   '@platformatic/nest',
