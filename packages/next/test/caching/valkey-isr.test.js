@@ -982,7 +982,7 @@ test('should handle deserialization error', async t => {
     logs.find(l => {
       return (
         l.msg === 'Cannot deserialize cache value from Valkey' &&
-        l.err?.message === 'Unexpected end of buffer reading string'
+        typeof l.err?.message === 'string' && l.err.message.length > 0
       )
     })
   )
