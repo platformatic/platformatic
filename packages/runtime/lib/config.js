@@ -260,10 +260,30 @@ export async function prepareApplication (config, application, defaultWorkers) {
         application.type = extractModuleFromSchemaUrl(applicationConfig, true).module
         application.skipTelemetryHooks = pkg.skipTelemetryHooks
       } else {
-        const { moduleName, capability } = await importCapabilityAndConfig(application.path)
-        pkg = capability
+        // Applications without the config property may still have a configuration file in their folder.
+        // As the workers do, discover it and derive the capability from its $schema, so that a
+        // placeholder in the schema resolves with the env file of the runtime and a .env file found
+        // above the application is not picked up unless the runtime asked for it.
+        const configFile = await findConfigurationFile(application.path)
+        const applicationConfig = configFile
+          ? await loadConfiguration(
+            join(application.path, configFile),
+            undefined,
+            config[kMetadata].envFile ? { envFile: false } : undefined
+          )
+          : null
 
-        application.type = moduleName
+        const module = applicationConfig ? extractModuleFromSchemaUrl(applicationConfig) : null
+
+        if (module) {
+          pkg = await loadConfigurationModule(application.path, applicationConfig)
+          application.type = module.module
+        } else {
+          const { moduleName, capability } = await importCapabilityAndConfig(application.path)
+          pkg = capability
+
+          application.type = moduleName
+        }
       }
 
       application.skipTelemetryHooks = pkg.skipTelemetryHooks
