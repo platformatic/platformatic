@@ -1,4 +1,4 @@
-FROM node:22-slim as base
+FROM node:26-slim as base
 
 ENV HOME=/home
 ENV PLT_HOME=$HOME/platformatic/
@@ -38,7 +38,7 @@ RUN cd packages/cli && pnpm add -g .
 RUN cd packages/wattpm && pnpm add -g .
 
 # No pnpm/build tools install here, we just copy the files from the previous stage
-FROM node:22-slim
+FROM node:26-slim
 
 # Make pnpm available
 RUN npm install -g pnpm@12
