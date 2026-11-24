@@ -42,6 +42,11 @@
       "allowedVersions": "<17"
     },
     {
+      // undici 8 is only used on v4 (#5124). Keep main (v3) on undici 7 until v4 is merged.
+      "matchPackageNames": ["undici"],
+      "allowedVersions": "<8"
+    },
+    {
       "matchUpdateTypes": [
         "minor",
         "patch",
