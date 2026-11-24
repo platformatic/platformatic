@@ -15,6 +15,11 @@
     "**/fixtures/**"
   ],
   "rangeStrategy": "update-lockfile",
+  // This repo does not enable the GitHub "Allow auto-merge" checkbox
+  // (allow_auto_merge is false), so Renovate's default platform-native
+  // automerge cannot work. Let Renovate merge the PR itself once the
+  // branch's status checks are green.
+  "platformAutomerge": false,
   // Mirrors pnpm-workspace.yaml `minimumReleaseAge: 1440` (1440 minutes = 1 day).
   // Security updates bypass this check regardless.
   "minimumReleaseAge": "1 day",
