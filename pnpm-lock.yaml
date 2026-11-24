@@ -308,8 +308,8 @@ importers:
         specifier: ^4.2.0
         version: 4.2.0
       undici:
-        specifier: ^7.27.2
-        version: 7.30.2
+        specifier: ^8.0.0
+        version: 8.12.4
       ws:
         specifier: ^8.18.0
         version: 8.23.0
@@ -419,8 +419,8 @@ importers:
         specifier: ^6.8.1
         version: 6.10.1
       undici:
-        specifier: ^7.27.2
-        version: 7.30.2
+        specifier: ^8.0.0
+        version: 8.12.4
       ws:
         specifier: ^8.16.0
         version: 8.23.0
@@ -508,8 +508,8 @@ importers:
         specifier: ^1.22.8
         version: 1.22.14
       undici:
-        specifier: ^7.27.2
-        version: 7.30.2
+        specifier: ^8.0.0
+        version: 8.12.4
       which:
         specifier: ^3.0.1
         version: 3.0.1
@@ -720,8 +720,8 @@ importers:
         specifier: ~6.0.3
         version: 6.0.3
       undici:
-        specifier: ^7.27.2
-        version: 7.30.2
+        specifier: ^8.0.0
+        version: 8.12.4
       vscode-json-languageservice:
         specifier: ^5.3.9
         version: 5.7.2
@@ -750,8 +750,8 @@ importers:
         specifier: ~3.1.0
         version: 3.1.0
       undici:
-        specifier: ^7.27.2
-        version: 7.30.2
+        specifier: ^8.0.0
+        version: 8.12.4
     devDependencies:
       '@fastify/cookie':
         specifier: ^11.0.0
@@ -878,8 +878,8 @@ importers:
         specifier: ^7.6.3
         version: 7.8.6
       undici:
-        specifier: ^7.28.0
-        version: 7.30.2
+        specifier: ^8.0.0
+        version: 8.12.4
       yaml:
         specifier: ^2.4.1
         version: 2.9.1
@@ -1035,8 +1035,8 @@ importers:
         specifier: ^0.3.0
         version: 0.3.0
       undici:
-        specifier: ^7.27.2
-        version: 7.30.2
+        specifier: ^8.0.0
+        version: 8.12.4
     devDependencies:
       '@fastify/multipart':
         specifier: ^10.0.0
@@ -1114,8 +1114,8 @@ importers:
         specifier: ^10.1.0
         version: 10.4.0
       undici:
-        specifier: ^7.27.2
-        version: 7.30.2
+        specifier: ^8.0.0
+        version: 8.12.4
     devDependencies:
       '@types/inquirer':
         specifier: ^10.0.0
@@ -1833,8 +1833,8 @@ importers:
         specifier: ^5.27.11
         version: 5.33.23
       undici:
-        specifier: ^7.27.2
-        version: 7.30.2
+        specifier: ^8.0.0
+        version: 8.12.4
       undici-thread-interceptor:
         specifier: ^1.3.1
         version: 1.5.0
@@ -2065,8 +2065,8 @@ importers:
         specifier: ^0.3.0
         version: 0.3.0
       undici:
-        specifier: ^7.27.2
-        version: 7.30.2
+        specifier: ^8.0.0
+        version: 8.13.1
     devDependencies:
       '@fastify/aws-lambda':
         specifier: ^6.0.0
@@ -2693,8 +2693,8 @@ importers:
         specifier: ~6.0.3
         version: 6.0.3
       undici:
-        specifier: ^7.27.2
-        version: 7.30.2
+        specifier: ^8.0.0
+        version: 8.12.4
 
   packages/wattpm-pprof-capture:
     dependencies:
@@ -2711,8 +2711,8 @@ importers:
         specifier: ^0.8.0
         version: 0.8.0
       undici:
-        specifier: ^7.27.2
-        version: 7.30.2
+        specifier: ^8.0.0
+        version: 8.12.4
     devDependencies:
       '@platformatic/foundation':
         specifier: workspace:*
@@ -2791,8 +2791,8 @@ importers:
         specifier: ~6.0.3
         version: 6.0.3
       undici:
-        specifier: ^7.27.2
-        version: 7.30.2
+        specifier: ^8.0.0
+        version: 8.12.4
 
 packages:
 
@@ -11521,6 +11521,10 @@ packages:
 
   undici@8.12.4:
     resolution: {integrity: sha512-8Mx+uNKKER2bA4AdtedkqRbwUCIJFr2nJckXRe5yrDqzePqwLP7VNcctN8/XdmDSbF7mS+jJKIszlL+vbam1VA==}
+    engines: {node: '>=22.19.0'}
+
+  undici@8.13.1:
+    resolution: {integrity: sha512-Kt7EaPjh0s93lJH/PmW3d5rhkcpUa6fS3jqZ7+YGxNd9L7Xy/i827xe4C2uhhq+pJebM4tQOl5AgHmW11G5Skg==}
     engines: {node: '>=22.19.0'}
 
   unenv@2.0.0-rc.24:
@@ -20908,7 +20912,7 @@ snapshots:
       ultrahtml: 1.7.0
       uncrypto: 0.1.3
       unctx: 3.0.1(magic-string@1.4.5)(oxc-parser@0.152.0)(rolldown@1.2.19)(unplugin@3.7.0(esbuild@0.28.2)(rolldown@1.2.19)(rollup@4.68.3)(vite@8.3.8(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))(webpack@5.106.2(cssnano@9.9.0(postcss@8.5.33))(csso@5.0.5)(esbuild@0.28.2)(lightningcss@1.33.0)(postcss@8.5.33)))
-      undici: 8.12.4
+      undici: 8.13.1
       unhead: 3.4.3(esbuild@0.28.2)(rolldown@1.2.19)(rollup@4.68.3)(vite@8.3.8(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))(webpack@5.106.2(cssnano@9.9.0(postcss@8.5.33))(csso@5.0.5)(esbuild@0.28.2)(lightningcss@1.33.0)(postcss@8.5.33))
       unimport: 7.0.2(acorn@8.19.0)(esbuild@0.28.2)(oxc-parser@0.152.0)(rolldown@1.2.19)(rollup@4.68.3)(vite@8.3.8(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))(webpack@5.106.2(cssnano@9.9.0(postcss@8.5.33))(csso@5.0.5)(esbuild@0.28.2)(lightningcss@1.33.0)(postcss@8.5.33))
       unplugin: 3.7.0(esbuild@0.28.2)(rolldown@1.2.19)(rollup@4.68.3)(vite@8.3.8(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))(webpack@5.106.2(cssnano@9.9.0(postcss@8.5.33))(csso@5.0.5)(esbuild@0.28.2)(lightningcss@1.33.0)(postcss@8.5.33))
@@ -22862,6 +22866,8 @@ snapshots:
 
   undici@8.12.4: {}
 
+  undici@8.13.1: {}
+
   unenv@2.0.0-rc.24:
     dependencies:
       pathe: 2.0.3
@@ -22914,7 +22920,7 @@ snapshots:
       css-tree: 3.2.1
       fnv1a-64: 0.1.2
       std-env: 4.3.0
-      undici: 8.12.4
+      undici: 8.13.1
 
   unimport@6.5.0(esbuild@0.28.2)(oxc-parser@0.152.0)(rolldown@1.2.19)(rollup@4.68.3)(vite@8.3.8(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))(webpack@5.106.2(cssnano@9.9.0(postcss@8.5.33))(csso@5.0.5)(esbuild@0.28.2)(lightningcss@1.33.0)(postcss@8.5.33)):
     dependencies:
