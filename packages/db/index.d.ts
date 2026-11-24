@@ -61,5 +61,7 @@ export declare function MigrateMissingMigrationsError (): FastifyError
 export declare function UnknownDatabaseError (): FastifyError
 export declare function MigrateMissingMigrationsDirError (dir: string): FastifyError
 export declare function OutOfOrderMigrationsError (databaseVersion: number, migrations: string): FastifyError
+export declare function MigrationsLockError (): FastifyError
+export declare function MigrationsLockTimeoutError (timeout: number): FastifyError
 export declare function MissingSeedFileError (): FastifyError
 export declare function MigrationsToApplyError (): FastifyError

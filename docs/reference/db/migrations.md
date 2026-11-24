@@ -67,7 +67,7 @@ To go back to skipping such a migration:
 }
 ```
 
-Only one migration run per database should be active at a time, including runs from different workers of the same process, and the migrations directory should not change while it runs. The check takes no migration lock: another run applying migrations at the same moment can change the recorded versions between its reads or after it has finished.
+Only one migration run per database should be active at a time, including runs from different workers of the same process, and the migrations directory should not change while it runs. The check takes no migration lock of its own: without the `lock` option (see [Concurrent runs](#concurrent-runs)) another run applying migrations at the same moment can change the recorded versions between its reads or after it has finished. With `lock`, on the databases that support it, the check runs after the lock is taken.
 
 The error only reports the files. How to resolve it depends on the state of each database that shares them, so check on every one whether the reported version is recorded and whether the changes of the migration are present.
 
@@ -125,5 +125,32 @@ For manual migration management:
 ```bash
 $ npx wattpm db:migrations:apply --to MIGRATION_NUMBER
 ```
+
+## Concurrent runs
+
+By default nothing stops two processes from applying migrations to the same database at the same time: several replicas of an application that start together with `autoApply`, or a deploy job that overlaps with a manual `db:migrations:apply`. Both can read the same database version and run the same files, so one of them fails or a migration runs twice.
+
+Set `lock` to `true` to run them one after the other:
+
+```json
+{
+  "migrations": {
+    "dir": "./path/to/migrations/folder",
+    "autoApply": true,
+    "lock": true
+  }
+}
+```
+
+With the lock, a run takes a lock on the database before it reads the database version, and at the end attempts to close the database session that holds it: the lock is free once the server has seen that session end. A second run waits, then reads the version the first one left and goes on from there. Rollbacks take the same lock.
+
+- Every process that applies migrations to the database must set the option. A run without it does not wait.
+- There is one lock for each database, whatever the `table` and `currentSchema` settings: two applications that keep their own versions tables in one database wait for each other as well. On MySQL and MariaDB the lock is tied to the name of the database the connection is on, and the processes must reach the same server; with `lower_case_table_names` set to `2` the server preserves the case of database names and compares them without it, so one database can have several spellings and all runs on that server use the same lock. On MySQL 5.7 and on MariaDB, with `lower_case_table_names` at `0` or `1`, a database selected under its legacy `#mysql50#` name gets a lock apart from the one of its plain name.
+- A run with the lock creates one more connection pool, of size one, takes the lock on its connection, sends its queries through it and, at the end, attempts to dispose of the pool. The lock is an advisory lock on PostgreSQL (`pg_try_advisory_lock`) and a named lock on MySQL and MariaDB (`GET_LOCK`). It belongs to that database session: the database frees it when the session ends, so a process that crashes does not leave it behind.
+- While another session holds the lock, a run tries again after a pause of up to 100 milliseconds, for `lockTimeout` milliseconds (`0` to `2147483647`, default: `60000`), and then fails with `PLT_DB_MIGRATIONS_LOCK_TIMEOUT_ERROR` without applying anything. The time starts right before the first try and is checked after each try that found the lock taken, and a run that gets the lock on its last try goes on. With `0` a run tries once. Raise it when a single run can take longer than that. With `autoApply` the wait is part of the start of the application, so the runtime's [`startTimeout`](../runtime/configuration.md#starttimeout) (default: `30000`) and `server.pluginTimeout` (default: `60000`) have to allow for it as well.
+- A migration must not release the locks of its session (`pg_advisory_unlock_all()`, `RELEASE_ALL_LOCKS()`): that would let another run start before the version is recorded. Its version is recorded on the same session right after its statements, and the next migration runs there too, so a migration that changes the selected database (`USE`) has to restore it. On PostgreSQL the same holds for the `search_path` when `currentSchema` is not set; with `currentSchema`, the `search_path` is set again before each query.
+- The lock does not make a migration atomic. A process that dies after the statements of a migration ran and before its version was recorded leaves that migration to be applied again by the next run, as without the lock.
+- The lock needs a connection that stays on one database session and whose locks are freed when the client disconnects. Do not turn it on behind a pooler in transaction mode (for example PgBouncer with `pool_mode = transaction`), where the queries of a run can reach different sessions. A pooler in session mode works when its reset query frees advisory locks, as PgBouncer's default `DISCARD ALL` does, and when it has a spare server connection for the pool of the run: waiting for one is not part of `lockTimeout`.
+- SQLite has no such lock: the option logs a warning there and the run goes on without it.
 
 <Issues />
