@@ -1030,7 +1030,7 @@ importers:
         version: 1.4.1
       safe-stable-stringify:
         specifier: ^3.0.0
-        version: 3.0.0
+        version: 3.0.1
       semgrator:
         specifier: ^0.3.0
         version: 0.3.0
@@ -1795,7 +1795,7 @@ importers:
         version: 2.0.20
       cron:
         specifier: ^4.1.0
-        version: 4.4.1
+        version: 4.4.2
       debounce:
         specifier: ^4.0.0
         version: 4.0.0
@@ -1847,7 +1847,7 @@ importers:
         version: 9.3.0
       '@fastify/express':
         specifier: ^4.0.0
-        version: 4.0.12(supports-color@10.2.2)
+        version: 4.0.13(supports-color@10.2.2)
       '@fastify/formbody':
         specifier: ^9.0.0
         version: 9.0.2
@@ -2146,7 +2146,7 @@ importers:
         version: 5.12.8
       ioredis:
         specifier: ^6.0.0
-        version: 6.0.0(supports-color@10.2.2)
+        version: 6.1.0(supports-color@10.2.2)
       neostandard:
         specifier: ^0.14.0
         version: 0.14.1(eslint@10.15.0(jiti@2.7.0)(supports-color@10.2.2))(supports-color@10.2.2)(typescript@6.0.3)
@@ -3539,8 +3539,8 @@ packages:
   '@fastify/error@4.3.0':
     resolution: {integrity: sha512-mtIdc4R7HnUMOuUDQgnJkEF+Omr2p3JrSSJ44+RME/eAQ5TqdDy5MvXAjze/RyVHhJckuJKkXnMhKfPmFMKqyA==}
 
-  '@fastify/express@4.0.12':
-    resolution: {integrity: sha512-nn3EHN2iGOpEbnu6tK++oGqfvDQTMkmu33xEh6Pkv2xeGrDokxQ6SWhuqixyRuTJfQ6ZbEeXfIuukl6Ao9EKcA==}
+  '@fastify/express@4.0.13':
+    resolution: {integrity: sha512-DIGQ8d2limdkP5vOE8+DqjelGYHWjyIk2SRukkkma/wGstk9m2a0MmIWFFKhHicLS+xwdC4pEqAWOUiiury54Q==}
 
   '@fastify/fast-json-stringify-compiler@5.1.1':
     resolution: {integrity: sha512-pyxRKk7UpUnnrztP9pF4+ZYxusEQ4LifTyzRdiXmyql1QezNHxO02D25MVU2o4kMeAMYWAjG6RKRlojgkbiDAw==}
@@ -4103,8 +4103,8 @@ packages:
   '@ioredis/commands@1.11.0':
     resolution: {integrity: sha512-tuMmOu6dtyGFv/fzCjtapCJj/zgoHaFsqs3wKsroJSRXtlLmyL/t+B7uaQiavGk1F3WWFQcUqZwk92bpp9jKcA==}
 
-  '@ioredis/commands@2.0.0':
-    resolution: {integrity: sha512-vrx0AE/T0h7cRZwfo1M39Cr+ZhZrkf0V8mQN75wucKCxCLD9l/VX6no3gFvrLqD1IlG/1LtzWovqEw3t0Vr9zg==}
+  '@ioredis/commands@2.4.0':
+    resolution: {integrity: sha512-fyu7ZM5RvtsYZ3pz4DFlPqSGB3aoVD9ir0vL6/TLtRo8EMuC7f0Z+qGBskDkUL/gJs5fzelxityZAfNNUCrVrQ==}
 
   '@iovalkey/commands@0.1.0':
     resolution: {integrity: sha512-/B9W4qKSSITDii5nkBCHyPkIkAi+ealUtr1oqBJsLxjSRLka4pxun2VvMNSmcwgAMxgXtQfl0qRv7TE+udPJzg==}
@@ -7121,8 +7121,8 @@ packages:
     resolution: {integrity: sha512-IBWsY8xznyQrcHn8h4bC8/4ErNke5elzgG8GcqF4RFPw6aHkWWRc7Tgw6upjaTX/CT/yQgqYENkxYsTYN+hW2g==}
     engines: {node: '>=18'}
 
-  cron@4.4.1:
-    resolution: {integrity: sha512-ycMs0wTezbyWLuT6JKQWpLPr2q4H0x9yZfcitH+sThOg/VtijRHFHkikE683gjzgmziz0sdyQY5ZWdcNfBVXtA==}
+  cron@4.4.2:
+    resolution: {integrity: sha512-sXlg/D5CdX7M4q3isDCbBD3XCHXExr3yBFwfZ1xaSe/IUVd3DmsnVzeSRjLlJeohbK+j4UtdKmY9k735RMl5XQ==}
     engines: {node: '>=18.x'}
 
   croner@10.0.1:
@@ -8409,8 +8409,8 @@ packages:
     resolution: {integrity: sha512-ehuGcf94bQXhfagULNXrJdfnWO38v070jxSx/qE87Kjzmu2fU7ro5EFAb+OPituLqgfyuQaym5DlrNydW2sJ9A==}
     engines: {node: '>=12.22.0'}
 
-  ioredis@6.0.0:
-    resolution: {integrity: sha512-f+Dtubxfpf6KYFq7WVXJoOLn0bk4TJrMrN9SzeE+jrWrCWj7XX3fA6vkryafhADX+GMymRxgDJDOI33COkJc0w==}
+  ioredis@6.1.0:
+    resolution: {integrity: sha512-0ooWUoxEiWEcCA0FFBsmCnYHnjiFgWPQwA144NxpQzLIVkW20JUjAoKtMg+7spFn+6OAI68XwpcLcGKW5xe4UA==}
     engines: {node: '>=20.0.0'}
 
   iovalkey@0.2.2:
@@ -10742,8 +10742,8 @@ packages:
     resolution: {integrity: sha512-b3rppTKm9T+PsVCBEOUR46GWI7fdOs00VKZ1+9c1EWDaDMvjQc6tUwuFyIprgGgTcWoVHSKrU8H31ZHA2e0RHA==}
     engines: {node: '>=10'}
 
-  safe-stable-stringify@3.0.0:
-    resolution: {integrity: sha512-1z5+QfsSGAtBGJrCw2DP9cwfdvSEMRN4BKKaZxFIKwcwRbshkrtKzzueVFAJ2d1QJm+J3AmpYvI88jFnlEZmyg==}
+  safe-stable-stringify@3.0.1:
+    resolution: {integrity: sha512-tQUOE7EhXynTVsedprW7zvmY7sCETpwRRywh0XiF9Ml+yRAfaP6/UnZ+eDhhrX/tkQZeKBb2AZ1c1L8XCmEyzg==}
     engines: {node: '>=18'}
 
   safer-buffer@2.1.2:
@@ -13190,7 +13190,7 @@ snapshots:
 
   '@fastify/error@4.3.0': {}
 
-  '@fastify/express@4.0.12(supports-color@10.2.2)':
+  '@fastify/express@4.0.13(supports-color@10.2.2)':
     dependencies:
       express: 5.3.0(supports-color@10.2.2)
       fastify-plugin: 6.0.1
@@ -13287,7 +13287,7 @@ snapshots:
   '@fastify/session@11.2.1':
     dependencies:
       fastify-plugin: 6.0.1
-      safe-stable-stringify: 3.0.0
+      safe-stable-stringify: 3.0.1
 
   '@fastify/static@10.1.12':
     dependencies:
@@ -13748,7 +13748,7 @@ snapshots:
   '@ioredis/commands@1.11.0':
     optional: true
 
-  '@ioredis/commands@2.0.0': {}
+  '@ioredis/commands@2.4.0': {}
 
   '@iovalkey/commands@0.1.0': {}
 
@@ -17450,7 +17450,7 @@ snapshots:
       crc-32: 1.2.2
       readable-stream: 4.8.0
 
-  cron@4.4.1:
+  cron@4.4.2:
     dependencies:
       '@types/luxon': 3.7.6
       luxon: 3.7.2
@@ -18888,10 +18888,9 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  ioredis@6.0.0(supports-color@10.2.2):
+  ioredis@6.1.0(supports-color@10.2.2):
     dependencies:
-      '@ioredis/commands': 2.0.0
-      cluster-key-slot: 1.1.1
+      '@ioredis/commands': 2.4.0
       debug: 4.4.3(supports-color@10.2.2)
       denque: 2.1.0
       redis-errors: 1.2.0
@@ -19707,7 +19706,7 @@ snapshots:
       graphql-jit: 0.8.10(graphql@16.15.0)
       mqemitter: 7.1.0
       readable-stream: 4.8.0
-      safe-stable-stringify: 3.0.0
+      safe-stable-stringify: 3.0.1
       secure-json-parse: 4.1.1
       single-user-cache: 2.1.0
       tiny-lru: 13.1.1
@@ -20257,7 +20256,7 @@ snapshots:
     dependencies:
       hyperid: 4.0.0
       inherits: 2.0.4
-      ioredis: 6.0.0(supports-color@10.2.2)
+      ioredis: 6.1.0(supports-color@10.2.2)
       lru-cache: 11.5.3
       mqemitter: 7.1.0
       msgpack-lite: 0.2.2
@@ -22038,7 +22037,7 @@ snapshots:
 
   safe-stable-stringify@2.5.0: {}
 
-  safe-stable-stringify@3.0.0: {}
+  safe-stable-stringify@3.0.1: {}
 
   safer-buffer@2.1.2: {}
 
