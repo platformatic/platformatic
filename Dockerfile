@@ -23,13 +23,13 @@ COPY pnpm-lock.yaml ./
 COPY pnpm-workspace.yaml ./
 
 # Fetch all dependencies
-RUN pnpm fetch --prod
+RUN pnpm fetch --prod --config.trust-lockfile=true
 
 # Copy files
 COPY . .
 
 # Install all the deps in the source code
-RUN pnpm install --prod --offline --node-linker=hoisted --config.shamefullyHoist=true --force
+RUN pnpm install --prod --offline --node-linker=hoisted --config.shamefullyHoist=true --force --config.trust-lockfile=true
 
 # Add platformatic to path
 RUN cd packages/cli && pnpm add -g .
