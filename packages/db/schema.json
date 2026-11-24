@@ -1187,6 +1187,15 @@
           "maximum": 2147483647,
           "default": 60000,
           "description": "How long, in milliseconds, a run keeps trying to take the migrations lock before it fails. With 0 it tries once."
+        },
+        "naming": {
+          "type": "string",
+          "enum": [
+            "sequence",
+            "timestamp"
+          ],
+          "default": "sequence",
+          "description": "How the migrations create command names a new migration. \"sequence\" uses the next number (001, 002), \"timestamp\" uses the current UTC date and time (20260115103000), which two branches rarely both pick."
         }
       },
       "additionalProperties": false,
