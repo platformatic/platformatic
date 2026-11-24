@@ -27,6 +27,35 @@ migrations/
 
 Each migration file should have a corresponding undo file to facilitate rollbacks.
 
+### Timestamp versions
+
+By default the `<application-id>:migrations:create` command (`db:migrations:create` for an application named `db`) names a new migration with the next number. When several branches add migrations in parallel from the same highest version, each of them gets the same next number, and whoever merges second has to rename.
+
+Set `naming` to `timestamp` in the `migrations` configuration to name new migrations with the current UTC date and time instead:
+
+```json
+{
+  "migrations": {
+    "dir": "./migrations",
+    "naming": "timestamp"
+  }
+}
+```
+
+```
+migrations/
+  |- 20260115103000.do.sql
+  |- 20260115103000.undo.sql
+```
+
+Naming by the UTC second makes it rare for two branches to pick the same version. In this mode the command does not connect to the database, and it creates its files exclusively, so on a filesystem that honors exclusive creation it does not overwrite one: when a migration in the directory already has that version, it uses the next free number, which may no longer read as a date and time (`20260115103059` is followed by `20260115103060`).
+
+This option only changes the name of new files. When migrating forward, migrations still run in version order, and only the versions above the highest applied one are selected. Three things follow:
+
+- A pending migration with a lower version, for example one created with a sequence number before the switch, still runs before the first timestamp version as long as it is above the current version of the database.
+- A timestamp says when a migration was written, not when it was merged. Say one branch creates `20260115103000` and another creates `20260116090000`, the second is merged first and a database applies it. When the first branch is merged, its migration is below the database version and has no row in the versions table: it is an [out of order migration](#out-of-order-migrations). With the default `outOfOrder: "error"` the next forward apply fails and lists it, and with `ignore` it is skipped. If both branches are merged before the database applies either migration, both run, in version order.
+- The same can happen inside one checkout when the clock moves backward, or with a file that carries a version from the future, once the higher version has been applied.
+
 ## Managing Migrations
 
 Postgrator maintains a table in your database schema to store and track which migrations have been applied. When migrating forward, only the migrations above the highest applied version run, whether the server starts or the command is triggered manually. See [Out of order migrations](#out-of-order-migrations) for a migration that arrives below that version.

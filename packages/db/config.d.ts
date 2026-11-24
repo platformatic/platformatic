@@ -475,6 +475,10 @@ export interface PlatformaticDatabaseConfig {
      * How long, in milliseconds, a run keeps trying to take the migrations lock before it fails. With 0 it tries once.
      */
     lockTimeout?: number;
+    /**
+     * How the migrations create command names a new migration. "sequence" uses the next number (001, 002), "timestamp" uses the current UTC date and time (20260115103000), which two branches rarely both pick.
+     */
+    naming?: "sequence" | "timestamp";
   };
   types?: {
     /**
