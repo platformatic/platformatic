@@ -391,6 +391,8 @@ An optional object with the following settings:
 - **`outOfOrder`** (`string`, default: `error`): What to do with a migration below the current database version that is not recorded as applied, for example one that arrives from a parallel branch after a higher numbered one already ran. One of `error` (fail a forward or same version apply and list the files) or `ignore` (skip it). See [Out of order migrations](./migrations.md#out-of-order-migrations).
 - **`newline`** (`string`): Force line ending on file when generating checksum. Value should be either CRLF (windows) or LF (unix/mac).
 - **`currentSchema`** (`string`): For Postgres and MS SQL Server(will ignore for another DBs). Specifies schema to look to when validating `versions` table columns. For Postgres, run `SET search_path = currentSchema` prior to running queries against db.
+- **`lock`** (`boolean`, default: `false`): Takes a lock on the database while applying or rolling back migrations, so that concurrent runs on that database that all set it happen one after the other. Supported on PostgreSQL, MySQL and MariaDB. See [Concurrent runs](./migrations.md#concurrent-runs).
+- **`lockTimeout`** (`integer` from `0` to `2147483647`, default: `60000`): How long, in milliseconds, a run keeps trying to take the lock while another session holds it, before it fails with `PLT_DB_MIGRATIONS_LOCK_TIMEOUT_ERROR`. With `0` it tries once.
 
 ### `authorization`
 

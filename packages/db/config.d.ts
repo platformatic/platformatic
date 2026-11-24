@@ -467,6 +467,14 @@ export interface PlatformaticDatabaseConfig {
      * For Postgres and MS SQL Server(will ignore for another DBs). Specifies schema to look to when validating `versions` table columns. For Postgres, run's `SET search_path = currentSchema` prior to running queries against db.
      */
     currentSchema?: string;
+    /**
+     * Take a lock on the database while applying or rolling back migrations, so that concurrent runs that all set it happen one after the other. Supported on PostgreSQL, MySQL and MariaDB.
+     */
+    lock?: boolean;
+    /**
+     * How long, in milliseconds, a run keeps trying to take the migrations lock before it fails. With 0 it tries once.
+     */
+    lockTimeout?: number;
   };
   types?: {
     /**

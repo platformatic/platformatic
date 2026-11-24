@@ -438,6 +438,20 @@ export const migrations = {
       type: 'string',
       description:
         "For Postgres and MS SQL Server(will ignore for another DBs). Specifies schema to look to when validating `versions` table columns. For Postgres, run's `SET search_path = currentSchema` prior to running queries against db."
+    },
+    lock: {
+      type: 'boolean',
+      default: false,
+      description:
+        'Take a lock on the database while applying or rolling back migrations, so that concurrent runs that all set it happen one after the other. Supported on PostgreSQL, MySQL and MariaDB.'
+    },
+    lockTimeout: {
+      type: 'integer',
+      minimum: 0,
+      maximum: 2147483647,
+      default: 60000,
+      description:
+        'How long, in milliseconds, a run keeps trying to take the migrations lock before it fails. With 0 it tries once.'
     }
   },
   additionalProperties: false,
