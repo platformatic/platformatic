@@ -52,6 +52,11 @@
       "allowedVersions": "<8"
     },
     {
+      // undici-thread-interceptor 2 is only used on v4 (#5124). Keep main (v3) on undici-thread-interceptor 1 until v4 is merged.
+      "matchPackageNames": ["undici-thread-interceptor"],
+      "allowedVersions": "<2"
+    },
+    {
       "matchUpdateTypes": [
         "minor",
         "patch",
