@@ -511,8 +511,8 @@ importers:
         specifier: ^7.27.2
         version: 7.30.2
       which:
-        specifier: ^3.0.1
-        version: 3.0.1
+        specifier: ^7.0.0
+        version: 7.0.0
     devDependencies:
       '@platformatic/db':
         specifier: workspace:*
