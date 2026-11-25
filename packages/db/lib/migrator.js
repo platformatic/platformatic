@@ -1,7 +1,7 @@
 import { createConnectionPool } from '@platformatic/sql-mapper'
 import { AsyncLocalStorage } from 'node:async_hooks'
 import { createHash } from 'node:crypto'
-import { readdir, stat } from 'node:fs/promises'
+import { access, readdir, stat } from 'node:fs/promises'
 import { basename } from 'node:path'
 import { setTimeout as sleep } from 'node:timers/promises'
 import Postgrator from 'postgrator'
@@ -298,10 +298,22 @@ export class Migrator {
   // table (for example one that arrives from a parallel branch after a higher
   // numbered one already ran) is not selected and nothing reports it. The
   // table holds one row per applied migration, so those files can be found.
-  async getOutOfOrderMigrations (databaseVersion, migrations) {
+  async getOutOfOrderMigrations (databaseVersion, migrations, appliedVersions) {
     // No versions table yet, or nothing applied: nothing can be below.
     if (databaseVersion === 0) return []
 
+    appliedVersions ??= await this.getAppliedVersions()
+
+    return migrations
+      .filter(
+        migration =>
+          migration.action === 'do' && migration.version < databaseVersion && !appliedVersions.has(migration.version)
+      )
+      .sort((a, b) => a.version - b.version)
+  }
+
+  // The versions recorded in the versions table, which must exist.
+  async getAppliedVersions (postgrator = this.postgrator) {
     // Quote the table as Postgrator does when it creates and reads it.
     const table = this.migrationsTable || 'versions'
     const quotedTable =
@@ -312,15 +324,8 @@ export class Migrator {
           .join('.')
         : table
 
-    const { rows } = await this.postgrator.runQuery(`SELECT version FROM ${quotedTable}`)
-    const appliedVersions = new Set(rows.map(row => Number(row.version)))
-
-    return migrations
-      .filter(
-        migration =>
-          migration.action === 'do' && migration.version < databaseVersion && !appliedVersions.has(migration.version)
-      )
-      .sort((a, b) => a.version - b.version)
+    const { rows } = await postgrator.runQuery(`SELECT version FROM ${quotedTable}`)
+    return new Set(rows.map(row => Number(row.version)))
   }
 
   async checkOutOfOrderMigrations (to = '') {
@@ -435,6 +440,119 @@ export class Migrator {
     return false
   }
 
+  // Compares the migration files with the versions recorded in the database
+  // and runs no migration: a versions table that does not exist is not created.
+  // A migration is "applied" or "pending", "out-of-order" when its file is
+  // below the database version and has no row, which is what the `outOfOrder`
+  // option is about, and "missing-file" when a row has no `do` file. Version
+  // 0 is left out: it is the row Postgrator writes when it creates the table,
+  // and Postgrator never runs a file of that version.
+  async getStatus () {
+    let postgrator
+    let sqliteDb = null
+    let hasDatabase = true
+
+    const connectionString = this.coreConfig.connectionString
+    const isSQLite = typeof connectionString === 'string' && connectionString.startsWith('sqlite')
+    // An in-memory database only exists in the connection that migrated it.
+    const inMemoryInUse = this.postgrator !== null && connectionString === 'sqlite://:memory:'
+    if (isSQLite && !inMemoryInUse) {
+      // The setup the other commands share opens a SQLite file for writing,
+      // which creates a file that does not exist and can write to one that
+      // does. A status only reads, so it opens the file read only on its own,
+      // also when this migrator already holds a writable connection.
+      await this.checkMigrationsDirectoryExists()
+      sqliteDb = await this.openSQLiteReadOnly()
+      hasDatabase = sqliteDb !== null
+      postgrator = new Postgrator({
+        migrationPattern: this.migrationDir + '/*',
+        driver: 'sqlite3',
+        schemaTable: this.migrationsTable || 'versions',
+        execQuery: async query => ({ rows: sqliteDb.prepare(query).all() }),
+        newline: this.newline
+      })
+    } else {
+      if (this.postgrator === null) await this.setupPostgrator()
+      postgrator = this.postgrator
+    }
+
+    let migrations
+    let databaseVersion = 0
+    let appliedVersions = new Set()
+    try {
+      migrations = await postgrator.getMigrations()
+      // With no SQLite file nothing was applied: the files are the whole answer.
+      if (hasDatabase) {
+        databaseVersion = await postgrator.getDatabaseVersion()
+      }
+      if (databaseVersion !== 0) {
+        // The database version is the highest of the rows the files are compared
+        // with, so a run that ends between the two reads cannot make them disagree.
+        appliedVersions = await this.getAppliedVersions(postgrator)
+        databaseVersion = 0
+        for (const version of appliedVersions) {
+          if (version > databaseVersion) databaseVersion = version
+        }
+      }
+    } finally {
+      sqliteDb?.close()
+    }
+
+    const entries = []
+    const versionsWithFile = new Set()
+    for (const migration of migrations) {
+      if (migration.action !== 'do' || migration.version === 0) continue
+      versionsWithFile.add(migration.version)
+
+      let status = 'pending'
+      if (appliedVersions.has(migration.version)) {
+        status = 'applied'
+      } else if (migration.version < databaseVersion) {
+        status = 'out-of-order'
+      }
+      entries.push({ version: migration.version, file: basename(migration.filename), status })
+    }
+
+    for (const version of appliedVersions) {
+      if (version !== 0 && !versionsWithFile.has(version)) {
+        entries.push({ version, file: null, status: 'missing-file' })
+      }
+    }
+    entries.sort((a, b) => a.version - b.version)
+
+    // The answer of hasMigrationsToApply(), from the files and the rows read
+    // above: any file above the database version, or with `outOfOrder: "error"`
+    // a `do` file below it that has no row.
+    const hasFilesAbove = migrations.some(migration => migration.version > databaseVersion)
+    const outOfOrder =
+      this.outOfOrder === 'error' ? await this.getOutOfOrderMigrations(databaseVersion, migrations, appliedVersions) : []
+    const upToDate = !hasFilesAbove && outOfOrder.length === 0
+
+    return { databaseVersion, upToDate, migrations: entries }
+  }
+
+  // The SQLite database of the connection string, opened read only, or null
+  // when no file is at that path. A read only open never creates the file.
+  async openSQLiteReadOnly () {
+    const path = this.coreConfig.connectionString.replace('sqlite://', '')
+    const { DatabaseSync } = await import('node:sqlite')
+
+    for (let attempt = 1; ; attempt++) {
+      try {
+        return new DatabaseSync(path, { readOnly: true })
+      } catch (err) {
+        try {
+          await access(path)
+        } catch (accessError) {
+          if (accessError.code === 'ENOENT') return null
+        }
+        // The file is there. A first apply may have created it since the
+        // open failed, so the open is tried once more.
+        if (attempt === 2) throw err
+      }
+    }
+  }
+
   async checkIfMigrationFilesExist () {
     try {
       const files = await readdir(this.migrationDir)
@@ -476,6 +594,21 @@ export async function execute (logger, config, to, rollback) {
       await migrator.applyMigrations(to)
     }
     return migrator.appliedMigrationsCount > 0
+  } finally {
+    await migrator.close()
+  }
+}
+
+export async function getStatus (logger, config) {
+  const migrationsConfig = config.migrations
+  if (migrationsConfig === undefined) {
+    throw new MigrateMissingMigrationsError()
+  }
+
+  const migrator = new Migrator(migrationsConfig, config.db, logger)
+
+  try {
+    return await migrator.getStatus()
   } finally {
     await migrator.close()
   }

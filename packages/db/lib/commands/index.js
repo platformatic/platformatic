@@ -1,5 +1,6 @@
 import { applyMigrations, helpFooter as applyMigrationsFooter } from './migrations-apply.js'
 import { createMigrations, helpFooter as createMigrationsFooter } from './migrations-create.js'
+import { migrationsStatus, helpFooter as migrationsStatusFooter } from './migrations-status.js'
 import { printSchema } from './print-schema.js'
 import { seed, helpFooter as seedFooter } from './seed.js'
 import { generateTypes, helpFooter as typesFooter } from './types.js'
@@ -14,6 +15,7 @@ export function createCommands (id) {
     commands: {
       [`${id}:migrations:create`]: createMigrations,
       [`${id}:migrations:apply`]: applyMigrations,
+      [`${id}:migrations:status`]: migrationsStatus,
       [`${id}:seed`]: seed,
       [`${id}:types`]: generateTypes,
       [`${id}:schema`]: printSchema
@@ -38,6 +40,18 @@ export function createCommands (id) {
           {
             usage: '-t, --to <version>',
             description: 'Migrate to a specific version'
+          }
+        ]
+      },
+      [`${id}:migrations:status`]: {
+        usage: `${id}:migrations:status`,
+        description: 'Show the status of the migrations',
+        footer: migrationsStatusFooter,
+        options: [
+          configOption,
+          {
+            usage: '-j, --json',
+            description: 'Print the status as JSON'
           }
         ]
       },

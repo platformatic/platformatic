@@ -62,6 +62,7 @@ All the commands will be prefixed by the application id. For instance, if your a
 
 - `movies:migrations:create`: Create a new migration file. See the [migration documentation](./migrations.md) for more informations.
 - `movies:migrations:apply`: Apply all configured migrations to the database. See the [migration documentation](./migrations.md) for more informations.
+- `movies:migrations:status`: Show the status of the migrations. See the [migration documentation](./migrations.md#migrations-status) for more informations.
 - `movies:seed`: Load a seed into the database. See the [seed documentation](./seed.md) for more informations.
 - `movies:types`: Generate TypeScript types for your entities from the database.
 - `movies:schema`: Prints the OpenAPI or GraphQL schema for the database.
