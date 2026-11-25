@@ -148,6 +148,14 @@
 
 **Message:** Found migrations below the current database version %s that are not recorded as applied: %s. See the "migrations.outOfOrder" option.
 
+### PLT_DB_MIGRATIONS_LOCK_ERROR
+
+**Message:** The database was unable to take the migrations lock.
+
+### PLT_DB_MIGRATIONS_LOCK_TIMEOUT_ERROR
+
+**Message:** Unable to take the migrations lock in %s ms: it is still held by another run. See the "migrations.lockTimeout" option.
+
 ### PLT_DB_MIGRATIONS_TO_APPLY_ERROR
 
 **Message:** You have migrations to apply.

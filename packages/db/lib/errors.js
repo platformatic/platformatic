@@ -19,6 +19,14 @@ export const OutOfOrderMigrationsError = createError(
   `${ERROR_PREFIX}_OUT_OF_ORDER_MIGRATIONS_ERROR`,
   'Found migrations below the current database version %s that are not recorded as applied: %s. See the "migrations.outOfOrder" option.'
 )
+export const MigrationsLockError = createError(
+  `${ERROR_PREFIX}_MIGRATIONS_LOCK_ERROR`,
+  'The database was unable to take the migrations lock.'
+)
+export const MigrationsLockTimeoutError = createError(
+  `${ERROR_PREFIX}_MIGRATIONS_LOCK_TIMEOUT_ERROR`,
+  'Unable to take the migrations lock in %s ms: it is still held by another run. See the "migrations.lockTimeout" option.'
+)
 export const MissingSeedFileError = createError(`${ERROR_PREFIX}_MISSING_SEED_FILE_ERROR`, 'Missing seed file')
 export const MigrationsToApplyError = createError(
   `${ERROR_PREFIX}_MIGRATIONS_TO_APPLY_ERROR`,

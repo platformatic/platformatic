@@ -15,6 +15,11 @@
     "**/fixtures/**"
   ],
   "rangeStrategy": "update-lockfile",
+  // This repo does not enable the GitHub "Allow auto-merge" checkbox
+  // (allow_auto_merge is false), so Renovate's default platform-native
+  // automerge cannot work. Let Renovate merge the PR itself once the
+  // branch's status checks are green.
+  "platformAutomerge": false,
   // Mirrors pnpm-workspace.yaml `minimumReleaseAge: 1440` (1440 minutes = 1 day).
   // Security updates bypass this check regardless.
   "minimumReleaseAge": "1 day",
@@ -40,6 +45,11 @@
       // (mercurius-js/mercurius-federation#267). Keep allowing 16.x updates.
       "matchPackageNames": ["graphql"],
       "allowedVersions": "<17"
+    },
+    {
+      // undici 8 is only used on v4 (#5124). Keep main (v3) on undici 7 until v4 is merged.
+      "matchPackageNames": ["undici"],
+      "allowedVersions": "<8"
     },
     {
       "matchUpdateTypes": [
