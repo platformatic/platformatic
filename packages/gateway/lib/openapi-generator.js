@@ -10,7 +10,7 @@ import { composeOpenApi } from './openapi-composer.js'
 import { loadOpenApiConfig } from './openapi-load-config.js'
 import { modifyOpenApiSchema, originPathSymbol } from './openapi-modifier.js'
 import { openApiScalar } from './openapi-scalar.js'
-import { normalizePrefix, prefixWithSlash } from './utils.js'
+import { defaultPassthroughContentTypes, mediaTypeEssence, normalizePrefix, prefixWithSlash } from './utils.js'
 
 async function fetchOpenApiSchema (openApiUrl) {
   const { body } = await request(openApiUrl)
@@ -140,7 +140,7 @@ async function findInvalidOpenApiSchemas (openApiSchemas, applications) {
 }
 
 async function openApiGatewayPlugin (app, { opts, generated }) {
-  const { apiByApiRoutes } = generated
+  const { apiByApiRoutes, specification, scopedBodies } = generated
 
   const dispatcher = getGlobalDispatcher()
 
@@ -151,8 +151,24 @@ async function openApiGatewayPlugin (app, { opts, generated }) {
 
   const openApiGlue = await import('@platformatic/fastify-openapi-glue')
 
+  // fastify-openapi-glue compiles the schema of a request body for every
+  // request of the route, whatever its media type. An operation that also
+  // accepts a pass-through media type has its schema compiled for the other
+  // media types only, as a `content` object, which Fastify validates a body
+  // against only when the request is of one of them.
+  app.addHook('onRoute', routeOptions => {
+    const mediaTypes = scopedBodies.get(`${routeOptions.method} ${routeOptions.config?.openApiPath}`)
+    const body = routeOptions.schema?.body
+    if (!mediaTypes || !body || body.content) {
+      return
+    }
+
+    const content = Object.fromEntries(mediaTypes.map(mediaType => [mediaType, { schema: body }]))
+    routeOptions.schema = { ...routeOptions.schema, body: { content } }
+  })
+
   try {
-    await registerOpenApiGlue(app, openApiGlue, apiByApiRoutes)
+    await registerOpenApiGlue(app, openApiGlue, specification, apiByApiRoutes)
   } catch (error) {
     // The glue rejects the whole composed specification with a generic error.
     // Re-validate each downstream schema separately so the error names the
@@ -184,9 +200,55 @@ function skipValidatorCompiler () {
   return () => true
 }
 
-async function registerOpenApiGlue (app, openApiGlue, apiByApiRoutes) {
+// The request of a pass-through content type is forwarded with its raw stream
+// as the body: the gateway has no parsed body to validate against the schema
+// of the operation's request body, the upstream parses and validates it. The
+// specification the routes are registered with leaves the pass-through media
+// types out of each request body, and the request body out of an operation
+// that accepts no other media type. It returns the media types left to each
+// operation that accepts both, by method and path, for their body schema to be
+// scoped to them, and the request bodies it changed, for the document the
+// gateway serves to describe them as the composed document does.
+function withoutPassthroughRequestBodies (composedOpenApiSchema, passthroughContentTypes) {
+  const passthroughMediaTypes = new Set(passthroughContentTypes.map(mediaTypeEssence))
+  const scopedBodies = new Map()
+  const passthroughRequestBodies = []
+  const paths = {}
+
+  for (const [path, pathItem] of Object.entries(composedOpenApiSchema.paths ?? {})) {
+    paths[path] = { ...pathItem }
+
+    for (const [method, operation] of Object.entries(pathItem)) {
+      const content = operation?.requestBody?.content
+      if (!content) {
+        continue
+      }
+
+      const mediaTypes = Object.keys(content)
+      const kept = mediaTypes.filter(mediaType => !passthroughMediaTypes.has(mediaTypeEssence(mediaType)))
+      if (kept.length === mediaTypes.length) {
+        continue
+      }
+
+      const { requestBody, ...rest } = operation
+      passthroughRequestBodies.push({ path, method, requestBody })
+      if (kept.length === 0) {
+        paths[path][method] = rest
+        continue
+      }
+
+      const keptContent = Object.fromEntries(kept.map(mediaType => [mediaType, content[mediaType]]))
+      paths[path][method] = { ...rest, requestBody: { ...requestBody, content: keptContent } }
+      scopedBodies.set(`${method.toUpperCase()} ${path}`, kept.map(mediaTypeEssence))
+    }
+  }
+
+  return { specification: { ...composedOpenApiSchema, paths }, scopedBodies, passthroughRequestBodies }
+}
+
+async function registerOpenApiGlue (app, openApiGlue, specification, apiByApiRoutes) {
   await app.register(openApiGlue, {
-    specification: app.composedOpenApiSchema,
+    specification,
     addEmptySchema: true,
     operationResolver: (operationId, method, openApiPath) => {
       const { origin, prefix, schema, validation } = apiByApiRoutes[openApiPath]
@@ -317,6 +379,11 @@ export async function openApiGenerator (app, opts) {
   app.decorate('openApiSchemas', openApiSchemas)
   app.decorate('composedOpenApiSchema', composedOpenApiSchema)
 
+  const { specification, scopedBodies, passthroughRequestBodies } = withoutPassthroughRequestBodies(
+    composedOpenApiSchema,
+    opts.passthroughContentTypes ?? defaultPassthroughContentTypes
+  )
+
   const swaggerOpenApi = {
     info: {
       title: opts.openapi?.title || 'Platformatic Gateway',
@@ -348,12 +415,23 @@ export async function openApiGenerator (app, opts) {
         }
       }
       return { schema, url }
+    },
+    // The routes leave the pass-through media types out of their body schema,
+    // the document describes the request bodies as the composed document does.
+    transformObject ({ openapiObject }) {
+      for (const { path, method, requestBody } of passthroughRequestBodies) {
+        const operation = openapiObject.paths?.[path]?.[method]
+        if (operation) {
+          operation.requestBody = requestBody
+        }
+      }
+      return openapiObject
     }
   })
 
   await app.register(openApiScalar, opts)
 
-  return { apiByApiRoutes }
+  return { apiByApiRoutes, specification, scopedBodies }
 }
 
 export const openApiGateway = fp(openApiGatewayPlugin)

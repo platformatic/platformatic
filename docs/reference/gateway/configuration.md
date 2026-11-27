@@ -486,7 +486,7 @@ Configure `@platformatic/gateway` specific settings such as `applications` or `r
   }
   ```
 
-- **`passthroughContentTypes`** (`array`) - An array of content types that should be passed through without parsing to enable proxying. This is useful for handling multipart forms, binary data, or other content types that need to be forwarded to backend services without modification. Default is `['multipart/form-data', 'application/octet-stream']`.
+- **`passthroughContentTypes`** (`array`) - An array of content types that should be passed through without parsing to enable proxying. This is useful for handling multipart forms, binary data, or other content types that need to be forwarded to backend services without modification. Default is `['multipart/form-data', 'application/octet-stream']`. The body of a request of one of these content types is not validated against the request body schema of its operation, since the gateway does not parse it: the backend service validates it. The parameters of the request are still validated, and the composed OpenAPI document keeps the request body as the service describes it.
 
   ```json title="Example JSON object"
   {
