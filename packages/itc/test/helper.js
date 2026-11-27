@@ -39,11 +39,18 @@ export class BatchingITC extends ITC {
   }
 
   _send (message, options) {
-    this._flushResponses(this.port)
+    this._flushQueue(this.port)
     super._send(message, options)
   }
 
   _sendResponse (response, context, skipSanitize) {
-    this._queueResponse(this.port, response, context.transferList, skipSanitize)
+    this._queueMessage(this.port, response, context.transferList, skipSanitize)
+  }
+}
+
+// An ITC that queues its requests too, as MessagingITC does.
+export class QueueingITC extends BatchingITC {
+  _send (message, options) {
+    this._queueMessage(this.port, message, options?.transferList, options?.sanitize === false)
   }
 }

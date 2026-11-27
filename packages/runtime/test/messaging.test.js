@@ -98,37 +98,48 @@ test('should release tracked requests after a timeout', async t => {
   await nextImmediate()
 })
 
-test('should post the first response at once and the others of the same turn as one message', async t => {
-  const { targetChannel, sender, target, targetId } = setupMessagingPair(t)
-  const posted = trackPosts(targetChannel)
+test('should post the first message at once and the others of the same turn as one message', async t => {
+  const { channel, targetChannel, sender, target, targetId } = setupMessagingPair(t)
+  const requests = trackPosts(channel)
+  const responses = trackPosts(targetChannel)
 
   target.handle('echo', value => value)
 
-  const responses = await Promise.all(Array.from({ length: 10 }, (_, id) => sender.send(targetId, 'echo', { id })))
+  // Start at the end of a turn, so that how the messages are grouped doesn't depend on when the test runs.
+  await nextImmediate()
+  const results = await Promise.all(Array.from({ length: 10 }, (_, id) => sender.send(targetId, 'echo', { id })))
 
   deepStrictEqual(
-    responses.map(({ id }) => id),
+    results.map(({ id }) => id),
     [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
   )
   deepStrictEqual(
-    posted.map(message => [message.type, message.responses?.length]),
+    requests.map(message => [message.type, message.messages?.length]),
+    [
+      ['PLT_ITC_REQUEST', undefined],
+      ['PLT_ITC_BATCH', 9]
+    ]
+  )
+  // The target answers the first request at once, and its batching period ends before the other requests arrive.
+  // It answers the first of them at once, and batches the others because they came in a batch.
+  deepStrictEqual(
+    responses.map(message => [message.type, message.messages?.length]),
     [
       ['PLT_ITC_RESPONSE', undefined],
-      ['PLT_ITC_RESPONSES', 9]
+      ['PLT_ITC_RESPONSE', undefined],
+      ['PLT_ITC_BATCH', 8]
     ]
   )
 })
 
-test('should post the queued responses before a request on the same channel', async t => {
-  const { sender, senderId, target, targetId } = setupMessagingPair(t)
-  const received = []
+test('should keep the order of the requests and responses posted on a channel', async t => {
+  const { targetChannel, sender, senderId, target, targetId } = setupMessagingPair(t)
+  const posted = trackPosts(targetChannel)
   const ping = Promise.withResolvers()
 
-  sender.handle('ping', () => {
-    received.push('ping request')
-  })
+  sender.handle('ping', () => 'pong')
   target.handle('echo', value => {
-    if (value === 1) {
+    if (value === 2) {
       // This runs at the end of this turn, when the response to 2 is queued: it must still be posted first.
       setImmediate(() => ping.resolve(target.send(senderId, 'ping')))
     }
@@ -136,13 +147,20 @@ test('should post the queued responses before a request on the same channel', as
     return value
   })
 
-  await Promise.all([
-    sender.send(targetId, 'echo', 1).then(() => received.push('echo 1 response')),
-    sender.send(targetId, 'echo', 2).then(() => received.push('echo 2 response')),
-    ping.promise
-  ])
-
-  deepStrictEqual(received, ['echo 1 response', 'echo 2 response', 'ping request'])
+  // Start at the end of a turn, so that how the messages are grouped doesn't depend on when the test runs.
+  await nextImmediate()
+  deepStrictEqual(
+    await Promise.all([sender.send(targetId, 'echo', 0), sender.send(targetId, 'echo', 1), sender.send(targetId, 'echo', 2), ping.promise]),
+    [0, 1, 2, 'pong']
+  )
+  deepStrictEqual(
+    posted.map(message => {
+      return message.type === 'PLT_ITC_BATCH'
+        ? message.messages.map(message => message.data ?? message.name)
+        : (message.data ?? message.name)
+    }),
+    [0, 1, [2, 'ping']]
+  )
 })
 
 test('should post the queued responses when closing', async t => {
