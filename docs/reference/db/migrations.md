@@ -83,7 +83,7 @@ When several branches add migrations in parallel, a migration can reach a databa
 The `outOfOrder` option of the `migrations` configuration controls this case:
 
 - `error` (default): applying migrations forward, or to the version the database is already at, fails before any migration SQL runs, and the error lists the `do` files below the current database version that have no row in the versions table. A skipped migration becomes a failed deploy, whether the deploy applies migrations with the `db:migrations:apply` command or at startup with `autoApply`.
-- `ignore`: the migration is skipped and nothing reports it. This was the behaviour before the option existed.
+- `ignore`: the migration is skipped when migrations are applied, as it was before the option existed. The [`db:migrations:status`](#migrations-status) command shows it as out of order.
 
 To go back to skipping such a migration:
 
@@ -115,6 +115,51 @@ The `db:seed` command also refuses to seed while a skipped `do` file remains, as
 Versions are compared as JavaScript numbers, as Postgrator compares them, so use positive safe integers. Postgrator reserves version zero for its seed row.
 
 A skipped `do` file is not reported during a rollback and never blocks one. A rollback still selects `undo` files by version, as it does without the option, including the `undo` file of a migration that has no row.
+
+### Migrations status
+
+The `$db:migrations:status` command compares the migration files with the versions recorded in the database. It runs no migration, takes no migration lock and does not create the versions table.
+
+```bash
+$ npx wattpm db:migrations:status
+Database version: 5
+
+Version  File        Status
+1        001.do.sql  applied
+2        002.do.sql  out of order
+3        003.do.sql  applied
+5                    applied, file missing
+6        006.do.sql  pending
+```
+
+Each migration has one of four statuses:
+
+- `applied`: the version is recorded in the versions table and its `do` file is in the migrations directory.
+- `pending`: the `do` file is above the database version.
+- `out of order`: the file is below the database version and its version is not recorded. See [Out of order migrations](#out-of-order-migrations).
+- `applied, file missing`: the version is recorded and no `do` file has it. This can happen when an older build lacks a migration that a newer build applied.
+
+The command exits with code 1 when there are migrations to apply, by the same check the `db:seed` command makes before it loads a seed: a file above the database version, or a migration out of order unless `migrations.outOfOrder` is `ignore`. A recorded version without a file is listed and does not change the exit code. The check counts every file above the database version, so an `undo` file there with no `do` file gives exit code 1 with no pending row. The command also exits with code 1 when it cannot read the status, for example when the migrations directory does not exist.
+
+With `--json` the report is printed as JSON, with the statuses `applied`, `pending`, `out-of-order` and `missing-file`. This is the JSON of the table above:
+
+```json
+{
+  "databaseVersion": 5,
+  "upToDate": false,
+  "migrations": [
+    { "version": 1, "file": "001.do.sql", "status": "applied" },
+    { "version": 2, "file": "002.do.sql", "status": "out-of-order" },
+    { "version": 3, "file": "003.do.sql", "status": "applied" },
+    { "version": 5, "file": null, "status": "missing-file" },
+    { "version": 6, "file": "006.do.sql", "status": "pending" }
+  ]
+}
+```
+
+The command does not validate checksums: an SQL file changed after it was applied is reported as `applied`, and an apply forward or to the current version is the one that refuses it, when `validateChecksums` is on and the recorded checksum differs. A JS migration is imported to be listed, so the code at the top level of its module runs, with whatever that code does, and can write to standard output next to the report; its `generateSql()` is not called.
+
+On SQLite the command opens the database file read only, on a connection of its own. A file that does not exist is not created and is reported as a database with no migration applied, also when its folder does not exist. A read only connection cannot recover a database left with a hot journal by a writer that crashed: the command then fails with SQLite's error. For a database in WAL mode SQLite may still create the `-wal` and `-shm` files next to the database when the folder is writable, and may fail to read when it is not.
 
 ## Configuring and Running Migrations
 
