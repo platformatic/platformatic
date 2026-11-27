@@ -21,7 +21,7 @@ const PLT_ITC_REQUEST_TYPE = 'PLT_ITC_REQUEST'
 const PLT_ITC_RESPONSE_TYPE = 'PLT_ITC_RESPONSE'
 const PLT_ITC_NOTIFICATION_TYPE = 'PLT_ITC_NOTIFICATION'
 const PLT_ITC_UNHANDLED_ERROR_TYPE = 'PLT_ITC_UNHANDLED_ERROR'
-const PLT_ITC_RESPONSES_TYPE = 'PLT_ITC_RESPONSES'
+const PLT_ITC_BATCH_TYPE = 'PLT_ITC_BATCH'
 const PLT_ITC_VERSION = '1.0.0'
 
 // Request IDs only need to be unique among the peers of a port (or, for ChildManager, of a server).
@@ -90,12 +90,12 @@ export function generateResponse (request, error, data) {
   }
 }
 
-// Several responses posted as one message. Each of them is handled as if it had been posted alone.
-export function generateResponses (responses) {
+// Several requests and responses posted as one message. Each of them is handled as if it had been posted alone.
+export function generateBatch (messages) {
   return {
-    type: PLT_ITC_RESPONSES_TYPE,
+    type: PLT_ITC_BATCH_TYPE,
     version: PLT_ITC_VERSION,
-    responses
+    messages
   }
 }
 
@@ -292,20 +292,20 @@ export function postMessage (port, message, transferList, skipSanitize) {
   port.postMessage(sanitize(message, transferList), transferList)
 }
 
-// The responses queued for a port by ITC.prototype._queueResponse.
-const kQueuedResponses = Symbol('plt.itc.queuedResponses')
+// The messages queued for a port by ITC.prototype._queueMessage.
+const kQueuedMessages = Symbol('plt.itc.queuedMessages')
 
 // When a response was posted as soon as it was ready, an error thrown by postMessage rejected the promise of the
 // request handling, which nothing awaits. A queued response that fails to post is reported the same way: as an
-// unhandled rejection.
+// unhandled rejection. A queued request that fails to post fails its own send instead.
 function reportUnhandled (error) {
   Promise.reject(error)
 }
 
-// After a batching period that queued nothing, which happens when requests come one at a time, this many responses
+// After a batching period that queued nothing, which happens when requests come one at a time, this many messages
 // are posted at once without starting a new period. A period costs a setImmediate, which would again find nothing
 // to batch.
-const kPassThroughAfterLoneResponse = 8
+const kPassThroughAfterLoneMessage = 8
 
 export class ITC extends EventEmitter {
   #waitingRequests
@@ -483,10 +483,18 @@ export class ITC extends EventEmitter {
         this.#handleResponse(message, context)
         return
       }
-      if (messageType === PLT_ITC_RESPONSES_TYPE) {
-        const responses = message.responses
-        for (let i = 0; i < responses.length; i++) {
-          this.#handleResponse(responses[i], context)
+      if (messageType === PLT_ITC_BATCH_TYPE) {
+        const messages = message.messages
+        // A batch means the other side is busy: batch what this one posts back too, without a pass-through.
+        this.#passThrough = 0
+        for (let i = 0; i < messages.length; i++) {
+          const entry = messages[i]
+          if (entry.type === PLT_ITC_REQUEST_TYPE) {
+            // Each request gets its own context: a handler can set properties on it, like transferList.
+            this.#handleRequest(entry, { ...context })
+          } else {
+            this.#handleResponse(entry, context)
+          }
         }
         return
       }
@@ -518,8 +526,8 @@ export class ITC extends EventEmitter {
       return
     }
 
-    // Post the responses still queued before the ports close.
-    this.#flushQueuedResponses()
+    // Post the messages still queued before the ports close.
+    this.#flushQueues()
     this._close()
   }
 
@@ -531,7 +539,7 @@ export class ITC extends EventEmitter {
     postMessage(this.port, request, options?.transferList || [], options?.sanitize === false)
   }
 
-  // Posts the response to a request. A subclass can override it to call _queueResponse instead.
+  // Posts the response to a request. A subclass can override it to call _queueMessage instead.
   _sendResponse (response, context, skipSanitize) {
     if (skipSanitize) {
       this._send(response, { ...context, sanitize: false })
@@ -540,21 +548,21 @@ export class ITC extends EventEmitter {
     }
   }
 
-  // Posts a response on port, batching it with the other responses for that port while the ITC is busy.
-  // A subclass that calls this must call _flushResponses(port) before posting anything else on the port,
+  // Posts a request or a response on port, batching it with the other messages for that port while the ITC is busy.
+  // A subclass that calls this must call _flushQueue(port) before posting anything else on the port,
   // to keep the messages in order.
   //
   // The ITC is either idle or batching:
-  // - idle: a response is posted at once, then the ITC switches to batching until the end of the event loop turn,
+  // - idle: a message is posted at once, then the ITC switches to batching until the end of the event loop turn,
   //   which setImmediate marks: it runs after the I/O callbacks of the turn.
-  // - batching: responses are queued per port. At the end of the turn the queue of each port is posted as one
-  //   PLT_ITC_RESPONSES message, and the ITC stays in batching for the next turn. A turn that queued nothing ends
+  // - batching: messages are queued per port. At the end of the turn the queue of each port is posted as one
+  //   PLT_ITC_BATCH message, and the ITC stays in batching for the next turn. A turn that queued nothing ends
   //   batching.
-  // A lone response is never delayed, and under load one postMessage per port and turn replaces one per response.
-  _queueResponse (port, response, transferList, skipSanitize) {
+  // A lone message is never delayed, and under load one postMessage per port and turn replaces one per message.
+  _queueMessage (port, message, transferList, skipSanitize) {
     if (!this.#batching) {
-      // Exactly as a response posted without batching: an error is thrown to the request handling.
-      postMessage(port, response, transferList || [], skipSanitize)
+      // Exactly as a message posted without batching: an error is thrown to the caller.
+      postMessage(port, message, transferList || [], skipSanitize)
 
       if (this.#passThrough > 0) {
         this.#passThrough--
@@ -566,51 +574,51 @@ export class ITC extends EventEmitter {
       return
     }
 
-    // A response that must be sanitized is walked now, as it would be if posted at once.
+    // A message that must be sanitized is walked now, as it would be if posted at once.
     // The structured clone, which copies it, happens when the queue is flushed.
     if (!skipSanitize) {
-      response = sanitize(response, transferList)
+      message = sanitize(message, transferList)
     }
 
-    let queue = port[kQueuedResponses]
+    let queue = port[kQueuedMessages]
     if (queue === undefined) {
-      queue = { responses: [], transferLists: [], transferList: [] }
-      port[kQueuedResponses] = queue
+      queue = { messages: [], transferLists: [], transferList: [] }
+      port[kQueuedMessages] = queue
     }
 
-    if (queue.responses.length === 0) {
+    if (queue.messages.length === 0) {
       this.#queuedPorts.push(port)
     }
 
-    queue.responses.push(response)
+    queue.messages.push(message)
     queue.transferLists.push(transferList)
     if (transferList?.length > 0) {
       queue.transferList.push(...transferList)
     }
   }
 
-  // Posts the responses queued for port at once.
-  _flushResponses (port) {
-    if (port?.[kQueuedResponses]?.responses.length > 0) {
+  // Posts the messages queued for port at once.
+  _flushQueue (port) {
+    if (port?.[kQueuedMessages]?.messages.length > 0) {
       this.#flushPort(port)
     }
   }
 
   #endTurn () {
     if (this.#queuedPorts.length > 0) {
-      this.#flushQueuedResponses()
+      this.#flushQueues()
       this.#queuedInPeriod = true
       setImmediate(this.#onTurnEnd)
       return
     }
 
     this.#batching = false
-    // A period that queued nothing had only the response that started it.
-    this.#passThrough = this.#queuedInPeriod ? 0 : kPassThroughAfterLoneResponse
+    // A period that queued nothing had only the message that started it.
+    this.#passThrough = this.#queuedInPeriod ? 0 : kPassThroughAfterLoneMessage
     this.#queuedInPeriod = false
   }
 
-  #flushQueuedResponses () {
+  #flushQueues () {
     const ports = this.#queuedPorts
     if (ports.length === 0) {
       return
@@ -623,41 +631,45 @@ export class ITC extends EventEmitter {
   }
 
   #flushPort (port) {
-    const queue = port[kQueuedResponses]
-    const { responses, transferLists, transferList } = queue
+    const queue = port[kQueuedMessages]
+    const { messages, transferLists, transferList } = queue
 
-    // Also when the port was flushed already, by _flushResponses
-    if (responses.length === 0) {
+    // Also when the port was flushed already, by _flushQueue
+    if (messages.length === 0) {
       return
     }
 
-    queue.responses = []
+    queue.messages = []
     queue.transferLists = []
     queue.transferList = []
 
-    if (responses.length === 1) {
-      this.#postResponse(port, responses[0], transferLists[0])
+    if (messages.length === 1) {
+      this.#postQueued(port, messages[0], transferLists[0])
       return
     }
 
     try {
-      port.postMessage(generateResponses(responses), transferList)
+      port.postMessage(generateBatch(messages), transferList)
     } catch {
-      // A response can't be cloned. postMessage throws before posting or transferring anything,
-      // so post the responses one by one: only that one fails, as it did when each was posted alone.
-      for (let i = 0; i < responses.length; i++) {
-        this.#postResponse(port, responses[i], transferLists[i])
+      // A message can't be cloned. postMessage throws before posting or transferring anything,
+      // so post the messages one by one: only that one fails, as it did when each was posted alone.
+      for (let i = 0; i < messages.length; i++) {
+        this.#postQueued(port, messages[i], transferLists[i])
       }
     }
   }
 
-  #postResponse (port, response, transferList) {
+  #postQueued (port, message, transferList) {
     try {
-      // Responses to be sanitized were sanitized when queued. Those that were not are sanitized only if
+      // Messages to be sanitized were sanitized when queued. Those that were not are sanitized only if
       // they can't be cloned as they are.
-      postMessage(port, response, transferList || [], true)
+      postMessage(port, message, transferList || [], true)
     } catch (error) {
-      reportUnhandled(error)
+      if (message.type === PLT_ITC_REQUEST_TYPE) {
+        this.#waitingRequests.get(message.reqId)?.resolve({ error, data: null })
+      } else {
+        reportUnhandled(error)
+      }
     }
   }
 

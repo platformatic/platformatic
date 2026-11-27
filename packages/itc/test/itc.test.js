@@ -4,7 +4,7 @@ import { test } from 'node:test'
 import { setImmediate as nextImmediate, setTimeout as sleep } from 'node:timers/promises'
 import { MessageChannel, Worker } from 'node:worker_threads'
 import { generateRequest, generateResponse, ITC, sanitize } from '../lib/index.js'
-import { BatchingITC, generateItcRequest, generateItcResponse } from './helper.js'
+import { BatchingITC, generateItcRequest, generateItcResponse, QueueingITC } from './helper.js'
 
 test('should send a request between threads', async t => {
   const { port1, port2 } = new MessageChannel()
@@ -969,10 +969,10 @@ test('should post the first response at once and the others of the same turn as 
 
   deepStrictEqual(
     itc2.posted.map(message => message.type),
-    ['PLT_ITC_RESPONSE', 'PLT_ITC_RESPONSES']
+    ['PLT_ITC_RESPONSE', 'PLT_ITC_BATCH']
   )
   deepStrictEqual(
-    itc2.posted[1].responses.map(response => response.name),
+    itc2.posted[1].messages.map(response => response.name),
     ['with-function', 'plain', 'missing', 'echo']
   )
 })
@@ -1002,14 +1002,14 @@ test('should batch while every turn has responses and post at once again after a
   const posted = []
   const port = {
     postMessage (message) {
-      posted.push(message.type === 'PLT_ITC_RESPONSES' ? message.responses.map(response => response.data) : message.data)
+      posted.push(message.type === 'PLT_ITC_BATCH' ? message.messages.map(response => response.data) : message.data)
     }
   }
   const itc = new ITC({ port, name: 'itc' })
   t.after(() => itc.close())
 
   function respond (data) {
-    itc._queueResponse(port, generateResponse({ reqId: String(data), name: 'test' }, null, data), undefined, true)
+    itc._queueMessage(port, generateResponse({ reqId: String(data), name: 'test' }, null, data), undefined, true)
   }
 
   // Idle: posted at once. The others of the turn are batched.
@@ -1076,7 +1076,7 @@ test('should transfer the transfer lists of the queued responses', async t => {
   )
   deepStrictEqual(
     itc2.posted.map(message => message.type),
-    ['PLT_ITC_RESPONSE', 'PLT_ITC_RESPONSES']
+    ['PLT_ITC_RESPONSE', 'PLT_ITC_BATCH']
   )
 })
 
@@ -1169,4 +1169,86 @@ test('should post the queued responses before any other message on the port', as
   ])
 
   deepStrictEqual(received, ['echo 1 response', 'echo 2 response', 'ping request'])
+})
+
+function setupQueueingPair (t) {
+  const { port1, port2 } = new MessageChannel()
+
+  const itc1 = new QueueingITC({ port: port1, name: 'itc1' })
+  const itc2 = new ITC({ port: port2, name: 'itc2' })
+
+  itc1.listen()
+  itc2.listen()
+
+  t.after(() => itc1.close())
+  t.after(() => itc2.close())
+
+  return { itc1, itc2 }
+}
+
+test('should post the first request at once and the others of the same turn as one message', async t => {
+  const { itc1, itc2 } = setupQueueingPair(t)
+
+  itc2.handle('echo', value => value)
+
+  deepStrictEqual(await Promise.all([itc1.send('echo', 1), itc1.send('echo', 2), itc1.send('echo', 3)]), [1, 2, 3])
+  deepStrictEqual(
+    itc1.posted.map(message => message.type),
+    ['PLT_ITC_REQUEST', 'PLT_ITC_BATCH']
+  )
+  deepStrictEqual(
+    itc1.posted[1].messages.map(request => request.data),
+    [2, 3]
+  )
+})
+
+test('should give each request of a batch its own context', async t => {
+  const { itc1, itc2 } = setupQueueingPair(t)
+
+  itc2.handle('echo', value => value)
+  itc2.handle('buffer', (size, context) => {
+    const buffer = new ArrayBuffer(size)
+    context.transferList = [buffer]
+    return buffer
+  })
+
+  // The last two requests arrive in one batch. The transfer list set by the first handler must not be used for the
+  // response to the second request, which would then fail to post and time out.
+  const options = { timeout: 1000 }
+  const responses = await Promise.all([
+    itc1.send('echo', 1, options),
+    itc1.send('buffer', 8, options),
+    itc1.send('echo', 2, options)
+  ])
+
+  deepStrictEqual(responses[0], 1)
+  deepStrictEqual(responses[1].byteLength, 8)
+  deepStrictEqual(responses[2], 2)
+  deepStrictEqual(
+    itc1.posted.map(message => message.type),
+    ['PLT_ITC_REQUEST', 'PLT_ITC_BATCH']
+  )
+})
+
+test('should fail only the queued request that cannot be cloned', async t => {
+  const { itc1, itc2 } = setupQueueingPair(t)
+
+  itc2.handle('echo', value => value)
+
+  const results = await Promise.all(
+    [1, { map: new WeakMap() }, 3].map(value => {
+      return itc1.send('echo', value, { timeout: 1000 }).then(
+        response => response,
+        error => error.name
+      )
+    })
+  )
+
+  // The first request is posted at once. The batch of the other two can't be cloned, so they are posted one by one,
+  // and only the request that can't be cloned fails, with the error it got when posted alone.
+  deepStrictEqual(results, [1, 'DataCloneError', 3])
+  deepStrictEqual(
+    itc1.posted.map(message => message.type),
+    ['PLT_ITC_REQUEST', 'PLT_ITC_REQUEST']
+  )
 })
