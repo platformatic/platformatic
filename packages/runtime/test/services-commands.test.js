@@ -160,6 +160,7 @@ test('loadApplicationsCommands works with existing fixtures that have commands',
   const expectedDbCommands = [
     'service-db:migrations:create',
     'service-db:migrations:apply',
+    'service-db:migrations:status',
     'service-db:seed',
     'service-db:types',
     'service-db:schema'
