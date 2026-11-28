@@ -205,8 +205,8 @@ importers:
         specifier: ^9.0.0
         version: 9.4.0
       '@fastify/static':
-        specifier: ^10.1.9
-        version: 10.1.12
+        specifier: ^11.0.0
+        version: 11.0.0
       '@platformatic/basic':
         specifier: workspace:*
         version: link:../basic
@@ -578,8 +578,8 @@ importers:
         specifier: ^4.0.0
         version: 4.3.0
       '@fastify/static':
-        specifier: ^10.1.9
-        version: 10.1.12
+        specifier: ^11.0.0
+        version: 11.0.0
       '@fastify/swagger':
         specifier: ^9.0.0
         version: 9.9.5(supports-color@10.2.2)
@@ -927,8 +927,8 @@ importers:
         specifier: ^12.0.0
         version: 12.9.2
       '@fastify/static':
-        specifier: ^10.1.9
-        version: 10.1.12
+        specifier: ^11.0.0
+        version: 11.0.0
       '@fastify/swagger':
         specifier: ^9.0.0
         version: 9.9.5(supports-color@10.2.2)
@@ -1576,8 +1576,8 @@ importers:
   packages/react-router:
     dependencies:
       '@fastify/static':
-        specifier: ^10.1.9
-        version: 10.1.12
+        specifier: ^11.0.0
+        version: 11.0.0
       '@platformatic/basic':
         specifier: workspace:*
         version: link:../basic
@@ -1658,8 +1658,8 @@ importers:
   packages/remix:
     dependencies:
       '@fastify/static':
-        specifier: ^10.1.9
-        version: 10.1.12
+        specifier: ^11.0.0
+        version: 11.0.0
       '@platformatic/basic':
         specifier: workspace:*
         version: link:../basic
@@ -1963,8 +1963,8 @@ importers:
         specifier: ^4.0.0
         version: 4.3.0
       '@fastify/static':
-        specifier: ^10.1.9
-        version: 10.1.12
+        specifier: ^11.0.0
+        version: 11.0.0
       '@fastify/swagger':
         specifier: ^9.0.0
         version: 9.9.5(supports-color@10.2.2)
@@ -2574,8 +2574,8 @@ importers:
   packages/vite:
     dependencies:
       '@fastify/static':
-        specifier: ^10.1.9
-        version: 10.1.12
+        specifier: ^11.0.0
+        version: 11.0.0
       '@platformatic/basic':
         specifier: workspace:*
         version: link:../basic
@@ -3589,6 +3589,9 @@ packages:
 
   '@fastify/static@10.1.12':
     resolution: {integrity: sha512-D0pmf8OgurIsKiIjxC8ZJP/bCYnUSAiU6PS/se/6Me63UoliAu8FqrzDRX8FdgJMqFMXy45ISlfUZ1Gi6AJnqA==}
+
+  '@fastify/static@11.0.0':
+    resolution: {integrity: sha512-QCa8K1wesN35bBXnI0zmXJWjUoisrTtiaXJpbGBUjWH6vATzQ9B0Z4GVjmoF08N7CtLHAOvUWzpUqxrFIJBuMQ==}
 
   '@fastify/swagger@9.9.5':
     resolution: {integrity: sha512-2X/MXoTv3Jhxegju9DwjOTKcDT86q0SDPIuuZDx9DHfRsHzpVfxVIXzP73X+qcEA1j7N+k7Cm95h9esGy/oBgA==}
@@ -13523,6 +13526,16 @@ snapshots:
       fastq: 1.20.3
       glob: 14.0.6
 
+  '@fastify/static@11.0.0':
+    dependencies:
+      '@fastify/accept-negotiator': 2.1.2
+      '@fastify/error': 4.3.0
+      '@fastify/send': 4.2.0
+      content-disposition: 3.0.0
+      fastify-plugin: 6.0.1
+      fastq: 1.20.3
+      glob: 14.0.6
+
   '@fastify/swagger@9.9.5(supports-color@10.2.2)':
     dependencies:
       fastify-plugin: 6.0.1
@@ -18900,7 +18913,7 @@ snapshots:
 
   glob@14.0.6:
     dependencies:
-      minimatch: 11.0.8
+      minimatch: 11.0.9
       minipass: 7.1.3
       path-scurry: 3.0.0
 
