@@ -1,3 +1,13 @@
+// The content types whose requests are forwarded with their raw stream as the
+// body, unless `passthroughContentTypes` lists others.
+export const defaultPassthroughContentTypes = ['multipart/form-data', 'application/octet-stream']
+
+// The essence of a media type, `type/subtype` in lower case, by which Fastify
+// matches a content type parser and a body schema of a `content` object.
+export function mediaTypeEssence (mediaType) {
+  return mediaType.split(';')[0].trim().toLowerCase()
+}
+
 export function prefixWithSlash (url) {
   if (typeof url === 'string') {
     return url.startsWith('/') ? url : `/${url}`

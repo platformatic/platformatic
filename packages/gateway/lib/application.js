@@ -10,7 +10,7 @@ import { graphqlGenerator } from './graphql-generator.js'
 import { graphql } from './graphql.js'
 import { openApiGateway, openApiGenerator } from './openapi-generator.js'
 import { proxy } from './proxy.js'
-import { isFetchable } from './utils.js'
+import { defaultPassthroughContentTypes, isFetchable } from './utils.js'
 
 const EXPERIMENTAL_GRAPHQL_GATEWAY_FEATURE_MESSAGE = 'graphql composer is an experimental feature'
 
@@ -198,8 +198,7 @@ export async function platformaticGateway (app, capability) {
   await app.register(gatewayHook)
 
   // Register pass-through content type parsers from config
-  const passthroughTypes = config.gateway.passthroughContentTypes ||
-                          ['multipart/form-data', 'application/octet-stream']
+  const passthroughTypes = config.gateway.passthroughContentTypes || defaultPassthroughContentTypes
   for (const contentType of passthroughTypes) {
     if (!app.hasContentTypeParser(contentType)) {
       app.addContentTypeParser(contentType, function (req, body, done) {
