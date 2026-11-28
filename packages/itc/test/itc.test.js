@@ -1,10 +1,10 @@
 import { deepStrictEqual, fail, ifError, rejects, throws } from 'node:assert'
 import { once } from 'node:events'
 import { test } from 'node:test'
-import { setTimeout as sleep } from 'node:timers/promises'
-import { MessageChannel } from 'node:worker_threads'
-import { generateRequest, ITC, sanitize } from '../lib/index.js'
-import { generateItcRequest, generateItcResponse } from './helper.js'
+import { setImmediate as nextImmediate, setTimeout as sleep } from 'node:timers/promises'
+import { MessageChannel, Worker } from 'node:worker_threads'
+import { generateRequest, generateResponse, ITC, sanitize } from '../lib/index.js'
+import { BatchingITC, generateItcRequest, generateItcResponse } from './helper.js'
 
 test('should send a request between threads', async t => {
   const { port1, port2 } = new MessageChannel()
@@ -918,4 +918,255 @@ test('should sanitize the errors of a handler registered with sanitize: false', 
     deepStrictEqual(error.handlerError.fn, undefined)
     return true
   })
+})
+
+function setupBatchingPair (t) {
+  const { port1, port2 } = new MessageChannel()
+
+  const itc1 = new ITC({ port: port1, name: 'itc1' })
+  const itc2 = new BatchingITC({ port: port2, name: 'itc2' })
+
+  itc1.listen()
+  itc2.listen()
+
+  t.after(() => itc1.close())
+  t.after(() => itc2.close())
+
+  return { itc1, itc2 }
+}
+
+test('should post the first response at once and the others of the same turn as one message, in order', async t => {
+  const { itc1, itc2 } = setupBatchingPair(t)
+
+  itc2.handle('echo', value => value)
+  itc2.handle('with-function', value => ({ value, fn () {} }))
+  itc2.handle('plain', value => ({ value }), { sanitize: false })
+
+  const settled = []
+  const requests = [
+    itc1.send('echo', 1),
+    itc1.send('with-function', 2),
+    itc1.send('plain', 3),
+    itc1.send('missing', 4),
+    itc1.send('echo', 5)
+  ].map((request, i) => {
+    return request.then(
+      value => settled.push([i, value]),
+      error => settled.push([i, error.code])
+    )
+  })
+
+  await Promise.all(requests)
+
+  // Sanitized as when posted alone: the function is dropped
+  deepStrictEqual(settled, [
+    [0, 1],
+    [1, { value: 2 }],
+    [2, { value: 3 }],
+    [3, 'PLT_ITC_HANDLER_NOT_FOUND'],
+    [4, 5]
+  ])
+
+  deepStrictEqual(
+    itc2.posted.map(message => message.type),
+    ['PLT_ITC_RESPONSE', 'PLT_ITC_RESPONSES']
+  )
+  deepStrictEqual(
+    itc2.posted[1].responses.map(response => response.name),
+    ['with-function', 'plain', 'missing', 'echo']
+  )
+})
+
+test('should post a lone response at once', async t => {
+  const { itc1, itc2 } = setupBatchingPair(t)
+  let postedBeforeTurnEnd
+
+  itc2.handle('echo', value => {
+    // This immediate runs at the end of this turn, before any immediate the ITC arms.
+    setImmediate(() => {
+      postedBeforeTurnEnd = itc2.posted.length
+    })
+    return value
+  })
+
+  // With a timeout, so that a response that is never posted fails the test instead of hanging it
+  deepStrictEqual(await itc1.send('echo', 1, { timeout: 1000 }), 1)
+  deepStrictEqual(postedBeforeTurnEnd, 1)
+  deepStrictEqual(
+    itc2.posted.map(message => message.type),
+    ['PLT_ITC_RESPONSE']
+  )
+})
+
+test('should batch while every turn has responses and post at once again after a turn without', async t => {
+  const posted = []
+  const port = {
+    postMessage (message) {
+      posted.push(message.type === 'PLT_ITC_RESPONSES' ? message.responses.map(response => response.data) : message.data)
+    }
+  }
+  const itc = new ITC({ port, name: 'itc' })
+  t.after(() => itc.close())
+
+  function respond (data) {
+    itc._queueResponse(port, generateResponse({ reqId: String(data), name: 'test' }, null, data), undefined, true)
+  }
+
+  // Idle: posted at once. The others of the turn are batched.
+  respond(1)
+  respond(2)
+  respond(3)
+  deepStrictEqual(posted, [1])
+  await nextImmediate()
+  deepStrictEqual(posted, [1, [2, 3]])
+
+  // Still batching in the next turn, and in the one after
+  respond(4)
+  respond(5)
+  deepStrictEqual(posted, [1, [2, 3]])
+  await nextImmediate()
+  deepStrictEqual(posted, [1, [2, 3], [4, 5]])
+  respond(6)
+  await nextImmediate()
+  deepStrictEqual(posted, [1, [2, 3], [4, 5], 6])
+
+  // A turn without responses: idle again
+  await nextImmediate()
+  respond(7)
+  deepStrictEqual(posted, [1, [2, 3], [4, 5], 6, 7])
+
+  // The batching period started by 7 queues nothing, as when requests come one at a time.
+  // The next 8 responses are posted at once without starting a period, even in the same turn.
+  await nextImmediate()
+  for (let i = 8; i < 16; i++) {
+    respond(i)
+  }
+  deepStrictEqual(posted.slice(4), [7, 8, 9, 10, 11, 12, 13, 14, 15])
+
+  // The next one starts a period again
+  respond(16)
+  respond(17)
+  deepStrictEqual(posted.at(-1), 16)
+  await nextImmediate()
+  deepStrictEqual(posted.at(-1), 17)
+})
+
+test('should transfer the transfer lists of the queued responses', async t => {
+  const { itc1, itc2 } = setupBatchingPair(t)
+  const buffers = []
+
+  itc2.handle('buffer', (size, context) => {
+    const buffer = new ArrayBuffer(size)
+    buffers.push(buffer)
+    context.transferList = [buffer]
+    return buffer
+  })
+
+  // The first response is posted at once, the other two together
+  const responses = await Promise.all([itc1.send('buffer', 4), itc1.send('buffer', 8), itc1.send('buffer', 16)])
+
+  deepStrictEqual(
+    responses.map(buffer => buffer.byteLength),
+    [4, 8, 16]
+  )
+  // Transferred, not copied
+  deepStrictEqual(
+    buffers.map(buffer => buffer.byteLength),
+    [0, 0, 0]
+  )
+  deepStrictEqual(
+    itc2.posted.map(message => message.type),
+    ['PLT_ITC_RESPONSE', 'PLT_ITC_RESPONSES']
+  )
+})
+
+test('should sanitize a queued response of a handler registered with sanitize: false that cannot be cloned', async t => {
+  const { itc1, itc2 } = setupBatchingPair(t)
+
+  itc2.handle('plain', value => ({ value }), { sanitize: false })
+  itc2.handle('with-function', value => ({ value, fn () {} }), { sanitize: false })
+
+  // With a timeout, so that responses that are never posted fail the test instead of hanging it
+  const options = { timeout: 1000 }
+  const responses = await Promise.all([
+    itc1.send('plain', 1, options),
+    itc1.send('with-function', 2, options),
+    itc1.send('plain', 3, options)
+  ])
+
+  // The first response is posted at once. The batch of the other two can't be cloned, so they are posted one by one,
+  // and the one with a function is sanitized.
+  deepStrictEqual(responses, [{ value: 1 }, { value: 2 }, { value: 3 }])
+  deepStrictEqual(
+    itc2.posted.map(message => message.type),
+    ['PLT_ITC_RESPONSE', 'PLT_ITC_RESPONSE', 'PLT_ITC_RESPONSE']
+  )
+})
+
+test('should post the other queued responses when one cannot be cloned', async () => {
+  const worker = new Worker(new URL('./fixtures/clone-error.js', import.meta.url))
+  const [report] = await once(worker, 'message')
+  await worker.terminate()
+
+  // The first response is posted at once, the other two are batched. Only the response that can't be cloned fails,
+  // as when posted alone: its request times out and the responding thread gets an unhandled rejection.
+  deepStrictEqual(report, {
+    results: [1, 'PLT_ITC_REQUEST_TIMEOUT', 3],
+    unhandled: ['DataCloneError'],
+    posted: ['PLT_ITC_RESPONSE', 'PLT_ITC_RESPONSE']
+  })
+})
+
+test('should post the queued responses when the ITC closes', async t => {
+  const { itc1, itc2 } = setupBatchingPair(t)
+
+  itc2.handle('echo', value => {
+    if (value === 1) {
+      // This runs at the end of this turn, when the response to 2 is queued, before the ITC posts it.
+      setImmediate(() => itc2.close())
+    }
+
+    return value
+  })
+
+  deepStrictEqual(await Promise.all([itc1.send('echo', 1), itc1.send('echo', 2)]), [1, 2])
+})
+
+test('should post the queued responses when the ITC closes after the current request', async t => {
+  const { itc1, itc2 } = setupBatchingPair(t)
+
+  itc2.handle('echo', value => value)
+  itc2.handle('close', () => {
+    itc2.close()
+    return 'closing'
+  })
+
+  // The first response is posted at once, the second is queued when the ITC closes.
+  deepStrictEqual(await Promise.all([itc1.send('echo', 1), itc1.send('close')]), [1, 'closing'])
+})
+
+test('should post the queued responses before any other message on the port', async t => {
+  const { itc1, itc2 } = setupBatchingPair(t)
+  const received = []
+  const ping = Promise.withResolvers()
+
+  itc1.handle('ping', () => {
+    received.push('ping request')
+  })
+  itc2.handle('echo', value => {
+    if (value === 1) {
+      // This runs at the end of this turn, when the response to 2 is queued: it must still be posted first.
+      setImmediate(() => ping.resolve(itc2.send('ping')))
+    }
+
+    return value
+  })
+
+  await Promise.all([
+    itc1.send('echo', 1).then(() => received.push('echo 1 response')),
+    itc1.send('echo', 2).then(() => received.push('echo 2 response')),
+    ping.promise
+  ])
+
+  deepStrictEqual(received, ['echo 1 response', 'echo 2 response', 'ping request'])
 })

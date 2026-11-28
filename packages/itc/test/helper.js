@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto'
+import { ITC } from '../lib/index.js'
 
 export function generateItcRequest (request) {
   return {
@@ -20,5 +21,29 @@ export function generateItcResponse (response) {
     error: null,
     data: { test: 'test-req-message' },
     ...response
+  }
+}
+
+// An ITC that queues its responses, as MessagingITC does, and counts the messages it posts.
+export class BatchingITC extends ITC {
+  constructor (options) {
+    super(options)
+
+    // The messages posted, without the attempts that threw
+    this.posted = []
+    const postMessage = this.port.postMessage
+    this.port.postMessage = (message, transferList) => {
+      postMessage.call(this.port, message, transferList)
+      this.posted.push(message)
+    }
+  }
+
+  _send (message, options) {
+    this._flushResponses(this.port)
+    super._send(message, options)
+  }
+
+  _sendResponse (response, context, skipSanitize) {
+    this._queueResponse(this.port, response, context.transferList, skipSanitize)
   }
 }

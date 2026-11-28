@@ -236,7 +236,14 @@ export class MessagingITC extends ITC {
       channel[kPendingResponses].set(request.reqId, { application, request })
     }
 
+    // The responses queued for the channel go first, to keep the order of the messages.
+    this._flushResponses(channel)
     postMessage(channel, request, transferList, context.sanitize === false)
+  }
+
+  // Under load, the responses posted on a channel in the same event loop turn are posted together, as one message.
+  _sendResponse (response, context, skipSanitize) {
+    this._queueResponse(context.channel, response, context.transferList, skipSanitize)
   }
 
   _onRequestSettled (reqId, context) {

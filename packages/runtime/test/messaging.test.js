@@ -40,7 +40,20 @@ function setupMessagingPair (t, messagingTimeout = 1000) {
     channel.port2.close()
   })
 
-  return { channel: channel.port1, sender, target, targetId }
+  return { channel: channel.port1, targetChannel: channel.port2, sender, senderId, target, targetId }
+}
+
+// Records the messages posted on a port.
+function trackPosts (port) {
+  const posted = []
+  const postMessage = port.postMessage
+
+  port.postMessage = (message, transferList) => {
+    postMessage.call(port, message, transferList)
+    posted.push(message)
+  }
+
+  return posted
 }
 
 function getPendingResponses (channel) {
@@ -83,6 +96,68 @@ test('should release tracked requests after a timeout', async t => {
 
   handlerRelease.resolve('late-response')
   await nextImmediate()
+})
+
+test('should post the first response at once and the others of the same turn as one message', async t => {
+  const { targetChannel, sender, target, targetId } = setupMessagingPair(t)
+  const posted = trackPosts(targetChannel)
+
+  target.handle('echo', value => value)
+
+  const responses = await Promise.all(Array.from({ length: 10 }, (_, id) => sender.send(targetId, 'echo', { id })))
+
+  deepStrictEqual(
+    responses.map(({ id }) => id),
+    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+  )
+  deepStrictEqual(
+    posted.map(message => [message.type, message.responses?.length]),
+    [
+      ['PLT_ITC_RESPONSE', undefined],
+      ['PLT_ITC_RESPONSES', 9]
+    ]
+  )
+})
+
+test('should post the queued responses before a request on the same channel', async t => {
+  const { sender, senderId, target, targetId } = setupMessagingPair(t)
+  const received = []
+  const ping = Promise.withResolvers()
+
+  sender.handle('ping', () => {
+    received.push('ping request')
+  })
+  target.handle('echo', value => {
+    if (value === 1) {
+      // This runs at the end of this turn, when the response to 2 is queued: it must still be posted first.
+      setImmediate(() => ping.resolve(target.send(senderId, 'ping')))
+    }
+
+    return value
+  })
+
+  await Promise.all([
+    sender.send(targetId, 'echo', 1).then(() => received.push('echo 1 response')),
+    sender.send(targetId, 'echo', 2).then(() => received.push('echo 2 response')),
+    ping.promise
+  ])
+
+  deepStrictEqual(received, ['echo 1 response', 'echo 2 response', 'ping request'])
+})
+
+test('should post the queued responses when closing', async t => {
+  const { sender, target, targetId } = setupMessagingPair(t)
+
+  target.handle('echo', value => {
+    if (value === 1) {
+      // This runs at the end of this turn, when the response to 2 is queued, before it is posted.
+      setImmediate(() => target.close())
+    }
+
+    return value
+  })
+
+  deepStrictEqual(await Promise.all([sender.send(targetId, 'echo', 1), sender.send(targetId, 'echo', 2)]), [1, 2])
 })
 
 test('should honor the signal passed by the caller', async t => {
